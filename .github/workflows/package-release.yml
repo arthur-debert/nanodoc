@@ -31,8 +31,25 @@ jobs:
       - name: Publish to PyPI
         id: publish
         if: github.event.inputs.publish == 'true'
-        run: source .venv/bin/activate && ./bin/publish
+        run: |
+          # Extract version from pyproject.toml
+          VERSION=$(grep -m 1 'version = ' pyproject.toml | cut -d '"' -f 2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          # Run publish script
+          source .venv/bin/activate && ./bin/publish
+
+          # Create annotation with release link
+          echo "::notice title=PyPI Release::Package published to https://pypi.org/project/nanodoc/$VERSION/"
         env:
           TWINE_USERNAME: "__token__"
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
           TWINE_NON_INTERACTIVE: 1
+
+      - name: Display Release Link
+        if:
+          github.event.inputs.publish == 'true' && steps.publish.outcome ==
+          'success'
+        run: |
+          echo "✅ Package successfully published!"
+          echo "📦 View on PyPI: https://pypi.org/project/nanodoc/${{ steps.publish.outputs.version }}/"
