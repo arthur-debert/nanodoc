@@ -1,20 +1,20 @@
 """Help module for nanodoc."""
 
-"""Help module for nanodoc."""
-
 import argparse
 import glob
 import pathlib
 import sys
 from typing import Dict, Tuple
 
+from .files import TXT_EXTENSIONS
 
-def _get_help_file_path():
-    """Return the path to the help markdown file."""
+
+def _get_docs_dir():
+    """Return the path to the docs directory."""
     # Get the directory where this module is located
     module_dir = pathlib.Path(__file__).parent.absolute()
-    # The help file is in the docs subdirectory
-    return module_dir / "docs" / "HELP.md"
+    # The docs directory
+    return module_dir / "docs"
 
 
 def _get_guides_dir():
@@ -32,8 +32,8 @@ def get_available_guides() -> Dict[str, str]:
     guides = {}
     guides_dir = _get_guides_dir()
 
-    # Look for .txt and .md files in the guides directory
-    for ext in [".txt", ".md"]:
+    # Look for files with extensions from TXT_EXTENSIONS in the guides directory
+    for ext in TXT_EXTENSIONS:
         for guide_path in glob.glob(str(guides_dir / f"*{ext}")):
             guide_name = pathlib.Path(guide_path).name.replace(ext, "")
 
@@ -63,17 +63,12 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
     """
     guides_dir = _get_guides_dir()
 
-    # Check for the guide with .txt extension
-    txt_path = guides_dir / f"{guide_name}.txt"
-    if txt_path.exists():
-        with open(txt_path, "r", encoding="utf-8") as f:
-            return True, f.read()
-
-    # Check for the guide with .md extension
-    md_path = guides_dir / f"{guide_name}.md"
-    if md_path.exists():
-        with open(md_path, "r", encoding="utf-8") as f:
-            return True, f.read()
+    # Check for the guide with extensions from TXT_EXTENSIONS
+    for ext in TXT_EXTENSIONS:
+        guide_path = guides_dir / f"{guide_name}{ext}"
+        if guide_path.exists():
+            with open(guide_path, "r", encoding="utf-8") as f:
+                return True, f.read()
 
     # Guide not found, prepare error message with available guides
     available_guides = get_available_guides()
@@ -83,27 +78,30 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
     return False, f"Guide '{guide_name}' not found. Available guides:\n\n{guides_list}"
 
 
-def get_help_text():
-    """Return the help text for nanodoc."""
-    help_file_path = _get_help_file_path()
-    if help_file_path.exists():
-        with open(help_file_path, "r", encoding="utf-8") as f:
-            return f.read()
-    else:
-        # Fallback in case the file is not found
-        return "nanodoc help file not found. Please refer to the documentation."
-    help_file_path = _get_help_file_path()
-    if help_file_path.exists():
-        with open(help_file_path, "r", encoding="utf-8") as f:
-            return f.read()
-    else:
-        # Fallback in case the file is not found
-        return "nanodoc help file not found. Please refer to the documentation."
+def get_help_content() -> Tuple[bool, str]:
+    """Get the content of the help file.
+
+    Returns:
+        Tuple[bool, str]: A tuple containing:
+            - Boolean indicating if the help file was found
+            - The help content if found, or an error message if not
+    """
+    docs_dir = _get_docs_dir()
+
+    # Check for the help file with extensions from TXT_EXTENSIONS
+    for ext in TXT_EXTENSIONS:
+        help_path = docs_dir / f"HELP{ext}"
+        if help_path.exists():
+            with open(help_path, "r", encoding="utf-8") as f:
+                return True, f.read()
+
+    return False, "nanodoc help file not found. Please refer to the documentation."
 
 
 def print_help():
     """Print the help text for nanodoc."""
-    print(get_help_text())
+    found, content = get_help_content()
+    print(content)
     sys.exit(0)
 
 
