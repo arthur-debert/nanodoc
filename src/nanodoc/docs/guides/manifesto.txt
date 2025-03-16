@@ -1,0 +1,24 @@
+# Nanodoc Manifesto
+
+## Simplicity Over Complexity
+
+Nanodoc is built on the principle that documentation tools should be simple, lightweight, and focused on content rather than formatting. We believe that:
+
+1. **Content is king** - The focus should be on writing good documentation, not fighting with complex tools.
+2. **Minimal dependencies** - A documentation tool should work with minimal setup and dependencies.
+3. **Plain text first** - Plain text files are universal, version-control friendly, and will stand the test of time.
+
+## Why Nanodoc Exists
+
+Nanodoc was created to fill the gap between complex documentation generators and simple text concatenation. It provides just enough features to make documentation useful without the overhead of learning a complex system.
+
+## Our Commitments
+
+- Keep the core functionality simple and focused
+- Maintain backward compatibility whenever possible
+- Prioritize content readability over fancy formatting
+- Ensure documentation is easily accessible and searchable
+
+## Join Us
+
+If you believe in these principles, we welcome your contributions to Nanodoc. Help us keep documentation simple, accessible, and effective.
