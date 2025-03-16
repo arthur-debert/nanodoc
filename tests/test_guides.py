@@ -22,7 +22,7 @@ def test_get_available_guides():
     assert "quickstart" in guides
 
     # Check that the descriptions are correct
-    assert "Nanodoc Manifesto" in guides["manifesto"]
+    assert guides["manifesto"]  # Just check that it has a description
     assert guides["quickstart"]  # Just check that it has a description
 
 
@@ -31,8 +31,18 @@ def test_get_guide_content_existing():
     # Test with the manifesto guide
     found, content = get_guide_content("manifesto")
     assert found is True
-    assert "# Nanodoc Manifesto" in content
-    assert "Simplicity Over Complexity" in content
+
+    # Read the actual file content to compare
+    guide_path = (
+        pathlib.Path(__file__).parent.parent
+        / "src"
+        / "nanodoc"
+        / "docs"
+        / "guides"
+        / "manifesto.txt"
+    )
+    with open(guide_path, "r", encoding="utf-8") as f:
+        assert content == f.read()
 
     # Test with the quickstart guide
     found, content = get_guide_content("quickstart")
@@ -69,8 +79,19 @@ def test_help_with_guide():
         text=True,
     )
     assert result.returncode == 0
-    assert "# Nanodoc Manifesto" in result.stdout
-    assert "Simplicity Over Complexity" in result.stdout
+
+    # Read the actual file content to compare
+    guide_path = (
+        pathlib.Path(__file__).parent.parent
+        / "src"
+        / "nanodoc"
+        / "docs"
+        / "guides"
+        / "manifesto.txt"
+    )
+    with open(guide_path, "r", encoding="utf-8") as f:
+        guide_content = f.read()
+    assert guide_content in result.stdout
 
     # Test with the quickstart guide
     result = subprocess.run(

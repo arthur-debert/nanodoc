@@ -1,24 +1,48 @@
-# Nanodoc Manifesto
+1. Less clutter, less distraction
 
-## Simplicity Over Complexity
+Sometimes you just want to bundle a couple of pieces of texts together, and that's it.
 
-Nanodoc is built on the principle that documentation tools should be simple, lightweight, and focused on content rather than formatting. We believe that:
+nanodoc does give you some bell and whistles, but they are lean. use txxt format:
 
-1. **Content is king** - The focus should be on writing good documentation, not fighting with complex tools.
-2. **Minimal dependencies** - A documentation tool should work with minimal setup and dependencies.
-3. **Plain text first** - Plain text files are universal, version-control friendly, and will stand the test of time.
+2. Session titles are numbered
 
-## Why Nanodoc Exists
+And in between respectable line breaks.
 
-Nanodoc was created to fill the gap between complex documentation generators and simple text concatenation. It provides just enough features to make documentation useful without the overhead of learning a complex system.
+3. Paragraphs
 
-## Our Commitments
+Paragraphs are split by line breaks.
 
-- Keep the core functionality simple and focused
-- Maintain backward compatibility whenever possible
-- Prioritize content readability over fancy formatting
-- Ensure documentation is easily accessible and searchable
+Like this.
 
-## Join Us
+4. Code blocks
 
-If you believe in these principles, we welcome your contributions to Nanodoc. Help us keep documentation simple, accessible, and effective.
+Anuthing thats indented by 4 spaces and the first line begins with #
+
+    #
+    print("Hello, World!")
+    print("Anyone there?") # multiple lines are supported
+
+And optional, but there is change in rendering, specify the code block language:
+
+    # python
+    print("Hello, World!")
+    print("Anyone there?") # multiple lines are supported
+
+5. Lists
+
+- Use - to start.
+- Can be nested
+    - Like this.
+
+
+
+5.1 Session titles can be nested
+
+Such as this, with no indentation
+
+
+5.2 Ordered Lists
+
+    1. Use numbers
+    2. They will be renumbered if needed
+        1. Can be nested
