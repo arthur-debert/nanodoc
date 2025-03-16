@@ -14,7 +14,7 @@ from .data import get_content as get_item_content
 from .data import validate_content_item
 
 # Define text file extensions
-TXT_EXTENSIONS = [".txt", ".md"]
+TXT_EXTENSIONS = [".txt", ".md", "txxt"]
 
 logger = logging.getLogger("nanodoc")
 logger.setLevel(logging.CRITICAL)  # Start with logging disabled
