@@ -3,7 +3,7 @@ import pathlib
 import subprocess
 import sys
 
-from src.nanodoc.help import get_available_guides, get_guide_content
+from nanodoc.help import get_available_guides, get_guide_content
 
 # Get the parent directory of the current module
 MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
