@@ -10,11 +10,31 @@ from typing import Dict, Tuple
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
+from rich.style import Style
+from rich.theme import Theme
 
 from .files import TXT_EXTENSIONS
 
+# Define custom theme for Rich
+NANODOC_THEME = Theme(
+    {
+        "heading": Style(color="blue", bold=True),
+        "heading.1": Style(color="bright_blue", bold=True),
+        "heading.2": Style(color="blue", bold=True),
+        "code": Style(color="bright_green", dim=True),
+        "code-block": Style(bgcolor="black", color="bright_green"),
+        "link": Style(color="cyan", underline=True),
+        "item.bullet": Style(color="yellow", bold=True),
+        "item.number": Style(color="yellow", bold=True),
+        "strong": Style(color="bright_white", bold=True),
+        "emphasis": Style(color="bright_white", italic=True),
+        "error": Style(color="red", bold=True),
+        "title": Style(color="magenta", bold=True),
+    }
+)
+
 # Initialize Rich console
-console = Console()
+console = Console(theme=NANODOC_THEME)
 
 
 def _get_docs_dir():
@@ -107,7 +127,9 @@ def _render_content(content: str, guide_name: str = None):
     if _is_rich_content(content):
         console.print(content)
     elif guide_name and (_is_markdown_content(content) or guide_name.endswith(".md")):
-        console.print(Markdown(content))
+        # Use custom styles for markdown rendering
+        md = Markdown(content, code_theme="monokai")
+        console.print(md)
     else:
         # For plain text with structure (like manifesto.txt), we'll enhance it with some basic formatting
         # This will make numbered sections, code blocks, and lists look better
@@ -128,7 +150,9 @@ def _render_content(content: str, guide_name: str = None):
         content = re.sub(r"^(\s*)-\s+(.+)$", r"\1* \2", content, flags=re.MULTILINE)
 
         # Render as Markdown
-        console.print(Markdown(content))
+        # Use custom styles for markdown rendering
+        md = Markdown(content, code_theme="monokai")
+        console.print(md)
 
 
 def get_guide_content(guide_name: str) -> Tuple[bool, str]:
@@ -211,7 +235,15 @@ def print_guide(guide_name: str):
         sys.exit(0)
     else:
         # Format the error message with Rich
-        console.print(Panel(content, title="Guide Not Found", border_style="red"))
+        console.print(
+            Panel(
+                content,
+                title="Guide Not Found",
+                border_style="error",
+                title_align="center",
+                padding=(1, 2),
+            )
+        )
         # Exit with status 0 if the guide was found
     sys.exit(1)
 
