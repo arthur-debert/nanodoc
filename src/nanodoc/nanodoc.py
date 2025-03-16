@@ -6,7 +6,7 @@ import sys
 
 from .core import process_all
 from .files import TXT_EXTENSIONS, get_files_from_args
-from .help import check_help
+from .help import check_help, print_help
 from .version import VERSION
 
 LINE_WIDTH = 80
@@ -62,6 +62,30 @@ def setup_logging(to_stderr=False, enabled=False):
 ################################################################################
 
 
+# Custom help action to use our custom help format
+class CustomHelpAction(argparse.Action):
+    """Custom action for --help flag to use our custom help format."""
+
+    def __init__(
+        self,
+        option_strings,
+        dest=argparse.SUPPRESS,
+        default=argparse.SUPPRESS,
+        help=None,
+    ):
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help,
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print_help()
+        parser.exit()
+
+
 # For backward compatibility with tests
 
 
@@ -75,6 +99,7 @@ def parse_args():
         description="Generate documentation from source code.",
         prog="nanodoc",
         formatter_class=argparse.RawTextHelpFormatter,
+        add_help=False,  # Disable the default help flag
     )
     parser.add_argument("-v", action="store_true", help="Enable verbose mode")
     parser.add_argument(
@@ -107,6 +132,9 @@ def parse_args():
 
     parser.add_argument("sources", nargs="*", help="Source file(s)")
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+    parser.add_argument(
+        "-h", "--help", action=CustomHelpAction, help="Show help for command"
+    )
     parser.add_argument(
         "help",
         nargs="?",
