@@ -1,2 +1,0 @@
-nanodoc is a single python file only, no dependencies,
-tests import form nanodoc

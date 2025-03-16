@@ -1,7 +1,0 @@
-CI:
-* Has workflows for testing (and pushing results to codecov)
-* Has workflow to create git release + publish to pipy
-
-# Setup:
-    * Add CODECOV_TOKEN to secrests
-    * Add PYPI_PASSWORD to secrets.
