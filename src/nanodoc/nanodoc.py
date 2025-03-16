@@ -2,6 +2,8 @@
 """Main module for nanodoc application."""
 import argparse
 import logging
+import os
+import pathlib
 import sys
 
 from .core import process_all
@@ -89,6 +91,25 @@ class CustomHelpAction(argparse.Action):
 # For backward compatibility with tests
 
 
+def get_available_themes():
+    """Get a list of available theme names.
+
+    Returns:
+        list: A list of available theme names (without the .yaml extension).
+    """
+    # Get the directory where this module is located
+    module_dir = pathlib.Path(__file__).parent.absolute()
+    themes_dir = module_dir / "themes"
+    themes = []
+
+    if themes_dir.exists():
+        for file in os.listdir(themes_dir):
+            if file.endswith(".yaml"):
+                themes.append(file.replace(".yaml", ""))
+
+    return themes
+
+
 def parse_args():
     """Parse command-line arguments.
 
@@ -132,6 +153,15 @@ def parse_args():
 
     parser.add_argument("sources", nargs="*", help="Source file(s)")
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+
+    # Add theme selection option
+    available_themes = get_available_themes()
+    parser.add_argument(
+        "--theme",
+        choices=available_themes if available_themes else ["neutral"],
+        help="Select a theme for rendering help and guide content",
+    )
+
     parser.add_argument(
         "-h", "--help", action=CustomHelpAction, help="Show help for command"
     )
@@ -160,10 +190,10 @@ def main():
     """Main entry point for the nanodoc application."""
     args = parse_args()
 
-    # short circuit for help
-    check_help(args)
-
     try:
+        # short circuit for help
+        check_help(args)
+
         # Set up logging based on verbose flag
         setup_logging(to_stderr=True, enabled=args.v)
 
@@ -201,7 +231,7 @@ def main():
         )
         print(output)
     except Exception as e:
-        print(f"An error occurred: {e}", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 

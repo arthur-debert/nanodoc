@@ -7,6 +7,7 @@ import re
 import sys
 from typing import Dict, Tuple
 
+import yaml
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -15,26 +16,56 @@ from rich.theme import Theme
 
 from .files import TXT_EXTENSIONS
 
-# Define custom theme for Rich
-NANODOC_THEME = Theme(
-    {
-        "heading": Style(color="blue", bold=True),
-        "heading.1": Style(color="bright_blue", bold=True),
-        "heading.2": Style(color="blue", bold=True),
-        "code": Style(color="bright_green", dim=True),
-        "code-block": Style(bgcolor="black", color="bright_green"),
-        "link": Style(color="cyan", underline=True),
-        "item.bullet": Style(color="yellow", bold=True),
-        "item.number": Style(color="yellow", bold=True),
-        "strong": Style(color="bright_white", bold=True),
-        "emphasis": Style(color="bright_white", italic=True),
-        "error": Style(color="red", bold=True),
-        "title": Style(color="magenta", bold=True),
-    }
-)
+# Default theme name
+DEFAULT_THEME = "neutral"
 
-# Initialize Rich console
-console = Console(theme=NANODOC_THEME)
+
+def _get_themes_dir():
+    """Return the path to the themes directory."""
+    module_dir = pathlib.Path(__file__).parent.absolute()
+    return module_dir / "themes"
+
+
+def _load_theme(theme_name=DEFAULT_THEME):
+    """Load a theme from a YAML file.
+
+    Args:
+        theme_name: The name of the theme to load.
+
+    Returns:
+        Theme: A Rich Theme object.
+    """
+    themes_dir = _get_themes_dir()
+    theme_path = themes_dir / f"{theme_name}.yaml"
+
+    # Fall back to default theme if the requested theme doesn't exist
+    if not theme_path.exists():
+        theme_path = themes_dir / f"{DEFAULT_THEME}.yaml"
+
+    # Load the theme from YAML
+    try:
+        with open(theme_path, "r", encoding="utf-8") as f:
+            theme_data = yaml.safe_load(f)
+
+        # Convert the YAML data to a Rich Theme
+        styles = {}
+        for key, value in theme_data.items():
+            styles[key] = Style.parse(value)
+
+        return Theme(styles)
+    except Exception as e:
+        print(f"Error loading theme: {e}")
+        # Return a minimal default theme if there's an error
+        return Theme(
+            {
+                "heading": Style(color="blue", bold=True),
+                "error": Style(color="red", bold=True),
+            }
+        )
+
+
+# Initialize Rich console with the default theme
+console = Console(theme=_load_theme())
 
 
 def _get_docs_dir():
@@ -244,7 +275,7 @@ def print_guide(guide_name: str):
                 padding=(1, 2),
             )
         )
-        # Exit with status 0 if the guide was found
+        # Exit with status 1 if the guide was not found
     sys.exit(1)
 
 
@@ -254,12 +285,26 @@ def check_help(args):
     Args:
         args: The parsed command-line arguments.
     """
+    # Check for theme selection
+    theme_name = DEFAULT_THEME
+    if hasattr(args, "theme") and args.theme:
+        theme_name = args.theme
+        # Update the console theme
+        console.theme = _load_theme(theme_name)
+
     # Handle help command before any logging occurs
-    if len(sys.argv) >= 3 and sys.argv[1] == "help":
+    if len(sys.argv) >= 2 and sys.argv[-1] == "help":
         # Handle guide-specific help: nanodoc help <guide-name>
-        guide_name = sys.argv[2]
-        print_guide(guide_name)
-        # This function will exit, so the code below won't be reached
+        print_help()
+        sys.exit(0)
+    elif len(sys.argv) >= 3 and "help" in sys.argv:
+        # Find the position of "help" in the arguments
+        help_index = sys.argv.index("help")
+        # Check if there's an argument after "help"
+        if help_index < len(sys.argv) - 1:
+            guide_name = sys.argv[help_index + 1]
+            print_guide(guide_name)
+            # This function will exit, so the code below won't be reached
 
     # Handle general help command
     elif args.help == "help" or (len(sys.argv) == 2 and sys.argv[1] == "help"):

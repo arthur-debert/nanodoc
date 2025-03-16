@@ -1,0 +1,37 @@
+# Classic Dark theme for nanodoc
+# A dark theme with high contrast and vibrant colors
+
+# General styles
+default: "bright_white on black"
+background: "black"
+
+# Typography
+heading: "bright_cyan bold"
+heading.1: "bright_cyan bold underline"
+heading.2: "cyan bold"
+heading.3: "bright_blue bold"
+paragraph: "bright_white"
+strong: "bright_white bold"
+emphasis: "bright_white italic"
+link: "bright_blue underline"
+
+# Code
+code: "bright_green"
+code-block: "bright_green on dark_green"
+code-block.background: "dark_green"
+
+# Lists
+item.bullet: "bright_yellow bold"
+item.number: "bright_yellow bold"
+
+# UI elements
+title: "bright_magenta bold"
+subtitle: "magenta"
+error: "bright_red bold on rgb(80,0,0)"
+warning: "bright_yellow bold on rgb(50,50,0)"
+info: "bright_blue bold on rgb(0,0,80)"
+success: "bright_green bold on rgb(0,80,0)"
+
+# Panels and borders
+panel.border: "bright_blue"
+panel.title: "black on bright_blue"
