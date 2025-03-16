@@ -3,10 +3,18 @@
 import argparse
 import glob
 import pathlib
+import re
 import sys
 from typing import Dict, Tuple
 
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
+
 from .files import TXT_EXTENSIONS
+
+# Initialize Rich console
+console = Console()
 
 
 def _get_docs_dir():
@@ -48,6 +56,79 @@ def get_available_guides() -> Dict[str, str]:
                 guides[guide_name] = f"Guide: {guide_name}"
 
     return guides
+
+
+def _is_rich_content(content: str) -> bool:
+    """Check if the content contains Rich markup or should be rendered as Rich.
+
+    Args:
+        content: The content to check.
+
+    Returns:
+        bool: True if the content contains Rich markup or has a Rich render directive.
+    """
+    # Check for Rich render directive
+    if re.search(r"<!--\s*RENDER:\s*rich\s*-?->", content, re.IGNORECASE):
+        return True
+    # Check for Rich markup tags like [bold], [italic], etc.
+    return bool(
+        re.search(
+            r"\[(?:bold|italic|red|green|blue|yellow|cyan|magenta|dim|underline)\]",
+            content,
+        )
+    )
+
+
+def _is_markdown_content(content: str, file_extension: str = None) -> bool:
+    """Check if the content should be rendered as Markdown.
+
+    Args:
+        content: The content to check.
+        file_extension: The file extension, if available.
+
+    Returns:
+        bool: True if the content should be rendered as Markdown.
+    """
+    if file_extension and file_extension.lower() in [".md", ".markdown"]:
+        return True
+    # Check for Markdown headings
+    if re.search(r"^#+ ", content, re.MULTILINE):
+        return True
+    return False
+
+
+def _render_content(content: str, guide_name: str = None):
+    """Render content using the appropriate Rich formatter.
+
+    Args:
+        content: The content to render.
+        guide_name: The name of the guide, if applicable.
+    """
+    if _is_rich_content(content):
+        console.print(content)
+    elif guide_name and (_is_markdown_content(content) or guide_name.endswith(".md")):
+        console.print(Markdown(content))
+    else:
+        # For plain text with structure (like manifesto.txt), we'll enhance it with some basic formatting
+        # This will make numbered sections, code blocks, and lists look better
+        # First, look for section headers (numbered or not)
+        # Convert the plain text to a more Markdown-friendly format
+
+        # Convert section headers to Markdown headers
+        content = re.sub(
+            r"^(\d+(\.\d+)*)\.\s+(.+)$", r"## \1. \3", content, flags=re.MULTILINE
+        )
+
+        # Convert indented code blocks to Markdown code blocks
+        content = re.sub(
+            r"(?m)^( {4}|\t)(.+(?:\n(?:    |\t).+)*)", r"```\n\2\n```", content
+        )
+
+        # Convert bullet lists
+        content = re.sub(r"^(\s*)-\s+(.+)$", r"\1* \2", content, flags=re.MULTILINE)
+
+        # Render as Markdown
+        console.print(Markdown(content))
 
 
 def get_guide_content(guide_name: str) -> Tuple[bool, str]:
@@ -101,7 +182,9 @@ def get_help_content() -> Tuple[bool, str]:
 def print_help():
     """Print the help text for nanodoc."""
     found, content = get_help_content()
-    print(content)
+
+    if found:
+        _render_content(content)
     sys.exit(0)
 
 
@@ -110,7 +193,7 @@ def print_usage():
     parser = argparse.ArgumentParser(
         description="Generate documentation from source code.", prog="nanodoc"
     )
-    parser.print_usage()
+    console.print(parser.format_usage())
     sys.exit(0)
 
 
@@ -121,11 +204,15 @@ def print_guide(guide_name: str):
         guide_name: The name of the guide to print.
     """
     found, content = get_guide_content(guide_name)
-    print(content)
 
-    # Exit with status 0 if the guide was found, 1 if not
     if found:
+        _render_content(content, guide_name)
+        # Exit with status 0 if the guide was found
         sys.exit(0)
+    else:
+        # Format the error message with Rich
+        console.print(Panel(content, title="Guide Not Found", border_style="red"))
+        # Exit with status 0 if the guide was found
     sys.exit(1)
 
 
