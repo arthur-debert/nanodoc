@@ -7,11 +7,11 @@ from nanodoc.formatting import create_header
 # Get the parent directory of the current module
 MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Define sample files relative to the module directory
+# Define sample files relative to the fixtures directory
 SAMPLE_FILES = [
-    os.path.join(MODULE_DIR, "samples", "cake.txt"),
-    os.path.join(MODULE_DIR, "samples", "incident.txt"),
-    os.path.join(MODULE_DIR, "samples", "new-telephone.txt"),
+    os.path.join(MODULE_DIR, "tests", "fixtures", "cake.txt"),
+    os.path.join(MODULE_DIR, "tests", "fixtures", "incident.txt"),
+    os.path.join(MODULE_DIR, "tests", "fixtures", "new-telephone.txt"),
 ]
 
 # Use Python module approach instead of direct script execution
