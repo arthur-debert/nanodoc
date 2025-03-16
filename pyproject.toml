@@ -59,6 +59,6 @@ jinja2 = "^3.1.6"
 pythonpath = ["src"]
 
 # Using [tool.poetry.scripts] for proper entry points
-[tool.poetry.scripts]
+[tool.scripts]
 nanodoc = "nanodoc.nanodoc:main"
 pmrun = "nanodoc.nanodoc:main"
