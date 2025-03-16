@@ -1,6 +1,6 @@
 [project]
 name = "nanodoc"
-version = "0.6.4"
+version = "0.9.2"
 description = "A minimalist document bundler designed for stitching hints, reminders and short docs."
 authors = [{ name = "Arthur Debert", email = "arthur@debert.xyz" }]
 readme = "README.txt"
