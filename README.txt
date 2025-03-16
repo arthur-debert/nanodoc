@@ -34,7 +34,7 @@ Nanodoc is flexible in how you specify the files to bundle:
 
 $ nanodoc <file-1>...<file-n> # individual files
 $ nanodoc <dir-name> # all txt and md files in the dir will be included
-$ nanodoc <dir-name> <file-1> # mix and match as yould like
+$ nanodoc <dir-name> <file-1> # mix and match as you'd like
 $ nanodoc <bundle> # any .bundle.* file that is a list of paths, one per line
 $ nanodoc <live-bundle> # a file that mixes text and file paths, where paths are replaced with their content
 
@@ -79,31 +79,12 @@ nanodoc is available at a distributor near you:
 
 # Using pip
 pip install nanodoc
-
-# Using Homebrew (macOS and Linux)
-# First, add the tap (only needed once)
-brew tap arthur-debert/nanodoc https://github.com/arthur-debert/nanodoc
-brew install nanodoc
-# To update to the latest version
-brew update && brew upgrade nanodoc
-
-# Using apt (Debian/Ubuntu) - Direct installation
-wget https://github.com/arthur-debert/nanodoc/raw/main/Debian/python3-nanodoc_0.3.1-1_all.deb
-sudo apt install ./python3-nanodoc_0.3.1-1_all.deb
-
-# Using apt (Debian/Ubuntu) - Add as repository
-# Add the repository to your sources
-echo "deb [trusted=yes] https://raw.githubusercontent.com/arthur-debert/nanodoc/main/Debian ./" | sudo tee /etc/apt/sources.list.d/nanodoc.list
-# Update package lists
-sudo apt update
-# Install the package
-sudo apt install python3-nanodoc
-
-# For more detailed APT installation instructions, see README-apt-repo.md
+# even better pipx
+pipx install --user nanodoc
 
 ## Contributing
 
-Contributions are welcome! Say hi, curse me for eternety or even send in something constructive.
+Contributions are welcome! Say hi, curse me for eternity or even send in something constructive.
 Feel free to open issues or submit pull requests.
 
 (just keep it short, we're nano people after all)

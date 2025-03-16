@@ -1,0 +1,48 @@
+1. Less clutter, less distraction
+
+Sometimes you just want to bundle a couple of pieces of texts together, and that's it.
+
+nanodoc does give you some bell and whistles, but they are lean. use txxt format:
+
+2. Session titles are numbered
+
+And in between respectable line breaks.
+
+3. Paragraphs
+
+Paragraphs are split by line breaks.
+
+Like this.
+
+4. Code blocks
+
+Anuthing thats indented by 4 spaces and the first line begins with #
+
+    #
+    print("Hello, World!")
+    print("Anyone there?") # multiple lines are supported
+
+And optional, but there is change in rendering, specify the code block language:
+
+    # python
+    print("Hello, World!")
+    print("Anyone there?") # multiple lines are supported
+
+5. Lists
+
+- Use - to start.
+- Can be nested
+    - Like this.
+
+
+
+5.1 Session titles can be nested
+
+Such as this, with no indentation
+
+
+5.2 Ordered Lists
+
+    1. Use numbers
+    2. They will be renumbered if needed
+        1. Can be nested
