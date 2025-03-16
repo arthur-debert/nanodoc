@@ -25,4 +25,4 @@ disrupting the flow of the document.
 # Conclusion
 
 Live bundles are a powerful way to create dynamic documents that combine
-content from multiple files without the visual separation of traditional bundles. 
+content from multiple files without the visual separation of traditional bundles.
