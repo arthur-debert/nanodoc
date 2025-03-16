@@ -1,5 +1,7 @@
 """Help module for nanodoc."""
 
+"""Help module for nanodoc."""
+
 import argparse
 import glob
 import pathlib
@@ -83,6 +85,13 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
 
 def get_help_text():
     """Return the help text for nanodoc."""
+    help_file_path = _get_help_file_path()
+    if help_file_path.exists():
+        with open(help_file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    else:
+        # Fallback in case the file is not found
+        return "nanodoc help file not found. Please refer to the documentation."
     help_file_path = _get_help_file_path()
     if help_file_path.exists():
         with open(help_file_path, "r", encoding="utf-8") as f:

@@ -72,21 +72,6 @@ nanodoc offers three ways to specify the files you want to bundle:
     spaces, title case, adds original filename in parentheses)
 - `-h, --help`: Show this help message
 
-## Guides
-
-Nanodoc provides detailed guides on specific topics. To view a guide, use:
-
-```bash
-nanodoc help <guide-name>
-```
-
-Available guides:
-
-- **manifesto**: Nanodoc Manifesto
-- **quickstart**: Nanodoc Quick Start Guide
-
-If a guide name is not found, nanodoc will display a list of available guides.
-
 Between files, a separator line is inserted with the format:
 
 ```bash
@@ -105,6 +90,5 @@ nanodoc some_directory                      # Add all files in directory
 nanodoc --no-header file1.txt file2.txt     # Hide headers
 nanodoc --sequence=roman file1.txt          # Use roman numerals (i., ii., etc.)
 nanodoc --style=filename file1.txt          # Use filename style instead of nice (default)
-nanodoc bundle_file                         # bundle_file is a txt document with file paths on lines
-nanodoc help quickstart                     # Show the quickstart guide
+nanodoc bundle_file                         # bundle_file is a txt document with files paths on lines
 ```
