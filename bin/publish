@@ -1,0 +1,5 @@
+#! /usr/bin/env bash
+
+rm -fr dist/*
+poetry build
+twine upload dist/*
