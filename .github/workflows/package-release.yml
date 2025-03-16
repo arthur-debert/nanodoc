@@ -24,4 +24,4 @@ jobs:
 
       - name: Publish
         id: publish
-        run: source .venv/bin/activate ./bin/publish
+        run: source .venv/bin/activate && ./bin/publish
