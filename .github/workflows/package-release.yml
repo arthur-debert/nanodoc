@@ -2,12 +2,16 @@ name: Package Release
 
 on:
   push:
+    tags:
+      - "v*"
   pull_request:
   workflow_dispatch:
 
 jobs:
-  python-unittests:
+  release-to-pypi:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         python-version: ["3.12"]
@@ -22,6 +26,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache-key-prefix: "test-env-${{ matrix.python-version }}"
 
-      - name: Publish
+      - name: Publish to PyPI
         id: publish
+        if: startsWith(github.ref, 'refs/tags/v')
         run: source .venv/bin/activate && ./bin/publish
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          TWINE_NON_INTERACTIVE: 1
