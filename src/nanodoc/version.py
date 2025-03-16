@@ -13,17 +13,16 @@ try:
 except Exception:
     # Fallback to reading from pyproject.toml if package is not installed
     try:
-        import tomli
         import pathlib
-        
+
+        import tomli
+
         # Try to find the pyproject.toml file
         file_path = pathlib.Path(__file__).parent.parent / "pyproject.toml"
         if file_path.exists():
             with open(file_path, "rb") as f:
                 pyproject = tomli.load(f)
-                VERSION = pyproject.get("project", {}).get(
-                    "version", "unknown"
-                )
+                VERSION = pyproject.get("project", {}).get("version", "unknown")
         else:
             VERSION = "unknown"
     except ImportError:
@@ -32,4 +31,4 @@ except Exception:
 
 def get_version():
     """Return the version of nanodoc."""
-    return VERSION 
+    return VERSION

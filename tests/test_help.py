@@ -12,9 +12,7 @@ NANODOC_MODULE = "src.nanodoc"
 
 def test_help():
     result = subprocess.run(
-        [PYTHON_CMD, "-m", NANODOC_MODULE, "help"],
-        capture_output=True,
-        text=True
+        [PYTHON_CMD, "-m", NANODOC_MODULE, "help"], capture_output=True, text=True
     )
     assert result.returncode == 0
     assert "# nanodoc" in result.stdout
@@ -22,9 +20,7 @@ def test_help():
 
 def test_no_args():
     result = subprocess.run(
-        [PYTHON_CMD, "-m", NANODOC_MODULE],
-        capture_output=True,
-        text=True
+        [PYTHON_CMD, "-m", NANODOC_MODULE], capture_output=True, text=True
     )
     assert result.returncode == 0
     assert "usage: nanodoc" in result.stdout

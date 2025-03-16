@@ -25,7 +25,7 @@ def test_expand_bundles_with_invalid_files(tmpdir):
     # With the new implementation, this is treated as a mixed content bundle
     # because one of the lines is not a valid file path
     expanded_files = expand_bundles(str(bundle_file))
-    
+
     # Check if the result is a string (mixed content) or a list (traditional bundle)
     if isinstance(expanded_files, str):
         # For mixed content bundles, the file content should be included

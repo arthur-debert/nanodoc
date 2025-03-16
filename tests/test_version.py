@@ -1,6 +1,6 @@
+import re
 import subprocess
 import sys
-import re
 
 import nanodoc
 
@@ -19,14 +19,12 @@ def test_version_import():
 def test_version_flag():
     """Test that the --version flag works correctly."""
     result = subprocess.run(
-        [PYTHON_CMD, "-m", NANODOC_MODULE, "--version"],
-        capture_output=True,
-        text=True
+        [PYTHON_CMD, "-m", NANODOC_MODULE, "--version"], capture_output=True, text=True
     )
-    
+
     # The version flag exits with code 0
     assert result.returncode == 0
-    
+
     # Check that the version output matches the expected format
     # The output could be in either stdout or stderr
     # depending on how argparse is configured
@@ -38,6 +36,6 @@ def test_version_flag():
 def test_version_module():
     """Test that the version module works correctly."""
     from nanodoc.version import VERSION, get_version
-    
+
     assert VERSION == nanodoc.__version__
-    assert get_version() == VERSION 
+    assert get_version() == VERSION

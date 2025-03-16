@@ -19,13 +19,13 @@ Three ways to tell nanodoc which files to bundle:
 4. LIVE BUNDLE FILES:
    nanodoc livebundle.txt
    Where livebundle.txt can mix text and file paths:
-   
+
    Introduction to the document
    chapter1.txt
    This text appears between chapters
    chapter2.txt
    Conclusion
-   
+
    In live bundles, file paths are replaced with their content inline.
    No file titles or line number resets occur at file boundaries.
    This allows for seamless integration of content from multiple files.
@@ -41,13 +41,13 @@ Three ways to tell nanodoc which files to bundle:
    Conclusion
 
    Live bundles also support inline file inclusion using the @[file path] syntax:
-   
+
    This paragraph includes @[quote.txt] right in the middle of the text.
-   
+
    With this syntax, the file content is inserted inline with all line breaks
    removed. This is useful for including short snippets of text within a paragraph.
-   
+
    Example:
    If quote.txt contains "to be or not to be\nthat is the question", the result will be:
-   
+
    This paragraph includes to be or not to be that is the question right in the middle of the text.

@@ -101,7 +101,7 @@ import logging
 import sys
 
 from .core import process_all
-from .files import get_files_from_args, TXT_EXTENSIONS
+from .files import TXT_EXTENSIONS, get_files_from_args
 from .version import VERSION
 
 LINE_WIDTH = 80
@@ -192,7 +192,7 @@ def parse_args():
         help="Header style: nice (default, formatted title), filename (just filename), "
         "or path (full path)",
     )
-    
+
     parser.add_argument(
         "--txt-ext",
         action="append",
@@ -255,8 +255,8 @@ def main():
         if args.txt_ext:
             for ext in args.txt_ext:
                 # Add a leading dot if not present
-                if not ext.startswith('.'):
-                    ext = '.' + ext
+                if not ext.startswith("."):
+                    ext = "." + ext
                 # Only add if not already in the list
                 if ext not in extensions:
                     extensions.append(ext)

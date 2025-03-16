@@ -6,8 +6,8 @@
 
 import logging
 import os
-from typing import List, Tuple
 import re
+from typing import List, Tuple
 
 from .data import ContentItem, LineRange
 from .data import get_content as get_item_content
@@ -305,15 +305,12 @@ def is_file_path_line(line):
     """
     if not line:  # Handle empty strings explicitly
         return False
-    
+
     stripped_line = line.strip()
     if not stripped_line:  # Handle whitespace-only strings
         return False
-    
-    return (
-        not stripped_line.startswith("#")
-        and os.path.isfile(stripped_line)
-    )
+
+    return not stripped_line.startswith("#") and os.path.isfile(stripped_line)
 
 
 def is_mixed_content_bundle(lines):
@@ -369,9 +366,9 @@ def process_mixed_content_bundle(lines):
                 result.append(line)
         else:
             # Check for inline file references @[file path]
-            inline_pattern = r'@\[(.*?)\]'
+            inline_pattern = r"@\[(.*?)\]"
             matches = re.findall(inline_pattern, line)
-            
+
             if matches:
                 processed_line = line
                 for file_path in matches:
@@ -379,24 +376,28 @@ def process_mixed_content_bundle(lines):
                         try:
                             # Get file content and remove line breaks
                             file_content = get_file_content(file_path)
-                            inline_content = file_content.replace('\n', ' ').strip()
+                            inline_content = file_content.replace("\n", " ").strip()
                             # Replace the @[file path] with the inline content
-                            processed_line = processed_line.replace(f'@[{file_path}]', inline_content)
+                            processed_line = processed_line.replace(
+                                f"@[{file_path}]", inline_content
+                            )
                         except Exception as e:
-                            logger.warning(f"Error reading inline file {file_path}: {e}")
+                            logger.warning(
+                                f"Error reading inline file {file_path}: {e}"
+                            )
                             # Keep the original reference if file can't be read
                 result.append(processed_line)
             else:
                 # Regular text line - keep as is
                 result.append(line)
-    
+
     # Join all lines with newlines
     joined_result = "\n".join(result)
-    
+
     # Process any inline file references that might span multiple lines
-    inline_pattern = r'@\[(.*?)\]'
+    inline_pattern = r"@\[(.*?)\]"
     matches = re.findall(inline_pattern, joined_result)
-    
+
     if matches:
         processed_result = joined_result
         for file_path in matches:
@@ -404,14 +405,16 @@ def process_mixed_content_bundle(lines):
                 try:
                     # Get file content and remove line breaks
                     file_content = get_file_content(file_path)
-                    inline_content = file_content.replace('\n', ' ').strip()
+                    inline_content = file_content.replace("\n", " ").strip()
                     # Replace the @[file path] with the inline content
-                    processed_result = processed_result.replace(f'@[{file_path}]', inline_content)
+                    processed_result = processed_result.replace(
+                        f"@[{file_path}]", inline_content
+                    )
                 except Exception as e:
                     logger.warning(f"Error reading inline file {file_path}: {e}")
                     # Keep the original reference if file can't be read
         return processed_result
-    
+
     return joined_result
 
 
@@ -443,7 +446,7 @@ def expand_bundles(bundle_file):
         bundle_file (str): Path to the bundle file.
 
     Returns:
-        list or str: 
+        list or str:
             - For traditional bundles: A list of file paths
             - For mixed content bundles: A string with file paths replaced by
               their content
@@ -505,7 +508,7 @@ def is_bundle_file(file_path):
     try:
         with open(file_path, "r") as f:
             lines = f.readlines()
-            
+
             # First check: traditional bundle detection
             for line in lines:
                 line = line.strip()
@@ -516,7 +519,7 @@ def is_bundle_file(file_path):
                 else:
                     # If we find a non-file line, check for mixed content
                     break
-            
+
             # Second check: mixed content bundle detection
             has_file_path = False
             for line in lines:
@@ -526,7 +529,7 @@ def is_bundle_file(file_path):
                 if os.path.isfile(line):
                     has_file_path = True
                     break
-            
+
             return has_file_path
     except FileNotFoundError:
         return False
@@ -560,6 +563,7 @@ def expand_single_arg(arg, extensions=None):
         if isinstance(bundle_result, str):
             # This is a mixed content bundle - create a temporary file
             import tempfile
+
             with tempfile.NamedTemporaryFile(
                 mode="w", delete=False, suffix=".txt"
             ) as temp:
@@ -589,7 +593,7 @@ def expand_args(args, extensions=None):
         list: A flattened list of file paths (not validated).
     """
     logger.debug(f"Expanding arguments: {args}")
-    
+
     # Use default extensions if none provided
     if extensions is None:
         extensions = TXT_EXTENSIONS
@@ -672,7 +676,9 @@ def file_sort_key(path):
     base_name = os.path.splitext(os.path.basename(path))[0]
     ext = os.path.splitext(path)[1]
     # This ensures test_file.txt comes before test_file.md
-    ext_priority = 0 if ext == TXT_EXTENSIONS[0] else 1 if ext == TXT_EXTENSIONS[1] else 2
+    ext_priority = (
+        0 if ext == TXT_EXTENSIONS[0] else 1 if ext == TXT_EXTENSIONS[1] else 2
+    )
     return (base_name, ext_priority)
 
 

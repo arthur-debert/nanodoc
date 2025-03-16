@@ -86,32 +86,32 @@ jobs:
             echo "publish_github=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           # Parse input targets
           TARGETS="${{ github.event.inputs.targets }}"
           if [[ -z "$TARGETS" ]]; then
             TARGETS="pypi,brew,apt,github"
           fi
-          
+
           # Set individual target flags
           if [[ "$TARGETS" == *"pypi"* ]]; then
             echo "publish_pypi=true" >> $GITHUB_OUTPUT
           else
             echo "publish_pypi=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ "$TARGETS" == *"brew"* ]]; then
             echo "publish_brew=true" >> $GITHUB_OUTPUT
           else
             echo "publish_brew=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ "$TARGETS" == *"apt"* ]]; then
             echo "publish_apt=true" >> $GITHUB_OUTPUT
           else
             echo "publish_apt=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ "$TARGETS" == *"github"* ]]; then
             echo "publish_github=true" >> $GITHUB_OUTPUT
           else
@@ -163,7 +163,10 @@ jobs:
 
   homebrew_update:
     needs: [determine_targets, pypi_publish]
-    if: ${{ needs.determine_targets.outputs.publish_brew == 'true' && (always() || needs.pypi_publish.result == 'success' || needs.pypi_publish.result == 'skipped') }}
+    if:
+      ${{ needs.determine_targets.outputs.publish_brew == 'true' && (always() ||
+      needs.pypi_publish.result == 'success' || needs.pypi_publish.result ==
+      'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -186,19 +189,19 @@ jobs:
           if [[ -z "$STEPS" ]]; then
             STEPS="build,verify,commit"
           fi
-          
+
           if [[ "$STEPS" == *"build"* ]]; then
             echo "run_build=true" >> $GITHUB_OUTPUT
           else
             echo "run_build=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ "$STEPS" == *"verify"* ]]; then
             echo "run_verify=true" >> $GITHUB_OUTPUT
           else
             echo "run_verify=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ "$STEPS" == *"commit"* ]]; then
             echo "run_commit=true" >> $GITHUB_OUTPUT
           else
@@ -211,10 +214,10 @@ jobs:
         run: |
           # Install the package from PyPI
           pip install ${{ needs.determine_targets.outputs.package_name }}==${{ needs.determine_targets.outputs.version }}
-          
+
           # Generate the formula
           python package-managers/brew/pypi-to-brew ${{ needs.determine_targets.outputs.package_name }}
-          
+
           # Show the generated formula
           cat package-managers/brew/Formula/${{ needs.determine_targets.outputs.package_name }}.rb
 
@@ -252,7 +255,10 @@ jobs:
 
   apt_update:
     needs: [determine_targets, pypi_publish]
-    if: ${{ needs.determine_targets.outputs.publish_apt == 'true' && (always() || needs.pypi_publish.result == 'success' || needs.pypi_publish.result == 'skipped') }}
+    if:
+      ${{ needs.determine_targets.outputs.publish_apt == 'true' && (always() ||
+      needs.pypi_publish.result == 'success' || needs.pypi_publish.result ==
+      'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -275,19 +281,19 @@ jobs:
           if [[ -z "$STEPS" ]]; then
             STEPS="build,verify,commit"
           fi
-          
+
           if [[ "$STEPS" == *"build"* ]]; then
             echo "run_build=true" >> $GITHUB_OUTPUT
           else
             echo "run_build=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ "$STEPS" == *"verify"* ]]; then
             echo "run_verify=true" >> $GITHUB_OUTPUT
           else
             echo "run_verify=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ "$STEPS" == *"commit"* ]]; then
             echo "run_commit=true" >> $GITHUB_OUTPUT
           else
@@ -306,10 +312,10 @@ jobs:
         run: |
           # Install the package from PyPI
           pip install ${{ needs.determine_targets.outputs.package_name }}==${{ needs.determine_targets.outputs.version }}
-          
+
           # Generate the Debian package
           python package-managers/debian/pypi-to-apt ${{ needs.determine_targets.outputs.package_name }}
-          
+
           # Show the generated package info
           ls -la package-managers/debian/${{ needs.determine_targets.outputs.package_name }}-${{ needs.determine_targets.outputs.version }}/
 
@@ -348,7 +354,10 @@ jobs:
   # Add a dedicated job for GitHub releases
   github_release:
     needs: [determine_targets, pypi_publish]
-    if: ${{ needs.determine_targets.outputs.publish_github == 'true' && (always() || needs.pypi_publish.result == 'success' || needs.pypi_publish.result == 'skipped') }}
+    if:
+      ${{ needs.determine_targets.outputs.publish_github == 'true' && (always()
+      || needs.pypi_publish.result == 'success' || needs.pypi_publish.result ==
+      'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -380,4 +389,4 @@ jobs:
           generate_release_notes: ${{ inputs.release_notes == '' }}
           body: ${{ inputs.release_notes }}
           prerelease: false
-          name: "Release v${{ needs.determine_targets.outputs.version }}" 
+          name: "Release v${{ needs.determine_targets.outputs.version }}"
