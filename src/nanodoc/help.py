@@ -8,9 +8,9 @@ import sys
 def _get_help_file_path():
     """Return the path to the help markdown file."""
     # Get the directory where this module is located
-    module_dir = pathlib.Path(__file__).parent
-    # The help file is in the same directory
-    return module_dir / "HELP.md"
+    module_dir = pathlib.Path(__file__).parent.absolute()
+    # The help file is in the docs subdirectory
+    return module_dir / "docs" / "HELP.md"
 
 
 def get_help_text():
