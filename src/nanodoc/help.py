@@ -99,8 +99,8 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
         guide_name: The name of the guide to retrieve.
 
     Returns:
-        Tuple[bool, str]: A tuple with a boolean indicating if the guide was found
-        and the content of the guide.
+        Tuple[bool, str]: A tuple with a boolean indicating if the guide was
+        found and the content of the guide.
     """
     guides_dir = _get_guides_dir()
     found = False
@@ -129,6 +129,39 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
 
         if not guides_exist:
             content += "  No guides available.\n"
+
+    if _is_rich_content(content):
+        console.print(content)
+    elif guide_name and (_is_markdown_content(content) or guide_name.endswith(".md")):
+        # Use custom styles for markdown rendering
+        md = Markdown(content, code_theme="monokai")
+        console.print(md)
+    else:
+        # For plain text with structure, enhance it with basic formatting
+        # This will make numbered sections, code blocks, and lists look better
+        # First, look for section headers (numbered or not)
+        # Convert the plain text to a more Markdown-friendly format
+
+        # Convert section headers to Markdown headers
+        content = re.sub(
+            r"^(\d+(\.\d+)*)\.\s+(.+)$",
+            r"## \1. \3",
+            content,
+            flags=re.MULTILINE,
+        )
+
+        # Convert indented code blocks to Markdown code blocks
+        content = re.sub(
+            r"(?m)^( {4}|\t)(.+(?:\n(?:    |\t).+)*)", r"```\n\2\n```", content
+        )
+
+        # Convert bullet lists
+        content = re.sub(r"^(\s*)-\s+(.+)$", r"\1* \2", content, flags=re.MULTILINE)
+
+        # Render as Markdown
+        # Use custom styles for markdown rendering
+        md = Markdown(content, code_theme="monokai")
+        console.print(md)
 
     return found, content
 
