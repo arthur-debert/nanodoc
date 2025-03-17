@@ -178,12 +178,12 @@ repos:
       - id: yamllint
         args: ["--format", "parsable", "-c", ".yamllint.yaml"]
 
-  # # Python linting
-  # - repo: https://github.com/pycqa/flake8
-  #   rev: 7.0.0
-  #   hooks:
-  #     - id: flake8
-  #       files: '\.py$'
+  # Python linting
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        files: '\.py$'
 
   # ShellCheck hook (local)
   - repo: local
