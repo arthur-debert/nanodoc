@@ -9,9 +9,9 @@ MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Define sample files relative to the fixtures directory
 SAMPLE_FILES = [
-    os.path.join(MODULE_DIR, "tests", "fixtures", "cake.txt"),
-    os.path.join(MODULE_DIR, "tests", "fixtures", "incident.txt"),
-    os.path.join(MODULE_DIR, "tests", "fixtures", "new-telephone.txt"),
+    os.path.join(MODULE_DIR, "fixtures", "cake.txt"),
+    os.path.join(MODULE_DIR, "fixtures", "incident.txt"),
+    os.path.join(MODULE_DIR, "fixtures", "new-telephone.txt"),
 ]
 
 # Use Python module approach instead of direct script execution
