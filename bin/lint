@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run a "lighter" version of pre-commit that skips unit tests
+# Uses the SKIP environment variable which is a built-in pre-commit feature
+# See: https://pre-commit.com/#temporarily-disabling-hooks
+#
+# Passes all arguments directly to pre-commit
+SKIP=tests pre-commit run "$@"
