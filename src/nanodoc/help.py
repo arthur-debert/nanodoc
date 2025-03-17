@@ -20,6 +20,30 @@ from .files import TXT_EXTENSIONS
 DEFAULT_THEME = "neutral"
 
 
+# Custom help action to use our custom help format
+class CustomHelpAction(argparse.Action):
+    """Custom action for --help flag to use our custom help format."""
+
+    def __init__(
+        self,
+        option_strings,
+        dest=argparse.SUPPRESS,
+        default=argparse.SUPPRESS,
+        help=None,
+    ):
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help,
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print_help()
+        parser.exit()
+
+
 def _get_themes_dir():
     """Return the path to the themes directory."""
     module_dir = pathlib.Path(__file__).parent.absolute()
@@ -100,13 +124,61 @@ def get_available_guides() -> Dict[str, str]:
             try:
                 with open(guide_path, "r", encoding="utf-8") as f:
                     first_line = f.readline().strip()
-                    # Remove markdown heading symbols if present
-                    description = first_line.lstrip("#").strip()
+
+                    # Remove markdown heading symbols or numbered list markers if present
+                    if first_line.startswith("#"):
+                        # Remove markdown heading
+                        first_line = first_line.lstrip("#").strip()
+                    elif re.match(r"^\d+\.", first_line):
+                        # Remove numbered list marker (e.g., "1.")
+                        first_line = re.sub(r"^\d+\.\s*", "", first_line)
+
+                    # Extract description starting from the first word
+                    words = first_line.split()
+                    if words:
+                        description = " ".join(words)
+                    else:
+                        description = f"Guide: {guide_name}"
+
                     guides[guide_name] = description
             except Exception:
                 guides[guide_name] = f"Guide: {guide_name}"
 
     return guides
+
+
+def get_options_section():
+    """Generate the OPTIONS section of the help content.
+
+    Returns:
+        str: The formatted OPTIONS section.
+    """
+    # Import here to avoid circular imports
+    from . import nanodoc
+
+    # Generate OPTIONS section
+    options_content = ""
+    # Get command line options from nanodoc
+    for option_str, help_text in nanodoc.get_command_line_options():
+        # Add to options content
+        options_content += f"{option_str}:{' ' * (20 - len(option_str))} {help_text}\n"
+
+    return options_content
+
+
+def get_topics_section():
+    """Generate the HELP TOPICS section of the help content.
+
+    Returns:
+        str: The formatted HELP TOPICS section.
+    """
+    # Generate HELP TOPICS section
+    guides = get_available_guides()
+    topics_content = ""
+    for name, description in guides.items():
+        topics_content += f"{name}:{' ' * (20 - len(name))} {description}\n"
+
+    return topics_content
 
 
 def _is_rich_content(content: str) -> bool:
@@ -217,6 +289,9 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
 def get_help_content() -> Tuple[bool, str]:
     """Get the content of the help file.
 
+    This function reads the hardcoded help file and dynamically inserts
+    the OPTIONS and HELP TOPICS sections.
+
     Returns:
         Tuple[bool, str]: A tuple containing:
             - Boolean indicating if the help file was found
@@ -228,8 +303,35 @@ def get_help_content() -> Tuple[bool, str]:
     for ext in TXT_EXTENSIONS:
         help_path = docs_dir / f"HELP{ext}"
         if help_path.exists():
-            with open(help_path, "r", encoding="utf-8") as f:
-                return True, f.read()
+            try:
+                with open(help_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                # Get dynamic content sections
+                options_content = get_options_section()
+                topics_content = get_topics_section()
+
+                # Replace OPTIONS section
+                options_pattern = r"(\[bold\]OPTIONS:\[/bold\]\n\n).*?(\n\n\[bold\]HELP TOPICS:\[/bold\])"
+                content = re.sub(
+                    options_pattern,
+                    r"\1" + options_content + r"\2",
+                    content,
+                    flags=re.DOTALL,
+                )
+
+                # Replace HELP TOPICS section
+                topics_pattern = r"(\[bold\]HELP TOPICS:\[/bold\]\n\n).*?(\n\n\n\n\[bold\]EXAMPLES:\[/bold\])"
+                content = re.sub(
+                    topics_pattern,
+                    r"\1" + topics_content + r"\2",
+                    content,
+                    flags=re.DOTALL,
+                )
+
+                return True, content
+            except Exception as e:
+                return False, f"Error processing help file: {e}"
 
     return False, "nanodoc help file not found. Please refer to the documentation."
 

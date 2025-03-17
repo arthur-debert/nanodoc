@@ -8,7 +8,7 @@ import sys
 
 from .core import process_all
 from .files import TXT_EXTENSIONS, get_files_from_args
-from .help import check_help, print_help
+from .help import CustomHelpAction
 from .version import VERSION
 
 LINE_WIDTH = 80
@@ -59,35 +59,6 @@ def setup_logging(to_stderr=False, enabled=False):
     return logger
 
 
-################################################################################
-# Main Processing - Core processing functions
-################################################################################
-
-
-# Custom help action to use our custom help format
-class CustomHelpAction(argparse.Action):
-    """Custom action for --help flag to use our custom help format."""
-
-    def __init__(
-        self,
-        option_strings,
-        dest=argparse.SUPPRESS,
-        default=argparse.SUPPRESS,
-        help=None,
-    ):
-        super().__init__(
-            option_strings=option_strings,
-            dest=dest,
-            default=default,
-            nargs=0,
-            help=help,
-        )
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        print_help()
-        parser.exit()
-
-
 # For backward compatibility with tests
 
 
@@ -108,6 +79,77 @@ def get_available_themes():
                 themes.append(file.replace(".yaml", ""))
 
     return themes
+
+
+def get_command_line_options():
+    """Get a list of command line options with their descriptions.
+
+    Returns:
+        list: A list of tuples containing (option_string, help_text).
+    """
+    parser = argparse.ArgumentParser(
+        description="Generate documentation from source code.",
+        prog="nanodoc",
+        formatter_class=argparse.RawTextHelpFormatter,
+        add_help=False,  # Disable the default help flag
+    )
+    parser.add_argument("-v", action="store_true", help="Enable verbose mode")
+    parser.add_argument(
+        "-n",
+        action="count",
+        default=0,
+        help="Enable line number mode (one -n for file, two for all)",
+    )
+    parser.add_argument("--toc", action="store_true", help="Generate table of contents")
+    parser.add_argument("--no-header", action="store_true", help="Hide file headers")
+    parser.add_argument(
+        "--sequence",
+        choices=["numerical", "letter", "roman"],
+        help="Add sequence numbers to headers (numerical, letter, or roman)",
+    )
+    parser.add_argument(
+        "--style",
+        choices=["filename", "path", "nice"],
+        default="nice",
+        help="Header style: nice (default, formatted title), filename (just filename), "
+        "or path (full path)",
+    )
+
+    parser.add_argument(
+        "--txt-ext",
+        action="append",
+        help="Add additional file extensions to search for (can be used multiple times)",
+        metavar="EXT",
+    )
+
+    parser.add_argument("sources", nargs="*", help="Source file(s)")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+
+    # Add theme selection option
+    available_themes = get_available_themes()
+    parser.add_argument(
+        "--theme",
+        choices=available_themes if available_themes else ["neutral"],
+        help="Select a theme for rendering help and guide content",
+    )
+
+    # Get all actions from the parser
+    options = []
+    for action in parser._actions:
+        # Skip positional arguments and version action
+        if not action.option_strings or action.dest == "version":
+            continue
+
+        # Format the option string
+        option_str = ", ".join(action.option_strings)
+
+        # Get the help text
+        help_text = action.help if action.help else ""
+
+        # Add to options list
+        options.append((option_str, help_text))
+
+    return options
 
 
 def parse_args():
@@ -189,6 +231,9 @@ def parse_args():
 def main():
     """Main entry point for the nanodoc application."""
     args = parse_args()
+
+    # Import here to avoid circular imports
+    from .help import check_help
 
     try:
         # short circuit for help

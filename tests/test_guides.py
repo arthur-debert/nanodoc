@@ -125,7 +125,7 @@ def test_help_with_guide():
         # Verify that the guide content was passed to _render_content
         # Note: We can't directly check the call args because the subprocess runs in a separate process
         # Instead, we'll check that the command ran successfully
-        assert "# Nanodoc" in guide_content
+        assert "# quickstart" in guide_content
 
 
 def test_help_with_nonexistent_guide():
