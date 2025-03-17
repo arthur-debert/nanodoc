@@ -1,0 +1,22 @@
+#!/bin/bash
+# Script to check code complexity using xenon.
+# Runs the equivalent xenon check as the pre-commit hook.
+
+set -e
+
+# Get the project root directory (assuming this script is in bin/code-quality)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+
+# Default to checking the src directory if no arguments are provided
+if [ $# -eq 0 ]; then
+  ARGS=("src")
+else
+  ARGS=("$@")
+fi
+
+# Print the command being run
+echo "Running: xenon --max-absolute=B --max-modules=B --max-average=A ${ARGS[*]}"
+
+# Run xenon with the same arguments as the pre-commit hook
+cd "${PROJECT_ROOT}" && xenon --max-absolute=B --max-modules=B --max-average=A "${ARGS[@]}"

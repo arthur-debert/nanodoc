@@ -64,6 +64,9 @@ exclude = [
     "**/*.log",
 ]
 
+[tool.poetry.group.dev.dependencies]
+xenon = "^0.9.3"
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 
