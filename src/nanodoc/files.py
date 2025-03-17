@@ -7,7 +7,6 @@
 import logging
 import os
 import re
-from typing import List, Tuple
 
 from .data import ContentItem, LineRange, validate_content_item
 
@@ -15,9 +14,7 @@ from .data import ContentItem, LineRange, validate_content_item
 TXT_EXTENSIONS = [".txt", ".md", "txxt"]
 
 # Error message templates
-ERR_INVALID_LINE_REF_FORMAT = (
-    "Invalid line reference format: {} " "(must start with 'L')"
-)
+ERR_INVALID_LINE_REF_FORMAT = "Invalid line reference format: {} (must start with 'L')"
 ERR_INVALID_RANGE = "Invalid range {}-{} (1-{})"
 ERR_INLINE_FILE_READ = "Error reading inline file {}: {}"
 
@@ -25,7 +22,7 @@ logger = logging.getLogger("nanodoc")
 logger.setLevel(logging.CRITICAL)  # Start with logging disabled
 
 
-def parse_line_reference(line_ref: str) -> List[LineRange]:
+def parse_line_reference(line_ref: str) -> list[LineRange]:
     """Parse a line reference string into a list of LineRange objects.
 
     Supports 'X' as end marker for the last line of a file.
@@ -85,19 +82,19 @@ def parse_line_reference(line_ref: str) -> List[LineRange]:
 
 
 def convert_line_ranges_to_tuples(
-    line_ranges: List[LineRange], max_lines: int = None
-) -> List[Tuple[int, int]]:
+    line_ranges: list[LineRange], max_lines: int = None
+) -> list[tuple[int, int]]:
     """Convert a list of LineRange objects to a list of (start, end) tuples.
 
     This function is used for backward compatibility with code that expects
     the old format of line ranges.
 
     Args:
-        line_ranges (List[LineRange]): A list of LineRange objects
+        line_ranges (list[LineRange]): A list of LineRange objects
         max_lines (int, optional): The maximum number of lines in the file
 
     Returns:
-        List[Tuple[int, int]]: A list of (start, end) tuples
+        list[tuple[int, int]]: A list of (start, end) tuples
     """
     if not line_ranges:
         return None
@@ -146,11 +143,7 @@ def create_content_item(arg: str) -> ContentItem:
         line_ref = line_spec
 
     # Parse line reference or create a full file reference
-    if line_ref:
-        ranges = parse_line_reference(line_ref)
-    else:
-        # Full file is represented as L1-X
-        ranges = [LineRange(1, "X")]
+    ranges = parse_line_reference(line_ref) if line_ref else [LineRange(1, "X")]
 
     return ContentItem(original_arg=arg, file_path=file_path, ranges=ranges)
 
@@ -197,16 +190,16 @@ def get_file_content(file_path, line=None, start=None, end=None, parts=None):
     """
     # Handle conversion of LineRange objects to tuples
     if parts and isinstance(parts[0], LineRange):
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             num_lines = len(f.readlines())
         parts = convert_line_ranges_to_tuples(parts, num_lines)
 
     # Read all lines from the file
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             lines = f.readlines()
     except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {file_path}")
+        raise FileNotFoundError(f"File not found: {file_path}") from None
 
     num_lines = len(lines)
     result = []
@@ -243,15 +236,14 @@ def expand_directory(directory, extensions=TXT_EXTENSIONS):
 
     Args:
         directory (str): The directory path to search.
-        extensions (list): List of file extensions to include.
+        extensions (list): list of file extensions to include.
 
     Returns:
         list: A sorted list of file paths matching the extensions
         (not validated).
     """
     logger.debug(
-        f"Expanding directory with directory='{directory}', "
-        f"extensions='{extensions}'"
+        f"Expanding directory with directory='{directory}', extensions='{extensions}'"
     )
     matches = []
     for root, _, filenames in os.walk(directory):
@@ -284,7 +276,7 @@ def is_mixed_content_bundle(lines):
     """Determine if a bundle contains mixed content (text and file paths).
 
     Args:
-        lines (list): List of lines from the bundle file.
+        lines (list): list of lines from the bundle file.
 
     Returns:
         bool: True if the bundle contains mixed content, False otherwise.
@@ -314,7 +306,7 @@ def process_mixed_content_bundle(lines):
     """Process a mixed content bundle by replacing file paths with their content.
 
     Args:
-        lines (list): List of lines from the bundle file.
+        lines (list): list of lines from the bundle file.
 
     Returns:
         str: The processed content with file paths replaced by their content.
@@ -388,7 +380,7 @@ def process_traditional_bundle(lines):
     """Process a traditional bundle (list of file paths).
 
     Args:
-        lines (list): List of lines from the bundle file.
+        lines (list): list of lines from the bundle file.
 
     Returns:
         list: A list of file paths.
@@ -440,13 +432,13 @@ def expand_bundles(bundle_file):
             except ValueError as e:
                 raise FileNotFoundError(
                     f"Invalid line reference in bundle file: {str(e)}"
-                )
+                ) from e
         else:
             # Read the entire file
             content = get_file_content(file_path)
             lines = content.splitlines()
     except FileNotFoundError:
-        raise FileNotFoundError(f"Bundle file not found: {file_path}")
+        raise FileNotFoundError(f"Bundle file not found: {file_path}") from None
 
     # Check if this is a mixed content bundle
     if is_mixed_content_bundle(lines):
@@ -472,7 +464,7 @@ def is_bundle_file(file_path):
     """
     logger.debug(f"Checking if {file_path} is a bundle file")
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             lines = f.readlines()
 
             # First check: traditional bundle detection
@@ -509,7 +501,7 @@ def expand_single_arg(arg, extensions=None):
 
     Args:
         arg (str): The argument to expand.
-        extensions (list, optional): List of file extensions to include when
+        extensions (list, optional): list of file extensions to include when
                                     expanding directories.
 
     Returns:
@@ -552,7 +544,7 @@ def expand_args(args, extensions=None):
 
     Args:
         args (list): A list of file paths, directory paths, or bundle files.
-        extensions (list, optional): List of file extensions to include when
+        extensions (list, optional): list of file extensions to include when
             expanding directories. Defaults to TXT_EXTENSIONS.
 
     Returns:
@@ -617,9 +609,7 @@ def verify_path(path):
     if not os.access(file_path, os.R_OK):
         raise PermissionError(f"Error: File is not readable: {file_path}")
     if os.path.isdir(file_path):
-        raise IsADirectoryError(
-            "Error: Path is a directory, not a file: " f"{file_path}"
-        )
+        raise IsADirectoryError(f"Error: Path is a directory, not a file: {file_path}")
 
     # Validate line reference if present
     if line_ref:
@@ -629,7 +619,7 @@ def verify_path(path):
             # Validate that all referenced lines exist in the file
             get_file_content(file_path, parts=line_parts)
         except ValueError as e:
-            raise ValueError(f"Invalid line reference in {path}: {str(e)}")
+            raise ValueError(f"Invalid line reference in {path}: {str(e)}") from e
 
     return file_path, line_parts
 
@@ -651,8 +641,8 @@ def get_files_from_args(srcs, extensions=None):
     """Process the sources and return a list of ContentItems.
 
     Args:
-        srcs (list): List of source file paths, directories, or bundle files.
-        extensions (list, optional): List of file extensions to include when
+        srcs (list): list of source file paths, directories, or bundle files.
+        extensions (list, optional): list of file extensions to include when
             expanding directories. Defaults to TXT_EXTENSIONS.
 
     Returns:

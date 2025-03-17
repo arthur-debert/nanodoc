@@ -163,7 +163,7 @@ def test_expand_single_arg_mixed_bundle(tmpdir):
     assert len(result) == 1
 
     # Check that the temporary file contains the processed content
-    with open(result[0], "r") as f:
+    with open(result[0]) as f:
         content = f.read()
         assert "Line 1" in content
         # The file path should be replaced with its content
@@ -241,7 +241,7 @@ def test_inline_file_inclusion(tmpdir):
     )
 
     # Process the bundle directly with process_mixed_content_bundle
-    with open(str(bundle_file), "r") as f:
+    with open(str(bundle_file)) as f:
         lines = f.read().splitlines()
 
     result = process_mixed_content_bundle(lines)

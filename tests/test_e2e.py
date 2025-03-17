@@ -49,11 +49,11 @@ def test_e2e_with_nn_and_toc():
     telephone_header = create_header("new-telephone.txt", style="filename")
 
     # Count lines in sample files to build expectations
-    with open(SAMPLE_FILES[0], "r") as f:
+    with open(SAMPLE_FILES[0]) as f:
         cake_lines = f.readlines()
-    with open(SAMPLE_FILES[1], "r") as f:
+    with open(SAMPLE_FILES[1]) as f:
         incident_lines = f.readlines()
-    with open(SAMPLE_FILES[2], "r") as f:
+    with open(SAMPLE_FILES[2]) as f:
         telephone_lines = f.readlines()
 
     # Extract just the important parts of the output for comparison (ignoring logs)
@@ -69,37 +69,38 @@ def test_e2e_with_nn_and_toc():
 
     # Check for line numbering
     lines = actual_output.split("\n")
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         if any(f"{n}: " in line for n in range(1, 100)):
             assert True  # Found line numbers
             break
     else:
-        assert False, "No line numbers found in output"
+        raise AssertionError("No line numbers found in output")
 
     # Check TOC contains expected line numbers
     actual_output.split(cake_header)[0]
-    # The TOC section includes the TOC header and the lines between it and the first file header
+    # The TOC section includes the der and the lines between it and the first
+    # file header
     # Look for each filename in the TOC section directly
-    for i, line in enumerate(output_lines):
+    for _i, line in enumerate(output_lines):
         if "cake.txt" in line and "..." in line:
             assert True  # Found cake.txt in TOC
             break
     else:
-        assert False, "cake.txt not found in TOC"
+        raise AssertionError("cake.txt not found in TOC")
     # Check for incident.txt in TOC
-    for i, line in enumerate(output_lines):
+    for _i, line in enumerate(output_lines):
         if "incident.txt" in line and "..." in line:
             assert True  # Found incident.txt in TOC
             break
     else:
-        assert False, "incident.txt not found in TOC"
+        raise AssertionError("incident.txt not found in TOC")
     # Check for new-telephone.txt in TOC
-    for i, line in enumerate(output_lines):
+    for _i, line in enumerate(output_lines):
         if "new-telephone.txt" in line and "..." in line:
             assert True  # Found new-telephone.txt in TOC
             break
     else:
-        assert False, "new-telephone.txt not found in TOC"
+        raise AssertionError("new-telephone.txt not found in TOC")
 
     # Line count sanity check
     numbered_lines = [
@@ -154,12 +155,12 @@ def test_e2e_bundle_with_nn_and_toc(tmpdir):
 
     # Check for line numbering
     lines = actual_output.split("\n")
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         if any(f"{n}: " in line for n in range(1, 100)):
             assert True  # Found line numbers
             break
     else:
-        assert False, "No line numbers found in output"
+        raise AssertionError("No line numbers found in output")
 
     # Check TOC format has filenames and line numbers
     actual_output.split(cake_header)[0]

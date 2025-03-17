@@ -37,5 +37,5 @@ def test_version_module():
     """Test that the version module works correctly."""
     from nanodoc.version import VERSION, get_version
 
-    assert VERSION == nanodoc.__version__
+    assert nanodoc.__version__ == VERSION
     assert get_version() == VERSION

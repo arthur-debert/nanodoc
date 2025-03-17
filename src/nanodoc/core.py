@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from .data import (
     ContentItem,
@@ -24,7 +24,7 @@ def process_file(
     sequence: Optional[str] = None,
     seq_index: int = 0,
     style: Optional[str] = None,
-) -> Tuple[str, int]:
+) -> tuple[str, int]:
     """Process a single ContentItem and format its content.
 
     Args:
@@ -53,7 +53,7 @@ def process_file(
         get_content(content_item)
 
         # We need to get all lines to determine the actual line numbers
-        with open(content_item.file_path, "r") as f:
+        with open(content_item.file_path) as f:
             all_lines = f.readlines()
 
         # Create a list of lines to include with their original line numbers
@@ -101,7 +101,7 @@ def process_file(
 
 
 def process_all(
-    content_items: List[ContentItem],
+    content_items: list[ContentItem],
     line_number_mode: Optional[str] = None,
     generate_toc: bool = False,
     show_header: bool = True,
@@ -113,7 +113,7 @@ def process_all(
     This is the main entry point for both command-line usage and testing.
 
     Args:
-        content_items (list): List of ContentItem objects.
+        content_items (list): list of ContentItem objects.
         line_number_mode (str): Line numbering mode ('file', 'all', or None).
         generate_toc (bool): Whether to generate a table of contents.
         show_header (bool): Whether to show headers.
@@ -147,8 +147,7 @@ def process_all(
     line_counter = 0
 
     # Process each file group
-    file_index = 0
-    for file_path, items in file_groups.items():
+    for file_index, (_, items) in enumerate(file_groups.items()):
         # Process each ContentItem for this file
         for item in items:
             if line_number_mode == "file":
@@ -165,7 +164,6 @@ def process_all(
             )
             output_buffer += file_output
             line_counter += num_lines
-        file_index += 1
 
     if generate_toc:
         output_buffer = toc + output_buffer

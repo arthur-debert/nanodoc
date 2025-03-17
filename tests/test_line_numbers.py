@@ -56,7 +56,7 @@ def test_process_file_with_no_header(tmpdir):
     assert "Line 1" in output
     assert "Line 2" in output
     assert not output.startswith("\n")
-    assert not os.path.basename(file_path) in output.split("\n")[0]
+    assert os.path.basename(file_path) not in output.split("\n")[0]
 
 
 def test_process_file_with_header_sequence(tmpdir):

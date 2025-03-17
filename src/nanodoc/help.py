@@ -6,7 +6,6 @@ import logging
 import pathlib
 import re
 import sys
-from typing import Dict, Tuple
 
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -48,11 +47,11 @@ def _get_guides_dir():
     return module_dir / "docs" / "guides"
 
 
-def get_available_guides() -> Dict[str, str]:
+def get_available_guides() -> dict[str, str]:
     """Get a dictionary of available guides with their descriptions.
 
     Returns:
-        Dict[str, str]: A dictionary mapping guide names to their short
+        dict[str, str]: A dictionary mapping guide names to their short
         descriptions.
     """
     guides = {}
@@ -66,7 +65,7 @@ def get_available_guides() -> Dict[str, str]:
 
             # Extract the first line as the title/description
             try:
-                with open(guide_path, "r", encoding="utf-8") as f:
+                with open(guide_path, encoding="utf-8") as f:
                     first_line = f.readline().strip()
 
                     # Remove markdown heading symbols or numbered list markers
@@ -80,10 +79,7 @@ def get_available_guides() -> Dict[str, str]:
 
                     # Extract description starting from the first word
                     words = first_line.split()
-                    if words:
-                        description = " ".join(words)
-                    else:
-                        description = f"Guide: {guide_name}"
+                    description = " ".join(words) if words else f"Guide: {guide_name}"
 
                     guides[guide_name] = description
             except Exception:
@@ -92,14 +88,14 @@ def get_available_guides() -> Dict[str, str]:
     return guides
 
 
-def get_guide_content(guide_name: str) -> Tuple[bool, str]:
+def get_guide_content(guide_name: str) -> tuple[bool, str]:
     """Return the content of a guide.
 
     Args:
         guide_name: The name of the guide to retrieve.
 
     Returns:
-        Tuple[bool, str]: A tuple with a boolean indicating if the guide was
+        tuple[bool, str]: A tuple with a boolean indicating if the guide was
         found and the content of the guide.
     """
     guides_dir = _get_guides_dir()
@@ -111,12 +107,12 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
         guide_path = guides_dir / f"{guide_name}{ext}"
         if guide_path.exists():
             found = True
-            with open(guide_path, "r", encoding="utf-8") as f:
+            with open(guide_path, encoding="utf-8") as f:
                 content = f.read()
             break
 
     if not found:
-        # List available guides
+        # list available guides
         content = f"Guide '{guide_name}' not found. Available guides:\n"
 
         # Check if any guides exist
@@ -243,9 +239,7 @@ def _is_markdown_content(content: str, file_extension: str = None) -> bool:
     if file_extension and file_extension.lower() in [".md", ".markdown"]:
         return True
     # Check for Markdown headings
-    if re.search(r"^#+ ", content, re.MULTILINE):
-        return True
-    return False
+    return bool(re.search(r"^#+ ", content, re.MULTILINE))
 
 
 def _render_content(content: str, guide_name: str = None):
@@ -289,14 +283,14 @@ def _render_content(content: str, guide_name: str = None):
         console.print(md)
 
 
-def get_help_content() -> Tuple[bool, str]:
+def get_help_content() -> tuple[bool, str]:
     """Get the content of the help file.
 
     This function reads the hardcoded help file and dynamically inserts
     the OPTIONS and HELP TOPICS sections.
 
     Returns:
-        Tuple[bool, str]: A tuple containing:
+        tuple[bool, str]: A tuple containing:
             - Boolean indicating if the help file was found
             - The help content if found, or an error message if not
     """
@@ -307,7 +301,7 @@ def get_help_content() -> Tuple[bool, str]:
         help_path = docs_dir / f"HELP{ext}"
         if help_path.exists():
             try:
-                with open(help_path, "r", encoding="utf-8") as f:
+                with open(help_path, encoding="utf-8") as f:
                     content = f.read()
 
                 # Get dynamic content sections
