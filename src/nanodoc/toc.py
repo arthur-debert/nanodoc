@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import Dict, List
 
 from .data import ContentItem, get_content, line_range_to_string
 from .formatting import apply_style_to_filename, create_header
@@ -9,15 +8,15 @@ logger = logging.getLogger("nanodoc")
 
 
 def group_content_items_by_file(
-    content_items: List[ContentItem],
-) -> Dict[str, List[ContentItem]]:
+    content_items: list[ContentItem],
+) -> dict[str, list[ContentItem]]:
     """Group ContentItems by file path.
 
     Args:
-        content_items (List[ContentItem]): List of ContentItem objects
+        content_items (list[ContentItem]): list of ContentItem objects
 
     Returns:
-        Dict[str, List[ContentItem]]: Dictionary mapping file paths to lists of
+        dict[str, list[ContentItem]]: Dictionary mapping file paths to lists of
             ContentItems
     """
     file_groups = {}
@@ -28,11 +27,11 @@ def group_content_items_by_file(
     return file_groups
 
 
-def calculate_toc_size(file_groups: Dict[str, List[ContentItem]]) -> int:
+def calculate_toc_size(file_groups: dict[str, list[ContentItem]]) -> int:
     """Calculate the total size of the table of contents.
 
     Args:
-        file_groups (Dict[str, List[ContentItem]]): Dictionary mapping file
+        file_groups (dict[str, list[ContentItem]]): Dictionary mapping file
             paths to ContentItems
 
     Returns:
@@ -43,7 +42,7 @@ def calculate_toc_size(file_groups: Dict[str, List[ContentItem]]) -> int:
 
     # Calculate the size of each TOC entry
     toc_entries_lines = 0
-    for file_path, items in file_groups.items():
+    for _, items in file_groups.items():
         toc_entries_lines += 1  # Main file entry
         if len(items) > 1:
             toc_entries_lines += len(items)  # Subentries for multiple ranges
@@ -56,17 +55,17 @@ def calculate_toc_size(file_groups: Dict[str, List[ContentItem]]) -> int:
 
 
 def calculate_line_numbers(
-    file_groups: Dict[str, List[ContentItem]], toc_size: int
-) -> Dict[str, int]:
+    file_groups: dict[str, list[ContentItem]], toc_size: int
+) -> dict[str, int]:
     """Calculate line numbers for each file in the final document.
 
     Args:
-        file_groups (Dict[str, List[ContentItem]]): Dictionary mapping file
+        file_groups (dict[str, list[ContentItem]]): Dictionary mapping file
             paths to ContentItems
         toc_size (int): Size of the table of contents in lines
 
     Returns:
-        Dict[str, int]: Dictionary mapping file paths to their line numbers
+        dict[str, int]: Dictionary mapping file paths to their line numbers
     """
     toc_line_numbers = {}
     current_line = toc_size
@@ -92,20 +91,20 @@ def calculate_line_numbers(
 
 
 def format_filenames(
-    file_groups: Dict[str, List[ContentItem]], style=None
-) -> Dict[str, str]:
+    file_groups: dict[str, list[ContentItem]], style=None
+) -> dict[str, str]:
     """Format filenames according to the specified style.
 
     Args:
-        file_groups (Dict[str, List[ContentItem]]): Dictionary mapping file
+        file_groups (dict[str, list[ContentItem]]): Dictionary mapping file
             paths to ContentItems
         style (str): The header style (filename, path, nice, or None)
 
     Returns:
-        Dict[str, str]: Dictionary mapping file paths to formatted filenames
+        dict[str, str]: Dictionary mapping file paths to formatted filenames
     """
     formatted_filenames = {}
-    for file_path in file_groups.keys():
+    for file_path in file_groups:
         filename = os.path.basename(file_path)
         formatted_name = apply_style_to_filename(filename, style, file_path)
         formatted_filenames[file_path] = formatted_name
@@ -113,19 +112,19 @@ def format_filenames(
 
 
 def create_toc_content(
-    file_groups: Dict[str, List[ContentItem]],
-    formatted_filenames: Dict[str, str],
-    line_numbers: Dict[str, int],
+    file_groups: dict[str, list[ContentItem]],
+    formatted_filenames: dict[str, str],
+    line_numbers: dict[str, int],
     style=None,
 ) -> str:
     """Create the table of contents content.
 
     Args:
-        file_groups (Dict[str, List[ContentItem]]): Dictionary mapping file
+        file_groups (dict[str, list[ContentItem]]): Dictionary mapping file
             paths to ContentItems
-        formatted_filenames (Dict[str, str]): Dictionary mapping file paths to
+        formatted_filenames (dict[str, str]): Dictionary mapping file paths to
             formatted filenames
-        line_numbers (Dict[str, int]): Dictionary mapping file paths to line
+        line_numbers (dict[str, int]): Dictionary mapping file paths to line
             numbers
         style (str): The header style (filename, path, nice, or None)
 
@@ -161,11 +160,11 @@ def create_toc_content(
     return toc
 
 
-def generate_table_of_contents(content_items: List[ContentItem], style=None):
+def generate_table_of_contents(content_items: list[ContentItem], style=None):
     """Generate a table of contents for the given ContentItems.
 
     Args:
-        content_items (list): List of ContentItem objects
+        content_items (list): list of ContentItem objects
         style (str): The header style (filename, path, nice, or None)
 
     Returns:

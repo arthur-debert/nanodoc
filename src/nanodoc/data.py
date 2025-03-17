@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 
 @dataclass
@@ -29,7 +29,7 @@ def is_full_file(line_range: LineRange) -> bool:
     return line_range.start == 1 and line_range.end == "X"
 
 
-def normalize_line_range(line_range: LineRange, max_lines: int) -> Tuple[int, int]:
+def normalize_line_range(line_range: LineRange, max_lines: int) -> tuple[int, int]:
     """Convert to actual line numbers based on file length.
 
     Args:
@@ -70,13 +70,13 @@ class ContentItem:
     Attributes:
         original_arg (str): The original argument used to specify this content.
         file_path (str): The path to the file.
-        ranges (List[LineRange]): A list of LineRange objects.
+        ranges (list[LineRange]): A list of LineRange objects.
         content (Optional[str]): The cached content from the file.
     """
 
     original_arg: str
     file_path: str
-    ranges: List[LineRange]
+    ranges: list[LineRange]
     content: Optional[str] = None
 
 
@@ -106,7 +106,7 @@ def validate_content_item(content_item: ContentItem) -> bool:
         )
 
     # Validate ranges against file content
-    with open(content_item.file_path, "r") as f:
+    with open(content_item.file_path) as f:
         lines = f.readlines()
 
     max_lines = len(lines)
@@ -119,7 +119,8 @@ def validate_content_item(content_item: ContentItem) -> bool:
             )
         if start > end:
             raise ValueError(
-                f"Start line must be less than or equal to end line: {line_range_to_string(range_obj)}"
+                f"Start line must be less than or equal to end line: "
+                f"{line_range_to_string(range_obj)}"
             )
 
     return True
@@ -152,7 +153,7 @@ def load_content(content_item: ContentItem) -> str:
     if content_item.content is not None:
         return content_item.content
 
-    with open(content_item.file_path, "r") as f:
+    with open(content_item.file_path) as f:
         all_lines = f.readlines()
 
     max_lines = len(all_lines)

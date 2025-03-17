@@ -8,7 +8,6 @@ import logging
 import os
 import pathlib
 import re
-from typing import List
 
 import yaml
 from rich.console import Console
@@ -28,11 +27,11 @@ def _get_themes_dir():
     return module_dir / "themes"
 
 
-def get_available_themes() -> List[str]:
+def get_available_themes() -> list[str]:
     """Get a list of available theme names.
 
     Returns:
-        List[str]: A list of available theme names (without .yaml extension).
+        list[str]: A list of available theme names (without .yaml extension).
     """
     themes_dir = _get_themes_dir()
     themes = []
@@ -65,7 +64,7 @@ def _load_theme(theme_name=DEFAULT_THEME):
 
     # Load the theme from YAML
     try:
-        with open(theme_path, "r", encoding="utf-8") as f:
+        with open(theme_path, encoding="utf-8") as f:
             theme_data = yaml.safe_load(f)
 
         # Convert the YAML data to a Rich Theme

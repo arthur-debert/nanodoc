@@ -15,7 +15,7 @@
 #    - This ensures check hooks see the fixed versions of files
 #
 # 3. CHECK PHASE: Hooks that only check for issues (without fixing) run last
-#    - Linters like shellcheck, flake8, yamllint
+#    - Linters like shellcheck, ruff, yamllint
 #    - Validators like check-yaml and unit tests
 #    - If these fail, manual fixes are required
 #
@@ -89,13 +89,18 @@ repos:
       - id: markdownlint
         args: ["--config", ".markdownlint.json", "--fix"]
         stages: [pre-commit]
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+
+  # Python formatting with ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.2
     hooks:
-      - id: isort
-        files: '\.py$'
-        # Configuration in pyproject.toml [tool.isort]
+      - id: ruff
+        args: ["--fix", "--unsafe-fixes"]
         stages: [pre-commit]
+      - id: ruff-format
+        stages: [pre-commit]
+
+  # black is just a formatter, should run last
   - repo: https://github.com/psf/black
     rev: 24.2.0
     hooks:
@@ -103,20 +108,6 @@ repos:
         files: '\.py$'
         # Configuration in pyproject.toml [tool.black]
         stages: [pre-commit]
-  # Python formatting
-  - repo: https://github.com/pycqa/autoflake
-    rev: v2.2.1
-    hooks:
-      - id: autoflake
-        args:
-          [
-            "--in-place",
-            "--remove-all-unused-imports",
-            "--remove-unused-variables",
-          ]
-        files: '\.py$'
-        stages: [pre-commit]
-
   #############################################################################
   ### Stage all fixes before checking hooks run
   #############################################################################
@@ -136,10 +127,10 @@ repos:
         name: Poetry Check (errors and warnings)
         description: Validate the structure of the pyproject.toml file
         entry:
-          bash -c 'output=$(poetry check 2>&1); status=$?; echo "$output"; if [[
-          $status -ne 0 ]]; then exit $status; fi; if echo "$output" | grep -q
-          "Warning:"; then echo "Poetry check found warnings. Treating warnings
-          as errors."; exit 1; fi; exit 0'
+          bash -c 'output=$(poetry lock && poetry check 2>&1); status=$?; echo
+          "$output"; if [[ $status -ne 0 ]]; then exit $status; fi; if echo
+          "$output" | grep -q "Warning:"; then echo "Poetry check found
+          warnings. Treating warnings as errors."; exit 1; fi; exit 0'
         language: system
         pass_filenames: false
         always_run: true
@@ -177,13 +168,6 @@ repos:
     hooks:
       - id: yamllint
         args: ["--format", "parsable", "-c", ".yamllint.yaml"]
-
-  # # Python linting
-  # - repo: https://github.com/pycqa/flake8
-  #   rev: 7.0.0
-  #   hooks:
-  #     - id: flake8
-  #       files: '\.py$'
 
   # ShellCheck hook (local)
   - repo: local
