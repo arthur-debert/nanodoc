@@ -43,7 +43,8 @@ def generate_table_of_contents(content_items: List[ContentItem], style=None):
         file_groups[item.file_path].append(item)
 
     # Calculate the size of each TOC entry (filename + line number)
-    # Each file gets one entry, plus one subentry for each range if there are multiple ranges
+    # Each file gets one entry, plus one subentry for each range if there are
+    # several ranges.
     toc_entries_lines = 0
     for file_path, items in file_groups.items():
         toc_entries_lines += 1  # Main file entry
@@ -59,7 +60,7 @@ def generate_table_of_contents(content_items: List[ContentItem], style=None):
 
     # Calculate line numbers for each file
     for file_path, items in file_groups.items():
-        # Add 3 for the file header (1 for the header line, 2 for the blank lines)
+        # Add 3 for the file header (1 for the header line, 2 for blank lines)
         toc_line_numbers[file_path] = current_line + 3
 
         # Calculate total content lines
