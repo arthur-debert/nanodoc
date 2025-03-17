@@ -1,6 +1,6 @@
-1. Specifying Files in nanodoc
+1. Selecting files
 
-call nanodoc with the files you want to process
+Pass the files you want to include as arguments:
 
     # shell
     nanodoc file1.txt file2.txt file3.md
@@ -52,43 +52,3 @@ If you want to include a file's content inline (with no line breaks), use the @[
 
     #
     This paragraph includes @[quote.txt] right in the middle of the text.
-
-For example, this sentence includes @[../live_bundles.txt:L5-5] as an inline quote.
-With this syntax, line breaks are removed, making it perfect for short snippets.
-
-3.2 Line References
-
-Use line references to include only specific parts of files:
-
-    #
-    Introduction
-    file1.txt:L10-20
-    Middle section
-    file1.txt:L50-60
-    Conclusion
-
-4. Complete Example
-
-Here's a real-world example of a live bundle:
-
-    # Example Live Bundle
-
-    This is a demonstration of the live bundle feature in nanodoc.
-    Below, we'll include the content of the specifying_files.txt document:
-
-    ../specifying_files.txt
-
-    As you can see, the file content is seamlessly integrated into this document.
-    We can also include specific sections of files using line references:
-
-    ../live_bundles.txt:L20-30
-
-    This makes it easy to create composite documents that include content from
-    multiple sources with your own commentary and transitions between sections.
-
-5. Getting Help
-
-Access this guide anytime using:
-
-    # shell
-    nanodoc help selecting-files
