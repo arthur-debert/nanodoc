@@ -1,5 +1,6 @@
-from nanodoc.core import generate_table_of_contents, process_all
+from nanodoc.core import process_all
 from nanodoc.files import create_content_item
+from nanodoc.toc import generate_table_of_contents
 
 
 def test_generate_table_of_contents(tmpdir):
