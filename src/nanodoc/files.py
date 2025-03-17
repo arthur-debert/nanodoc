@@ -42,53 +42,37 @@ def parse_line_reference(line_ref: str) -> List[LineRange]:
             raise ValueError(f"Invalid character in line reference: '{char}'")
 
     ranges = []
-    for part in line_ref.split(","):
-        if not part.startswith("L"):
+
+    # Split by commas and process each part
+    parts = line_ref.split(",")
+    for part in parts:
+        # Use a single regex pattern with an optional group for the range part
+        # Format: L<number>(-<number or X>)?
+        match = re.match(r"^L(\d+)(?:-(\d+|X))?$", part, re.IGNORECASE)
+        if not match:
             raise ValueError(f"Invalid line reference format: {part}")
 
-        # Remove the 'L' prefix
-        num_part = part[1:]
+        # Extract start line number (always present)
+        start = int(match.group(1))
+        if start <= 0:
+            raise ValueError(f"Line numbers must be positive: {part}")
 
-        if "-" in num_part:
-            # Range reference
-            try:
-                range_parts = num_part.split("-")
-                if len(range_parts) != 2:
-                    raise ValueError(f"Invalid range format: {part}")
+        # Extract end line number (optional)
+        if match.group(2):
+            # This is a range reference
+            end_str = match.group(2).upper()
+            end = end_str if end_str == "X" else int(end_str)
 
-                start = int(range_parts[0])
-
-                # Handle 'X' as end marker
-                if range_parts[1].upper() == "X":
-                    end = "X"
-                else:
-                    end = int(range_parts[1])
-
-                if start <= 0:
-                    raise ValueError(f"Line numbers must be positive: {part}")
-                if isinstance(end, int) and (end <= 0 or start > end):
-                    raise ValueError(
-                        f"Start line must be less than or equal to end line: {part}"
-                    )
-                ranges.append(LineRange(start, end))
-            except ValueError as e:
-                if "must be positive" in str(e) or "must be less than" in str(e):
-                    raise
-                raise ValueError(f"Invalid line range format: {part}")
+            # Validate end line number if it's an integer
+            if isinstance(end, int) and (end <= 0 or start > end):
+                raise ValueError(
+                    f"Start line must be less than or equal to end line: {part}"
+                )
         else:
-            # Single line reference
-            try:
-                # Check if num_part contains only digits
-                if not num_part.isdigit():
-                    raise ValueError(f"Invalid line number format: {part}")
-                line_num = int(num_part)
-                if line_num <= 0:
-                    raise ValueError(f"Line number must be positive: {part}")
-                ranges.append(LineRange(line_num, line_num))
-            except ValueError as e:
-                if "must be positive" in str(e):
-                    raise
-                raise ValueError(f"Invalid line number format: {part}")
+            # This is a single line reference
+            end = start
+
+        ranges.append(LineRange(start, end))
 
     return ranges
 
