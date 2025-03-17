@@ -3,23 +3,16 @@
 import argparse
 import glob
 import logging
-import os
 import pathlib
 import re
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
-import yaml
-from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.style import Style
-from rich.theme import Theme
 
 from .files import TXT_EXTENSIONS
-
-# Default theme name
-DEFAULT_THEME = "neutral"
+from .formatting import DEFAULT_THEME, _load_theme, console
 
 # Initialize logger
 logger = logging.getLogger("nanodoc")
@@ -49,97 +42,6 @@ class CustomHelpAction(argparse.Action):
         parser.exit()
 
 
-def _get_themes_dir():
-    """Return the path to the themes directory."""
-    module_dir = pathlib.Path(__file__).parent.absolute()
-    return module_dir / "themes"
-
-
-def get_available_themes() -> List[str]:
-    """Get a list of available theme names.
-
-    Returns:
-        List[str]: A list of available theme names (without .yaml extension).
-    """
-    themes_dir = _get_themes_dir()
-    themes = []
-
-    if themes_dir.exists():
-        for file in os.listdir(themes_dir):
-            if file.endswith(".yaml"):
-                themes.append(file.replace(".yaml", ""))
-
-    logger.debug(f"Available themes: {themes}")
-    return themes
-
-
-def _load_theme(theme_name=DEFAULT_THEME):
-    """Load a theme from a YAML file.
-
-    Args:
-        theme_name: The name of the theme to load.
-
-    Returns:
-        Theme: A Rich Theme object.
-    """
-    themes_dir = _get_themes_dir()
-    theme_path = themes_dir / f"{theme_name}.yaml"
-
-    # Fall back to default theme if the requested theme doesn't exist
-    if not theme_path.exists():
-        logger.warning(f"Theme '{theme_name}' not found, using default theme")
-        theme_path = themes_dir / f"{DEFAULT_THEME}.yaml"
-
-    # Load the theme from YAML
-    try:
-        with open(theme_path, "r", encoding="utf-8") as f:
-            theme_data = yaml.safe_load(f)
-
-        # Convert the YAML data to a Rich Theme
-        styles = {}
-        for key, value in theme_data.items():
-            styles[key] = Style.parse(value)
-
-        logger.debug(f"Theme '{theme_name}' loaded successfully")
-        return Theme(styles)
-    except Exception as e:
-        logger.error(f"Error loading theme: {e}")
-        # Return a minimal default theme if there's an error
-        return Theme(
-            {
-                "heading": Style(color="blue", bold=True),
-                "error": Style(color="red", bold=True),
-            }
-        )
-
-
-# Initialize Rich console with the default theme
-console = Console(theme=_load_theme())
-
-
-def create_themed_console(theme_name=None):
-    """Create a Rich console with the specified theme.
-
-    Args:
-        theme_name: The name of the theme to use. If None, uses the default theme.
-
-    Returns:
-        Console: A Rich Console object with the specified theme.
-    """
-    if theme_name:
-        logger.debug(f"Creating console with theme: {theme_name}")
-        return Console(theme=_load_theme(theme_name))
-    return Console(theme=_load_theme())
-
-
-def _get_docs_dir():
-    """Return the path to the docs directory."""
-    # Get the directory where this module is located
-    module_dir = pathlib.Path(__file__).parent.absolute()
-    # The docs directory
-    return module_dir / "docs"
-
-
 def _get_guides_dir():
     """Return the path to the guides directory."""
     module_dir = pathlib.Path(__file__).parent.absolute()
@@ -147,15 +49,17 @@ def _get_guides_dir():
 
 
 def get_available_guides() -> Dict[str, str]:
-    """Return a dictionary of available guides with their descriptions.
+    """Get a dictionary of available guides with their descriptions.
 
     Returns:
-        Dict[str, str]: A dictionary mapping guide names to their short descriptions.
+        Dict[str, str]: A dictionary mapping guide names to their short
+        descriptions.
     """
     guides = {}
     guides_dir = _get_guides_dir()
 
-    # Look for files with extensions from TXT_EXTENSIONS in the guides directory
+    # Look for files with extensions from TXT_EXTENSIONS in the guides
+    # directory
     for ext in TXT_EXTENSIONS:
         for guide_path in glob.glob(str(guides_dir / f"*{ext}")):
             guide_name = pathlib.Path(guide_path).name.replace(ext, "")
@@ -165,7 +69,8 @@ def get_available_guides() -> Dict[str, str]:
                 with open(guide_path, "r", encoding="utf-8") as f:
                     first_line = f.readline().strip()
 
-                    # Remove markdown heading symbols or numbered list markers if present
+                    # Remove markdown heading symbols or numbered list markers
+                    # if present
                     if first_line.startswith("#"):
                         # Remove markdown heading
                         first_line = first_line.lstrip("#").strip()
@@ -195,7 +100,7 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
 
     Returns:
         Tuple[bool, str]: A tuple with a boolean indicating if the guide was found
-                         and the content of the guide.
+        and the content of the guide.
     """
     guides_dir = _get_guides_dir()
     found = False
@@ -226,6 +131,14 @@ def get_guide_content(guide_name: str) -> Tuple[bool, str]:
             content += "  No guides available.\n"
 
     return found, content
+
+
+def _get_docs_dir():
+    """Return the path to the docs directory."""
+    # Get the directory where this module is located
+    module_dir = pathlib.Path(__file__).parent.absolute()
+    # The docs directory
+    return module_dir / "docs"
 
 
 def get_options_section():
@@ -269,7 +182,8 @@ def _is_rich_content(content: str) -> bool:
         content: The content to check.
 
     Returns:
-        bool: True if the content contains Rich markup or has a Rich render directive.
+        bool: True if the content contains Rich markup or has a Rich render
+        directive.
     """
     # Check for Rich render directive
     if re.search(r"<!--\s*RENDER:\s*rich\s*-?->", content, re.IGNORECASE):
@@ -277,7 +191,7 @@ def _is_rich_content(content: str) -> bool:
     # Check for Rich markup tags like [bold], [italic], etc.
     return bool(
         re.search(
-            r"\[(?:bold|italic|red|green|blue|yellow|cyan|magenta|dim|underline)\]",
+            r"\[(?:bold|italic|red|green|blue|yellow|cyan|magenta|dim|" r"underline)\]",
             content,
         )
     )
@@ -315,14 +229,17 @@ def _render_content(content: str, guide_name: str = None):
         md = Markdown(content, code_theme="monokai")
         console.print(md)
     else:
-        # For plain text with structure (like manifesto.txt), we'll enhance it with some basic formatting
+        # For plain text with structure, enhance it with basic formatting
         # This will make numbered sections, code blocks, and lists look better
         # First, look for section headers (numbered or not)
         # Convert the plain text to a more Markdown-friendly format
 
         # Convert section headers to Markdown headers
         content = re.sub(
-            r"^(\d+(\.\d+)*)\.\s+(.+)$", r"## \1. \3", content, flags=re.MULTILINE
+            r"^(\d+(\.\d+)*)\.\s+(.+)$",
+            r"## \1. \3",
+            content,
+            flags=re.MULTILINE,
         )
 
         # Convert indented code blocks to Markdown code blocks
@@ -365,7 +282,10 @@ def get_help_content() -> Tuple[bool, str]:
                 topics_content = get_topics_section()
 
                 # Replace OPTIONS section
-                options_pattern = r"(\[bold\]OPTIONS:\[/bold\]\n\n).*?(\n\n\[bold\]HELP TOPICS:\[/bold\])"
+                options_pattern = (
+                    r"(\[bold\]OPTIONS:\[/bold\]\n\n).*?"
+                    r"(\n\n\[bold\]HELP TOPICS:\[/bold\])"
+                )
                 content = re.sub(
                     options_pattern,
                     r"\1" + options_content + r"\2",
@@ -374,7 +294,10 @@ def get_help_content() -> Tuple[bool, str]:
                 )
 
                 # Replace HELP TOPICS section
-                topics_pattern = r"(\[bold\]HELP TOPICS:\[/bold\]\n\n).*?(\n\n\n\n\[bold\]EXAMPLES:\[/bold\])"
+                topics_pattern = (
+                    r"(\[bold\]HELP TOPICS:\[/bold\]\n\n).*?"
+                    r"(\n\n\n\n\[bold\]EXAMPLES:\[/bold\])"
+                )
                 content = re.sub(
                     topics_pattern,
                     r"\1" + topics_content + r"\2",
@@ -386,7 +309,10 @@ def get_help_content() -> Tuple[bool, str]:
             except Exception as e:
                 return False, f"Error processing help file: {e}"
 
-    return False, "nanodoc help file not found. Please refer to the documentation."
+    return (
+        False,
+        "nanodoc help file not found. Please refer to the documentation.",
+    )
 
 
 def print_help():
