@@ -26,7 +26,7 @@ def test_no_args():
         [PYTHON_CMD, "-m", NANODOC_MODULE], capture_output=True, text=True
     )
     assert result.returncode == 0
-    assert "usage: nanodoc" in result.stdout
+    assert "Usage: python -m src.nanodoc" in result.stdout
     assert "# nanodoc" not in result.stdout
 
 

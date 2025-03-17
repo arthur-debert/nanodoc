@@ -147,6 +147,47 @@ def get_available_guides() -> Dict[str, str]:
     return guides
 
 
+def get_guide_content(guide_name: str) -> Tuple[bool, str]:
+    """Return the content of a guide.
+
+    Args:
+        guide_name: The name of the guide to retrieve.
+
+    Returns:
+        Tuple[bool, str]: A tuple with a boolean indicating if the guide was found
+                         and the content of the guide.
+    """
+    guides_dir = _get_guides_dir()
+    found = False
+    content = ""
+
+    # Check for the guide with various extensions
+    for ext in TXT_EXTENSIONS:
+        guide_path = guides_dir / f"{guide_name}{ext}"
+        if guide_path.exists():
+            found = True
+            with open(guide_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            break
+
+    if not found:
+        # List available guides
+        content = f"Guide '{guide_name}' not found. Available guides:\n"
+
+        # Check if any guides exist
+        guides_exist = False
+        for ext in TXT_EXTENSIONS:
+            for guide_path in guides_dir.glob(f"*{ext}"):
+                guides_exist = True
+                guide_name = guide_path.name.replace(ext, "")
+                content += f"  - {guide_name}\n"
+
+        if not guides_exist:
+            content += "  No guides available.\n"
+
+    return found, content
+
+
 def get_options_section():
     """Generate the OPTIONS section of the help content.
 
@@ -256,34 +297,6 @@ def _render_content(content: str, guide_name: str = None):
         # Use custom styles for markdown rendering
         md = Markdown(content, code_theme="monokai")
         console.print(md)
-
-
-def get_guide_content(guide_name: str) -> Tuple[bool, str]:
-    """Get the content of a specific guide.
-
-    Args:
-        guide_name: The name of the guide to retrieve.
-
-    Returns:
-        Tuple[bool, str]: A tuple containing:
-            - Boolean indicating if the guide was found
-            - The guide content if found, or an error message if not
-    """
-    guides_dir = _get_guides_dir()
-
-    # Check for the guide with extensions from TXT_EXTENSIONS
-    for ext in TXT_EXTENSIONS:
-        guide_path = guides_dir / f"{guide_name}{ext}"
-        if guide_path.exists():
-            with open(guide_path, "r", encoding="utf-8") as f:
-                return True, f.read()
-
-    # Guide not found, prepare error message with available guides
-    available_guides = get_available_guides()
-    guides_list = "\n".join(
-        [f"- {name}: {desc}" for name, desc in available_guides.items()]
-    )
-    return False, f"Guide '{guide_name}' not found. Available guides:\n\n{guides_list}"
 
 
 def get_help_content() -> Tuple[bool, str]:

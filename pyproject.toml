@@ -18,9 +18,7 @@ classifiers = [
 ]
 
 # Dependencies
-dependencies = [
-    "rich>=13.9.4,<14.0.0",
-]
+dependencies = ["rich>=13.9.4,<14.0.0", "click>=8.1.7,<9.0.0"]
 
 [project.optional-dependencies]
 dev = [
@@ -35,8 +33,8 @@ dev = [
 ]
 
 [project.scripts]
-nanodoc = "nanodoc.nanodoc:main"
-pmrun = "nanodoc.nanodoc:main"
+nanodoc = "nanodoc.cli:main"
+pmrun = "nanodoc.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/arthur-debert/nanodoc/"
@@ -68,3 +66,4 @@ exclude = [
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+maxfail = 200

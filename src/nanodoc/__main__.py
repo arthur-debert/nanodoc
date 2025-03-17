@@ -4,7 +4,7 @@ This module allows running the nanodoc package as a script:
 python -m nanodoc [arguments]
 """
 
-from .nanodoc import main
+from .cli import main
 
 if __name__ == "__main__":
     main()
