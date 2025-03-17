@@ -3,32 +3,24 @@
 
 An ultra-lightweight documentation generator that combines text files into a single document.
 
-USAGE nanodoc [options] [file1.txt file2.txt ...]
+nanodoc [options] <file1.txt> <file2.txt> ...
 
-[bold]FORMATTING:[/bold]
+[bold]OPTIONS:[/bold]
 
 --toc:                 Include a table of contents at the beginning
 --no-header:           Hide file headers completely
 --sequence:            Format sequences (numerical, letter, or roman)
 --style:               Change how filenames are displayed (filename, path, nice)
-
-[bold]LINE NUMBERS:[/bold]
-
--n: Enable per-file line numbering -nn: Enable global line numbering
-
-[bold]ADDITIONAL:[/bold]
-
+-n: Enable per-file line numbering
+-nn: Enable global line numbering
 --txt-ext: Add additional file extensions to search for
 
 [bold]HELP TOPICS:[/bold]
 
 manifesto:              simpler docs, simpler life
-quickstart:             quickstart, user guide and ref
-doc. short and sweet
+quickstart:             quickstart, user guide and ref doc. short and sweet
 
-[bold]FLAGS:[/bold]
 
---help Show help for command --version Show nanodoc version
 
 [bold]EXAMPLES:[/bold]
 
