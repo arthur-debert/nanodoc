@@ -96,13 +96,7 @@ repos:
         files: '\.py$'
         # Configuration in pyproject.toml [tool.isort]
         stages: [pre-commit]
-  - repo: https://github.com/psf/black
-    rev: 24.2.0
-    hooks:
-      - id: black
-        files: '\.py$'
-        # Configuration in pyproject.toml [tool.black]
-        stages: [pre-commit]
+
   # Python formatting
   - repo: https://github.com/pycqa/autoflake
     rev: v2.2.1
@@ -116,7 +110,14 @@ repos:
           ]
         files: '\.py$'
         stages: [pre-commit]
-
+  # black is just a formatter, should run last
+  - repo: https://github.com/psf/black
+    rev: 24.2.0
+    hooks:
+      - id: black
+        files: '\.py$'
+        # Configuration in pyproject.toml [tool.black]
+        stages: [pre-commit]
   #############################################################################
   ### Stage all fixes before checking hooks run
   #############################################################################
@@ -177,13 +178,6 @@ repos:
     hooks:
       - id: yamllint
         args: ["--format", "parsable", "-c", ".yamllint.yaml"]
-
-  # Python linting
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8
-        files: '\.py$'
 
   # ShellCheck hook (local)
   - repo: local

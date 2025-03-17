@@ -14,6 +14,13 @@ from .data import ContentItem, LineRange, validate_content_item
 # Define text file extensions
 TXT_EXTENSIONS = [".txt", ".md", "txxt"]
 
+# Error message templates
+ERR_INVALID_LINE_REF_FORMAT = (
+    "Invalid line reference format: {} " "(must start with 'L')"
+)
+ERR_INVALID_RANGE = "Invalid range {}-{} (1-{})"
+ERR_INLINE_FILE_READ = "Error reading inline file {}: {}"
+
 logger = logging.getLogger("nanodoc")
 logger.setLevel(logging.CRITICAL)  # Start with logging disabled
 
@@ -134,9 +141,7 @@ def create_content_item(arg: str) -> ContentItem:
 
         # Ensure the line spec starts with 'L'
         if not line_spec.startswith("L"):
-            raise ValueError(
-                f"Invalid line reference format: {line_spec} (must start with 'L')"
-            )
+            raise ValueError(ERR_INVALID_LINE_REF_FORMAT.format(line_spec))
 
         line_ref = line_spec
 
@@ -212,7 +217,7 @@ def get_file_content(file_path, line=None, start=None, end=None, parts=None):
         result.append(lines[line - 1])
     elif start is not None and end is not None:  # Line range
         if not 1 <= start <= num_lines or not 1 <= end <= num_lines or start > end:
-            raise ValueError(f"Invalid range {start}-{end} (1-{num_lines})")
+            raise ValueError(ERR_INVALID_RANGE.format(start, end, num_lines))
         result.extend(lines[start - 1 : end])
     elif parts:  # Multiple parts
         for start_line, end_line in parts:
@@ -222,7 +227,7 @@ def get_file_content(file_path, line=None, start=None, end=None, parts=None):
                 or start_line > end_line
             ):
                 raise ValueError(
-                    f"Invalid range {start_line}-{end_line} (1-{num_lines})"
+                    ERR_INVALID_RANGE.format(start_line, end_line, num_lines)
                 )
             result.extend(lines[start_line - 1 : end_line])
     else:  # Entire file
@@ -241,7 +246,8 @@ def expand_directory(directory, extensions=TXT_EXTENSIONS):
         extensions (list): List of file extensions to include.
 
     Returns:
-        list: A sorted list of file paths matching the extensions (not validated).
+        list: A sorted list of file paths matching the extensions
+        (not validated).
     """
     logger.debug(
         f"Expanding directory with directory='{directory}', "
@@ -337,15 +343,14 @@ def process_mixed_content_bundle(lines):
                         try:
                             # Get file content and remove line breaks
                             file_content = get_file_content(file_path)
-                            inline_content = file_content.replace("\n", " ").strip()
+                            inline_content = file_content.replace("\n", " ")
+                            inline_content = inline_content.strip()
                             # Replace the @[file path] with the inline content
                             processed_line = processed_line.replace(
                                 f"@[{file_path}]", inline_content
                             )
                         except Exception as e:
-                            logger.warning(
-                                f"Error reading inline file {file_path}: {e}"
-                            )
+                            logger.warning(ERR_INLINE_FILE_READ.format(file_path, e))
                             # Keep the original reference if file can't be read
                 result.append(processed_line)
             else:
@@ -372,7 +377,7 @@ def process_mixed_content_bundle(lines):
                         f"@[{file_path}]", inline_content
                     )
                 except Exception as e:
-                    logger.warning(f"Error reading inline file {file_path}: {e}")
+                    logger.warning(ERR_INLINE_FILE_READ.format(file_path, e))
                     # Keep the original reference if file can't be read
         return processed_result
 
@@ -548,7 +553,7 @@ def expand_args(args, extensions=None):
     Args:
         args (list): A list of file paths, directory paths, or bundle files.
         extensions (list, optional): List of file extensions to include when
-                                    expanding directories. Defaults to TXT_EXTENSIONS.
+            expanding directories. Defaults to TXT_EXTENSIONS.
 
     Returns:
         list: A flattened list of file paths (not validated).
@@ -574,9 +579,10 @@ def verify_path(path):
 
     Returns:
         str or tuple: If called from older code, returns just the verified path.
-                     If called from newer code that expects line parts, returns
-                     a tuple (str, list or None) with the verified path and line parts.
-                     Line parts is a list of (start, end) tuples or None if no line reference.
+            If called from newer code that expects line parts, returns
+            a tuple (str, list or None) with the verified path and line parts.
+            Line parts is a list of (start, end) tuples or None if no line
+            reference.
 
     Raises:
         FileNotFoundError: If the path does not exist.
@@ -601,9 +607,7 @@ def verify_path(path):
 
         # Ensure the line spec starts with 'L'
         if not line_spec.startswith("L"):
-            raise ValueError(
-                f"Invalid line reference format: {line_spec} (must start with 'L')"
-            )
+            raise ValueError(ERR_INVALID_LINE_REF_FORMAT.format(line_spec))
 
         line_ref = line_spec
 
@@ -649,7 +653,7 @@ def get_files_from_args(srcs, extensions=None):
     Args:
         srcs (list): List of source file paths, directories, or bundle files.
         extensions (list, optional): List of file extensions to include when
-                                    expanding directories. Defaults to TXT_EXTENSIONS.
+            expanding directories. Defaults to TXT_EXTENSIONS.
 
     Returns:
         list: A list of ContentItem objects.
