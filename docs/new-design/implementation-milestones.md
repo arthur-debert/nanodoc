@@ -80,7 +80,7 @@ architecture.
 | ----- | ------------------------------ | ----------- | --------------- |
 | 0     | Setup and Infrastructure       | Not Started |                 |
 | 1     | Path Resolution                | Completed   | 2024-03-17      |
-| 2     | Content Extraction             | Not Started |                 |
+| 2     | Content Extraction             | Completed   | 2024-03-17      |
 | 3     | Document Construction          | Not Started |                 |
 | 4     | Content Formatting             | Not Started |                 |
 | 5     | Rendering                      | Not Started |                 |
