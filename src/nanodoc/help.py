@@ -2,10 +2,12 @@
 
 import argparse
 import glob
+import logging
+import os
 import pathlib
 import re
 import sys
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import yaml
 from rich.console import Console
@@ -18,6 +20,9 @@ from .files import TXT_EXTENSIONS
 
 # Default theme name
 DEFAULT_THEME = "neutral"
+
+# Initialize logger
+logger = logging.getLogger("nanodoc")
 
 
 # Custom help action to use our custom help format
@@ -50,6 +55,24 @@ def _get_themes_dir():
     return module_dir / "themes"
 
 
+def get_available_themes() -> List[str]:
+    """Get a list of available theme names.
+
+    Returns:
+        List[str]: A list of available theme names (without .yaml extension).
+    """
+    themes_dir = _get_themes_dir()
+    themes = []
+
+    if themes_dir.exists():
+        for file in os.listdir(themes_dir):
+            if file.endswith(".yaml"):
+                themes.append(file.replace(".yaml", ""))
+
+    logger.debug(f"Available themes: {themes}")
+    return themes
+
+
 def _load_theme(theme_name=DEFAULT_THEME):
     """Load a theme from a YAML file.
 
@@ -64,6 +87,7 @@ def _load_theme(theme_name=DEFAULT_THEME):
 
     # Fall back to default theme if the requested theme doesn't exist
     if not theme_path.exists():
+        logger.warning(f"Theme '{theme_name}' not found, using default theme")
         theme_path = themes_dir / f"{DEFAULT_THEME}.yaml"
 
     # Load the theme from YAML
@@ -76,9 +100,10 @@ def _load_theme(theme_name=DEFAULT_THEME):
         for key, value in theme_data.items():
             styles[key] = Style.parse(value)
 
+        logger.debug(f"Theme '{theme_name}' loaded successfully")
         return Theme(styles)
     except Exception as e:
-        print(f"Error loading theme: {e}")
+        logger.error(f"Error loading theme: {e}")
         # Return a minimal default theme if there's an error
         return Theme(
             {
@@ -90,6 +115,21 @@ def _load_theme(theme_name=DEFAULT_THEME):
 
 # Initialize Rich console with the default theme
 console = Console(theme=_load_theme())
+
+
+def create_themed_console(theme_name=None):
+    """Create a Rich console with the specified theme.
+
+    Args:
+        theme_name: The name of the theme to use. If None, uses the default theme.
+
+    Returns:
+        Console: A Rich Console object with the specified theme.
+    """
+    if theme_name:
+        logger.debug(f"Creating console with theme: {theme_name}")
+        return Console(theme=_load_theme(theme_name))
+    return Console(theme=_load_theme())
 
 
 def _get_docs_dir():
@@ -145,6 +185,47 @@ def get_available_guides() -> Dict[str, str]:
                 guides[guide_name] = f"Guide: {guide_name}"
 
     return guides
+
+
+def get_guide_content(guide_name: str) -> Tuple[bool, str]:
+    """Return the content of a guide.
+
+    Args:
+        guide_name: The name of the guide to retrieve.
+
+    Returns:
+        Tuple[bool, str]: A tuple with a boolean indicating if the guide was found
+                         and the content of the guide.
+    """
+    guides_dir = _get_guides_dir()
+    found = False
+    content = ""
+
+    # Check for the guide with various extensions
+    for ext in TXT_EXTENSIONS:
+        guide_path = guides_dir / f"{guide_name}{ext}"
+        if guide_path.exists():
+            found = True
+            with open(guide_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            break
+
+    if not found:
+        # List available guides
+        content = f"Guide '{guide_name}' not found. Available guides:\n"
+
+        # Check if any guides exist
+        guides_exist = False
+        for ext in TXT_EXTENSIONS:
+            for guide_path in guides_dir.glob(f"*{ext}"):
+                guides_exist = True
+                guide_name = guide_path.name.replace(ext, "")
+                content += f"  - {guide_name}\n"
+
+        if not guides_exist:
+            content += "  No guides available.\n"
+
+    return found, content
 
 
 def get_options_section():
@@ -256,34 +337,6 @@ def _render_content(content: str, guide_name: str = None):
         # Use custom styles for markdown rendering
         md = Markdown(content, code_theme="monokai")
         console.print(md)
-
-
-def get_guide_content(guide_name: str) -> Tuple[bool, str]:
-    """Get the content of a specific guide.
-
-    Args:
-        guide_name: The name of the guide to retrieve.
-
-    Returns:
-        Tuple[bool, str]: A tuple containing:
-            - Boolean indicating if the guide was found
-            - The guide content if found, or an error message if not
-    """
-    guides_dir = _get_guides_dir()
-
-    # Check for the guide with extensions from TXT_EXTENSIONS
-    for ext in TXT_EXTENSIONS:
-        guide_path = guides_dir / f"{guide_name}{ext}"
-        if guide_path.exists():
-            with open(guide_path, "r", encoding="utf-8") as f:
-                return True, f.read()
-
-    # Guide not found, prepare error message with available guides
-    available_guides = get_available_guides()
-    guides_list = "\n".join(
-        [f"- {name}: {desc}" for name, desc in available_guides.items()]
-    )
-    return False, f"Guide '{guide_name}' not found. Available guides:\n\n{guides_list}"
 
 
 def get_help_content() -> Tuple[bool, str]:
