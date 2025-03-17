@@ -105,23 +105,21 @@ def get_command_line_options():
     parser.add_argument(
         "--sequence",
         choices=["numerical", "letter", "roman"],
-        help="Add sequence numbers to headers (numerical, letter, or roman)",
+        help="How to format session numbers (numerical, letter, or roman)",
     )
     parser.add_argument(
         "--style",
         choices=["filename", "path", "nice"],
         default="nice",
-        help="Header style: nice (default, formatted title), filename (just filename), "
-        "or path (full path)",
+        help="Header style: nice (default) filename or path",
     )
 
     parser.add_argument(
         "--txt-ext",
         action="append",
-        help="Add additional file extensions to search for (can be used multiple times)",
+        help="Add extensions to expand for (can be used multiple times)",
         metavar="EXT",
     )
-
     parser.add_argument("sources", nargs="*", help="Source file(s)")
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
 
@@ -182,8 +180,7 @@ def parse_args():
         "--style",
         choices=["filename", "path", "nice"],
         default="nice",
-        help="Header style: nice (default, formatted title), filename (just filename), "
-        "or path (full path)",
+        help="Header style: nice  (formatted title), filename or path.",
     )
 
     parser.add_argument(
