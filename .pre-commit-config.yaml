@@ -127,15 +127,6 @@ repos:
         files: '\.py$'
         stages: [pre-commit]
 
-  - repo: local
-    hooks:
-      - id: poetry check
-        name: Run poetry check for changes
-        entry: bash -c 'poetry lock && poetry check'
-        language: system
-        pass_filenames: false
-        always_run: true
-
   #############################################################################
   ### Stage all fixes before checking hooks run
   #############################################################################
@@ -149,6 +140,25 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+
+      # Run poetry check as the final stage
+      - id: poetry-check
+        name: Poetry Check (errors and warnings)
+        description: Validate the structure of the pyproject.toml file
+        entry:
+          bash -c 'output=$(poetry check 2>&1); status=$?; echo "$output"; if [[
+          $status -ne 0 ]]; then exit $status; fi; if echo "$output" | grep -q
+          "Warning:"; then echo "Poetry check found warnings. Treating warnings
+          as errors."; exit 1; fi; exit 0'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        # This hook:
+        # 1. Runs poetry check and captures its output
+        # 2. If poetry check exits with non-zero status, fails immediately
+        # 3. If output contains "Warning:", fails with a custom message
+        # 4. Otherwise passes
         # Run this hook after the poetry check hook and before the git-add-all-fixes hook
 
   - repo: local

@@ -2,11 +2,13 @@
 """Main module for nanodoc application."""
 import argparse
 import logging
+import os
+import pathlib
 import sys
 
 from .core import process_all
 from .files import TXT_EXTENSIONS, get_files_from_args
-from .help import check_help, print_help
+from .help import CustomHelpAction
 from .version import VERSION
 
 LINE_WIDTH = 80
@@ -57,36 +59,95 @@ def setup_logging(to_stderr=False, enabled=False):
     return logger
 
 
-################################################################################
-# Main Processing - Core processing functions
-################################################################################
-
-
-# Custom help action to use our custom help format
-class CustomHelpAction(argparse.Action):
-    """Custom action for --help flag to use our custom help format."""
-
-    def __init__(
-        self,
-        option_strings,
-        dest=argparse.SUPPRESS,
-        default=argparse.SUPPRESS,
-        help=None,
-    ):
-        super().__init__(
-            option_strings=option_strings,
-            dest=dest,
-            default=default,
-            nargs=0,
-            help=help,
-        )
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        print_help()
-        parser.exit()
-
-
 # For backward compatibility with tests
+
+
+def get_available_themes():
+    """Get a list of available theme names.
+
+    Returns:
+        list: A list of available theme names (without the .yaml extension).
+    """
+    # Get the directory where this module is located
+    module_dir = pathlib.Path(__file__).parent.absolute()
+    themes_dir = module_dir / "themes"
+    themes = []
+
+    if themes_dir.exists():
+        for file in os.listdir(themes_dir):
+            if file.endswith(".yaml"):
+                themes.append(file.replace(".yaml", ""))
+
+    return themes
+
+
+def get_command_line_options():
+    """Get a list of command line options with their descriptions.
+
+    Returns:
+        list: A list of tuples containing (option_string, help_text).
+    """
+    parser = argparse.ArgumentParser(
+        description="Generate documentation from source code.",
+        prog="nanodoc",
+        formatter_class=argparse.RawTextHelpFormatter,
+        add_help=False,  # Disable the default help flag
+    )
+    parser.add_argument("-v", action="store_true", help="Enable verbose mode")
+    parser.add_argument(
+        "-n",
+        action="count",
+        default=0,
+        help="Enable line number mode (one -n for file, two for all)",
+    )
+    parser.add_argument("--toc", action="store_true", help="Generate table of contents")
+    parser.add_argument("--no-header", action="store_true", help="Hide file headers")
+    parser.add_argument(
+        "--sequence",
+        choices=["numerical", "letter", "roman"],
+        help="How to format session numbers (numerical, letter, or roman)",
+    )
+    parser.add_argument(
+        "--style",
+        choices=["filename", "path", "nice"],
+        default="nice",
+        help="Header style: nice (default) filename or path",
+    )
+
+    parser.add_argument(
+        "--txt-ext",
+        action="append",
+        help="Add extensions to expand for (can be used multiple times)",
+        metavar="EXT",
+    )
+    parser.add_argument("sources", nargs="*", help="Source file(s)")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+
+    # Add theme selection option
+    available_themes = get_available_themes()
+    parser.add_argument(
+        "--theme",
+        choices=available_themes if available_themes else ["neutral"],
+        help="Select a theme for rendering help and guide content",
+    )
+
+    # Get all actions from the parser
+    options = []
+    for action in parser._actions:
+        # Skip positional arguments and version action
+        if not action.option_strings or action.dest == "version":
+            continue
+
+        # Format the option string
+        option_str = ", ".join(action.option_strings)
+
+        # Get the help text
+        help_text = action.help if action.help else ""
+
+        # Add to options list
+        options.append((option_str, help_text))
+
+    return options
 
 
 def parse_args():
@@ -119,8 +180,7 @@ def parse_args():
         "--style",
         choices=["filename", "path", "nice"],
         default="nice",
-        help="Header style: nice (default, formatted title), filename (just filename), "
-        "or path (full path)",
+        help="Header style: nice  (formatted title), filename or path.",
     )
 
     parser.add_argument(
@@ -132,6 +192,15 @@ def parse_args():
 
     parser.add_argument("sources", nargs="*", help="Source file(s)")
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+
+    # Add theme selection option
+    available_themes = get_available_themes()
+    parser.add_argument(
+        "--theme",
+        choices=available_themes if available_themes else ["neutral"],
+        help="Select a theme for rendering help and guide content",
+    )
+
     parser.add_argument(
         "-h", "--help", action=CustomHelpAction, help="Show help for command"
     )
@@ -160,10 +229,13 @@ def main():
     """Main entry point for the nanodoc application."""
     args = parse_args()
 
-    # short circuit for help
-    check_help(args)
+    # Import here to avoid circular imports
+    from .help import check_help
 
     try:
+        # short circuit for help
+        check_help(args)
+
         # Set up logging based on verbose flag
         setup_logging(to_stderr=True, enabled=args.v)
 
@@ -201,7 +273,7 @@ def main():
         )
         print(output)
     except Exception as e:
-        print(f"An error occurred: {e}", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 

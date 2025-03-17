@@ -1,4 +1,4 @@
-# Nanodoc
+# quickstart, user guide and ref doc.short. sweet
 
 Nanodoc is a minimalist document bundler designed for stiching hints, reminders
 and short docs. Useful for prompts, personalized docs highlights for your teams

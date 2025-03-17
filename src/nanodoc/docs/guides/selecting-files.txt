@@ -1,0 +1,94 @@
+1. Specifying Files in nanodoc
+
+call nanodoc with the files you want to process
+
+    # shell
+    nanodoc file1.txt file2.txt file3.md
+    # directories work too (expands all txt and md files, recursively)
+    nanodoc docs/
+    # combining them works too:
+    nanodoc docs/ file1.txt
+
+The files will be concatenated in the order they are provided.
+You can choose parts of a file only:
+
+    # shell
+    # lines 10 to 20 of file1.txt
+    nanodoc file1.txt:L10-20
+    # a single line works too
+    nanodoc file1.txt:L10
+    # as do multiple ranges
+    nanodoc file1.txt:L10-20,L30-40
+
+2. Bundle Files
+
+A bundle file is a file that contains the paths to what you want to include, that is, other files.
+
+    # bundle.txt content
+    file1.txt
+    file2.md
+    docs/
+    /absolute/path/to/file3.txt
+
+This comes handy for saving a curated selection to be called later.
+Bundle files must end with "bundle" or "bundle.<ext>", for example <filename>.bundle.txt.
+
+3. Live Bundle Files
+
+Live bundle files can mix text and file paths:
+
+    # livebundle.txt content
+    Introduction to the document
+    file1.txt
+    This text appears between files
+    file2.txt
+    Conclusion
+
+Any line that only contains a path will be replaced with the content of that file.
+
+3.1 Inline File Inclusion
+
+If you want to include a file's content inline (with no line breaks), use the @[file path] syntax:
+
+    #
+    This paragraph includes @[quote.txt] right in the middle of the text.
+
+For example, this sentence includes @[../live_bundles.txt:L5-5] as an inline quote.
+With this syntax, line breaks are removed, making it perfect for short snippets.
+
+3.2 Line References
+
+Use line references to include only specific parts of files:
+
+    #
+    Introduction
+    file1.txt:L10-20
+    Middle section
+    file1.txt:L50-60
+    Conclusion
+
+4. Complete Example
+
+Here's a real-world example of a live bundle:
+
+    # Example Live Bundle
+
+    This is a demonstration of the live bundle feature in nanodoc.
+    Below, we'll include the content of the specifying_files.txt document:
+
+    ../specifying_files.txt
+
+    As you can see, the file content is seamlessly integrated into this document.
+    We can also include specific sections of files using line references:
+
+    ../live_bundles.txt:L20-30
+
+    This makes it easy to create composite documents that include content from
+    multiple sources with your own commentary and transitions between sections.
+
+5. Getting Help
+
+Access this guide anytime using:
+
+    # shell
+    nanodoc help selecting-files
