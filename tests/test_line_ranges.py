@@ -101,7 +101,7 @@ def test_get_file_content_line_out_of_range(tmpdir):
 
     with pytest.raises(ValueError) as excinfo:
         get_file_content(file_path, line=10)
-    assert "Line reference out of range" in str(excinfo.value)
+    assert "Line 10 out of range (1-3)" in str(excinfo.value)
 
 
 def test_verify_path_with_line_reference_valid(tmpdir):

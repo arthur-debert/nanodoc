@@ -9,9 +9,7 @@ import os
 import re
 from typing import List, Tuple
 
-from .data import ContentItem, LineRange
-from .data import get_content as get_item_content
-from .data import validate_content_item
+from .data import ContentItem, LineRange, validate_content_item
 
 # Define text file extensions
 TXT_EXTENSIONS = [".txt", ".md", "txxt"]
@@ -190,84 +188,63 @@ def verify_content(content_item: ContentItem) -> ContentItem:
 def get_file_content(file_path, line=None, start=None, end=None, parts=None):
     """Get content from a file, optionally selecting specific lines or ranges.
 
+    This function handles getting content from regular files, and it also
+    handles converting `parts` from a list of `LineRange` objects to tuples.
+
     Args:
         file_path (str): The path to the file.
         line (int, optional): A specific line number to get (1-indexed).
         start (int, optional): The start line of a range (1-indexed).
         end (int, optional): The end line of a range (1-indexed).
-        parts (list, optional): A list of (start, end) tuples representing
-                               line ranges.
+        parts (list, optional): A list of (start, end) tuples or LineRange
+            objects representing line ranges.
 
     Returns:
         str: The selected content from the file.
 
     Raises:
         FileNotFoundError: If the file does not exist.
-        ValueError: If a line reference is out of range.
+        ValueError: If line references are out of range.
     """
-    # If parts is a list of LineRange objects, convert it to tuples
+    # Handle conversion of LineRange objects to tuples
     if parts and isinstance(parts[0], LineRange):
         with open(file_path, "r") as f:
-            max_lines = len(f.readlines())
-        parts = convert_line_ranges_to_tuples(parts, max_lines)
+            num_lines = len(f.readlines())
+        parts = convert_line_ranges_to_tuples(parts, num_lines)
 
-    # If we have a ContentItem, use its get_content method
-    if isinstance(file_path, ContentItem):
-        return get_item_content(file_path)
-
+    # Read all lines from the file
     try:
         with open(file_path, "r") as f:
             lines = f.readlines()
     except FileNotFoundError:
         raise FileNotFoundError(f"File not found: {file_path}")
 
-    # If no specific parts are requested, return the entire file
-    if (
-        line is None
-        and start is None
-        and end is None
-        and (parts is None or len(parts) == 0)
-    ):
-        return "".join(lines)
+    num_lines = len(lines)
+    result = []
 
-    # Convert to 0-indexed for internal use
-    max_line = len(lines)
-
-    # Handle single line
-    if line is not None:
-        if line <= 0 or line > max_line:
-            raise ValueError(
-                "Line reference out of range: " f"{line} (file has {max_line} lines)"
-            )
-        return lines[line - 1].rstrip("\n")
-
-    # Handle range
-    if start is not None and end is not None:
-        if start <= 0 or end <= 0 or start > max_line or end > max_line:
-            raise ValueError(
-                "Line reference out of range: "
-                f"{start}-{end} (file has {max_line} lines)"
-            )
-        # Join the lines and remove the trailing newline if present
-        content = "".join(lines[start - 1 : end])
-        return content.rstrip("\n")
-
-    # Handle multiple parts
-    if parts is not None:
-        result = []
-        for start, end in parts:
-            if start <= 0 or end <= 0 or start > max_line or end > max_line:
+    if line is not None:  # Single line
+        if not 1 <= line <= num_lines:
+            raise ValueError(f"Line {line} out of range (1-{num_lines})")
+        result.append(lines[line - 1])
+    elif start is not None and end is not None:  # Line range
+        if not 1 <= start <= num_lines or not 1 <= end <= num_lines or start > end:
+            raise ValueError(f"Invalid range {start}-{end} (1-{num_lines})")
+        result.extend(lines[start - 1 : end])
+    elif parts:  # Multiple parts
+        for start_line, end_line in parts:
+            if (
+                not 1 <= start_line <= num_lines
+                or not 1 <= end_line <= num_lines
+                or start_line > end_line
+            ):
                 raise ValueError(
-                    "Line reference out of range: "
-                    f"{start}-{end} (file has {max_line} lines)"
+                    f"Invalid range {start_line}-{end_line} (1-{num_lines})"
                 )
-            result.extend(lines[start - 1 : end])
-        # Join the lines and remove the trailing newline if present
-        content = "".join(result)
-        return content.rstrip("\n")
+            result.extend(lines[start_line - 1 : end_line])
+    else:  # Entire file
+        result = lines
 
-    # Default case
-    return "".join(lines)
+    return "".join(result).rstrip("\n")
 
 
 def expand_directory(directory, extensions=TXT_EXTENSIONS):
