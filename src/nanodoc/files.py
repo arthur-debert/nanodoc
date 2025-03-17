@@ -170,8 +170,9 @@ def verify_content(content_item: ContentItem) -> ContentItem:
 def get_file_content(file_path, line=None, start=None, end=None, parts=None):
     """Get content from a file, optionally selecting specific lines or ranges.
 
-    This function handles getting content from regular files, and it also
-    handles converting `parts` from a list of `LineRange` objects to tuples.
+    This function handles getting content from regular files with options to select
+    specific lines or ranges. It can handle single lines, line ranges, or multiple
+    parts of a file.
 
     Args:
         file_path (str): The path to the file.
@@ -181,6 +182,9 @@ def get_file_content(file_path, line=None, start=None, end=None, parts=None):
         parts (list, optional): A list of (start, end) tuples or LineRange
             objects representing line ranges.
 
+    Examples:
+        get_file_content("file.txt", line=5)  # Get line 5
+        get_file_content("file.txt", start=10, end=20)  # Get lines 10-20
     Returns:
         str: The selected content from the file.
 
@@ -188,45 +192,68 @@ def get_file_content(file_path, line=None, start=None, end=None, parts=None):
         FileNotFoundError: If the file does not exist.
         ValueError: If line references are out of range.
     """
-    # Handle conversion of LineRange objects to tuples
-    if parts and isinstance(parts[0], LineRange):
-        with open(file_path) as f:
-            num_lines = len(f.readlines())
-        parts = convert_line_ranges_to_tuples(parts, num_lines)
+    # Parameter validation
+    if not file_path:
+        raise ValueError("File path cannot be empty")
 
-    # Read all lines from the file
-    try:
-        with open(file_path) as f:
+    # Check for conflicting parameters
+    param_count = sum(x is not None for x in [line, start and end, parts])
+    if param_count > 1:
+        raise ValueError(
+            "Cannot specify multiple line selection methods simultaneously"
+        )
+
+    # Open the file once and handle potential errors
+    with open(file_path) as f:
+        # For single line or small range requests, we can optimize by not
+        # reading the entire file at once
+        if line is not None or (start is not None and end is not None):
             lines = f.readlines()
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {file_path}") from None
+            num_lines = len(lines)
 
-    num_lines = len(lines)
-    result = []
+            if line is not None:  # Single line
+                if not 1 <= line <= num_lines:
+                    raise ValueError(f"Line {line} out of range (1-{num_lines})")
+                return lines[line - 1].rstrip("\n")
 
-    if line is not None:  # Single line
-        if not 1 <= line <= num_lines:
-            raise ValueError(f"Line {line} out of range (1-{num_lines})")
-        result.append(lines[line - 1])
-    elif start is not None and end is not None:  # Line range
-        if not 1 <= start <= num_lines or not 1 <= end <= num_lines or start > end:
-            raise ValueError(ERR_INVALID_RANGE.format(start, end, num_lines))
-        result.extend(lines[start - 1 : end])
-    elif parts:  # Multiple parts
-        for start_line, end_line in parts:
-            if (
-                not 1 <= start_line <= num_lines
-                or not 1 <= end_line <= num_lines
-                or start_line > end_line
-            ):
-                raise ValueError(
-                    ERR_INVALID_RANGE.format(start_line, end_line, num_lines)
-                )
-            result.extend(lines[start_line - 1 : end_line])
-    else:  # Entire file
-        result = lines
+            elif start is not None and end is not None:  # Line range
+                if (
+                    not 1 <= start <= num_lines
+                    or not 1 <= end <= num_lines
+                    or start > end
+                ):
+                    raise ValueError(ERR_INVALID_RANGE.format(start, end, num_lines))
+                return "".join(lines[start - 1 : end]).rstrip("\n")
 
-    return "".join(result).rstrip("\n")
+        # Handle parts parameter
+        elif parts:
+            # Handle conversion of LineRange objects to tuples
+            if parts and isinstance(parts[0], LineRange):
+                # Get line count without reading all lines into memory if possible
+                f.seek(0)
+                num_lines = sum(1 for _ in f)
+                parts = convert_line_ranges_to_tuples(parts, num_lines)
+                f.seek(0)  # Reset file position
+
+            # Read all lines for parts processing
+            lines = f.readlines()
+            num_lines = len(lines)
+
+            result = []
+            for start_line, end_line in parts:
+                if (
+                    not 1 <= start_line <= num_lines
+                    or not 1 <= end_line <= num_lines
+                    or start_line > end_line
+                ):
+                    raise ValueError(
+                        ERR_INVALID_RANGE.format(start_line, end_line, num_lines)
+                    )
+                result.extend(lines[start_line - 1 : end_line])
+            return "".join(result).rstrip("\n")
+
+        else:  # Entire file
+            return f.read().rstrip("\n")
 
 
 def expand_directory(directory, extensions=TXT_EXTENSIONS):
