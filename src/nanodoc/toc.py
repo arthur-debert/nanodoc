@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List
+from typing import Dict, List
 
 from .data import ContentItem, get_content, line_range_to_string
 from .formatting import apply_style_to_filename, create_header
@@ -8,36 +8,40 @@ from .formatting import apply_style_to_filename, create_header
 logger = logging.getLogger("nanodoc")
 
 
-def generate_table_of_contents(content_items: List[ContentItem], style=None):
-    """Generate a table of contents for the given ContentItems.
+def group_content_items_by_file(
+    content_items: List[ContentItem],
+) -> Dict[str, List[ContentItem]]:
+    """Group ContentItems by file path.
 
     Args:
-        content_items (list): List of ContentItem objects
-        style (str): The header style (filename, path, nice, or None)
+        content_items (List[ContentItem]): List of ContentItem objects
 
     Returns:
-        tuple: (str, dict) The table of contents string and a dictionary
-               mapping source files to their line numbers in the final document
+        Dict[str, List[ContentItem]]: Dictionary mapping file paths to lists of
+            ContentItems
     """
-    logger.debug(f"Generating table of contents for {len(content_items)} items")
-
-    # Calculate line numbers for TOC
-    toc_line_numbers = {}
-    current_line = 0
-
-    # Calculate the size of the TOC header
-    toc_header_lines = 2  # Header line + blank line
-
-    # Group ContentItems by file path
     file_groups = {}
     for item in content_items:
         if item.file_path not in file_groups:
             file_groups[item.file_path] = []
         file_groups[item.file_path].append(item)
+    return file_groups
 
-    # Calculate the size of each TOC entry (filename + line number)
-    # Each file gets one entry, plus one subentry for each range if there are
-    # several ranges.
+
+def calculate_toc_size(file_groups: Dict[str, List[ContentItem]]) -> int:
+    """Calculate the total size of the table of contents.
+
+    Args:
+        file_groups (Dict[str, List[ContentItem]]): Dictionary mapping file
+            paths to ContentItems
+
+    Returns:
+        int: Total number of lines in the TOC
+    """
+    # Header line + blank line
+    toc_header_lines = 2
+
+    # Calculate the size of each TOC entry
     toc_entries_lines = 0
     for file_path, items in file_groups.items():
         toc_entries_lines += 1  # Main file entry
@@ -48,10 +52,25 @@ def generate_table_of_contents(content_items: List[ContentItem], style=None):
     toc_footer_lines = 1
 
     # Total TOC size
-    toc_size = toc_header_lines + toc_entries_lines + toc_footer_lines
+    return toc_header_lines + toc_entries_lines + toc_footer_lines
+
+
+def calculate_line_numbers(
+    file_groups: Dict[str, List[ContentItem]], toc_size: int
+) -> Dict[str, int]:
+    """Calculate line numbers for each file in the final document.
+
+    Args:
+        file_groups (Dict[str, List[ContentItem]]): Dictionary mapping file
+            paths to ContentItems
+        toc_size (int): Size of the table of contents in lines
+
+    Returns:
+        Dict[str, int]: Dictionary mapping file paths to their line numbers
+    """
+    toc_line_numbers = {}
     current_line = toc_size
 
-    # Calculate line numbers for each file
     for file_path, items in file_groups.items():
         # Add 3 for the file header (1 for the header line, 2 for blank lines)
         toc_line_numbers[file_path] = current_line + 3
@@ -66,26 +85,62 @@ def generate_table_of_contents(content_items: List[ContentItem], style=None):
             if len(items) > 1:
                 total_lines += 1
 
-        # Add file lines plus 3 for the header (1 for header, 2 for blank lines)
-        current_line += total_lines + 3  # 3 for header line and two blank lines
+        # Add file lines plus header (header line and two blank lines)
+        current_line += total_lines + 3
 
-    # Create TOC with line numbers
-    toc = ""
-    toc += "\n" + create_header("TOC", sequence=None, style=style) + "\n\n"
+    return toc_line_numbers
 
-    # Format filenames according to header style
+
+def format_filenames(
+    file_groups: Dict[str, List[ContentItem]], style=None
+) -> Dict[str, str]:
+    """Format filenames according to the specified style.
+
+    Args:
+        file_groups (Dict[str, List[ContentItem]]): Dictionary mapping file
+            paths to ContentItems
+        style (str): The header style (filename, path, nice, or None)
+
+    Returns:
+        Dict[str, str]: Dictionary mapping file paths to formatted filenames
+    """
     formatted_filenames = {}
     for file_path in file_groups.keys():
         filename = os.path.basename(file_path)
         formatted_name = apply_style_to_filename(filename, style, file_path)
         formatted_filenames[file_path] = formatted_name
+    return formatted_filenames
+
+
+def create_toc_content(
+    file_groups: Dict[str, List[ContentItem]],
+    formatted_filenames: Dict[str, str],
+    line_numbers: Dict[str, int],
+    style=None,
+) -> str:
+    """Create the table of contents content.
+
+    Args:
+        file_groups (Dict[str, List[ContentItem]]): Dictionary mapping file
+            paths to ContentItems
+        formatted_filenames (Dict[str, str]): Dictionary mapping file paths to
+            formatted filenames
+        line_numbers (Dict[str, int]): Dictionary mapping file paths to line
+            numbers
+        style (str): The header style (filename, path, nice, or None)
+
+    Returns:
+        str: The table of contents string
+    """
+    toc = ""
+    toc += "\n" + create_header("TOC", sequence=None, style=style) + "\n\n"
 
     max_filename_length = max(len(name) for name in formatted_filenames.values())
 
     # Add TOC entries
     for file_path, items in file_groups.items():
         formatted_name = formatted_filenames[file_path]
-        line_num = toc_line_numbers[file_path]
+        line_num = line_numbers[file_path]
 
         # Format the TOC entry with dots aligning the line numbers
         dots = "." * (max_filename_length - len(formatted_name) + 5)
@@ -103,5 +158,35 @@ def generate_table_of_contents(content_items: List[ContentItem], style=None):
                 toc += f"    {chr(97 + i)}. {range_str}\n"
 
     toc += "\n"
+    return toc
 
-    return toc, toc_line_numbers
+
+def generate_table_of_contents(content_items: List[ContentItem], style=None):
+    """Generate a table of contents for the given ContentItems.
+
+    Args:
+        content_items (list): List of ContentItem objects
+        style (str): The header style (filename, path, nice, or None)
+
+    Returns:
+        tuple: (str, dict) The table of contents string and a dictionary
+               mapping source files to their line numbers in the final document
+    """
+    logger.debug(f"Generating table of contents for {len(content_items)} items")
+
+    # Group ContentItems by file path
+    file_groups = group_content_items_by_file(content_items)
+
+    # Calculate the size of the TOC
+    toc_size = calculate_toc_size(file_groups)
+
+    # Calculate line numbers for each file
+    line_numbers = calculate_line_numbers(file_groups, toc_size)
+
+    # Format filenames according to header style
+    formatted_filenames = format_filenames(file_groups, style)
+
+    # Create TOC with line numbers
+    toc = create_toc_content(file_groups, formatted_filenames, line_numbers, style)
+
+    return toc, line_numbers
