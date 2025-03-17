@@ -66,9 +66,7 @@ repos:
     rev: v3.7.0-1
     hooks:
       - id: shfmt
-        # 2-space indentation, indent case, write changes
-        args: ["-i", "2", "-ci", "-bn", "-s", "-w"]
-        # binary ops may start a line
+        args: ["-w"] # Only need write mode, other settings from .editorconfig
         stages: [pre-commit]
 
   # Add prettier for comprehensive formatting across multiple languages
@@ -77,16 +75,7 @@ repos:
     hooks:
       - id: prettier
         # Let Prettier handle all file types it supports natively
-        # Including JS/TS, HTML, CSS, JSON, YAML, Markdown, GraphQL, etc.
-        args:
-          [
-            "--print-width",
-            "80",
-            "--prose-wrap",
-            "always",
-            "--end-of-line",
-            "lf",
-          ]
+        # Configuration in .prettierrc.json
         additional_dependencies:
           - prettier@3.1.0
         stages: [pre-commit]
@@ -105,13 +94,14 @@ repos:
     hooks:
       - id: isort
         files: '\.py$'
+        # Configuration in pyproject.toml [tool.isort]
         stages: [pre-commit]
-        args: ["--profile", "black"]
   - repo: https://github.com/psf/black
     rev: 24.2.0
     hooks:
       - id: black
         files: '\.py$'
+        # Configuration in pyproject.toml [tool.black]
         stages: [pre-commit]
   # Python formatting
   - repo: https://github.com/pycqa/autoflake

@@ -66,4 +66,13 @@ exclude = [
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-maxfail = 200
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+include = '\.pyi?$'
+exclude = '/(\.git|\.hg|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist)/'

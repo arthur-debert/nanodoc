@@ -10,7 +10,7 @@ from rich.console import Console
 
 from .core import process_all
 from .files import TXT_EXTENSIONS, get_files_from_args
-from .help import create_themed_console, get_available_themes
+from .formatting import create_themed_console, get_available_themes
 from .version import VERSION
 
 # Initialize console for rich output - will be updated with theme later
