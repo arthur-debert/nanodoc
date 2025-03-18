@@ -141,3 +141,4 @@ debian-build/
 *.deb
 **/__pycache__/**
 local/**
+tests/smoke/*
