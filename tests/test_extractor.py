@@ -292,20 +292,6 @@ def test_gather_content_with_original_source(tmp_path):
     assert result[0].content == file_content
 
 
-@pytest.mark.skip(reason="This test is not implemented yet")
-def test_resolve_files_with_custom_bundle_extensions():
-    """Test resolving files with custom bundle extensions."""
-    file_paths = [
-        "/path/to/file1.txt",
-        "/path/to/bundle.custom",  # Using a custom extension
-    ]
-    result = resolve_files(file_paths, bundle_extensions=[".ndoc", ".bundle"])
-
-    assert len(result) == 2
-    assert result[0].is_bundle is False
-    assert result[1].is_bundle is True
-
-
 def test_resolve_files_with_bundle_extensions():
     """Test resolving files with various bundle extensions."""
     file_paths = [

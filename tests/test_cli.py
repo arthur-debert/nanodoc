@@ -11,7 +11,6 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from nanodoc.core import run
-from nanodoc.document import Document
 
 
 def test_run_basic():
@@ -152,71 +151,3 @@ def test_run_without_toc(sample_files):
     assert "file2.md" in result
     assert "Heading 1" in result
     assert "Heading 2" in result
-
-
-@pytest.mark.skip(
-    reason="Needs more complete mocking to properly test the run pipeline"
-)
-@patch("nanodoc.renderer.render_document")
-@patch("nanodoc.document.build_document")
-@patch("nanodoc.formatter.apply_theme_to_document")
-def test_toc_flag_propagation(
-    mock_theme,
-    mock_build,
-    mock_render,
-    sample_files,
-):
-    """Test that the generate_toc flag is correctly propagated."""
-    # Setup mocks
-    mock_document = Document(content_items=[])
-    mock_build.return_value = mock_document
-    mock_theme.return_value = mock_document
-    mock_render.return_value = "Mocked content"
-
-    # Call run with generate_toc=True
-    run(
-        sources=sample_files,
-        line_number_mode=None,
-        generate_toc=True,
-        theme=None,
-        show_header=True,
-    )
-
-    # Verify render_document was called with include_toc=True
-    mock_render.assert_called()
-    kwargs = mock_render.call_args.kwargs
-    assert kwargs.get("include_toc") is True
-
-
-@pytest.mark.skip(
-    reason="Needs more complete mocking to properly test the run pipeline"
-)
-@patch("nanodoc.renderer.render_document")
-@patch("nanodoc.document.build_document")
-@patch("nanodoc.formatter.apply_theme_to_document")
-def test_line_number_flag_propagation(
-    mock_theme,
-    mock_build,
-    mock_render,
-    sample_files,
-):
-    """Test that the line_number_mode flag is correctly propagated."""
-    # Setup mocks
-    mock_document = Document(content_items=[])
-    mock_build.return_value = mock_document
-    mock_theme.return_value = mock_document
-    mock_render.return_value = "Mocked content"
-
-    # Call run with line_number_mode="all"
-    run(
-        sources=sample_files,
-        line_number_mode="all",
-        generate_toc=False,
-        theme=None,
-        show_header=True,
-    )
-
-    # Verify render_document was called with include_line_numbers=True
-    mock_render.assert_called()
-    kwargs = mock_render.call_args.kwargs
-    assert kwargs.get("include_line_numbers") is True

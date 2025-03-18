@@ -216,43 +216,6 @@ def test_milestone_6():
         )
 
 
-@pytest.mark.skip(reason="Not implemented yet")
-def test_milestone_7():
-    """Test bundle processing with include/inline directives."""
-    test_file = str(FIXTURES_DIR / "test_bundle.ndoc")
-
-    # Process through the pipeline
-    paths = resolve_paths([test_file])
-    file_contents = resolve_files(paths)
-    content_items = gather_content(file_contents)
-    document = build_document(content_items)
-
-    # Test the rendered output
-    rendered = render_document(document)
-
-    # The bundle should include content from:
-    # 1. The bundle file itself
-    # 2. The included file1.py
-    assert "bundle_function" in rendered
-    assert "function_1" in rendered
-
-    # Test that the document structure is correct:
-    # 1. Bundle is processed first
-    # 2. Included content maintains proper relationship
-    assert len(document.content_items) >= 2
-
-    # The first item should be the bundle
-    assert document.content_items[0].is_bundle is True
-    assert "test_bundle.ndoc" in document.content_items[0].filepath
-
-    # Second item should be inlined content
-    if len(document.content_items) > 1:
-        assert document.content_items[1].is_bundle is False
-        # Check that it has original_source pointing to the bundle
-        if hasattr(document.content_items[1], "original_source"):
-            assert document.content_items[1].original_source is not None
-
-
 def test_resolve_single_file(fixture_content_item):
     """Test resolving a single file path."""
     paths = resolve_paths([fixture_content_item.file_path])
