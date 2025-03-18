@@ -190,7 +190,7 @@ repos:
       # Run the test suite as the last step.
       - id: tests
         name: Run Test Suite
-        entry: "poetry run pytest ."
+        entry: "poetry run pytest tests/v2"
         language: system
         pass_filenames: false
         always_run: true

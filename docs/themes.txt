@@ -4,7 +4,7 @@ This directory contains theme files for nanodoc's Rich terminal output. Themes c
 
  Available Themes
 
-- neutral.yaml: Default theme with subtle colors
+- classic.yaml: Default theme with subtle colors
 - classic-light.yaml: Light theme with classic typography and subtle background colors
 - classic-dark.yaml: Dark theme with high contrast and vibrant colors
 

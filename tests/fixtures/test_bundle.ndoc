@@ -1,0 +1,6 @@
+# Test Bundle
+@include ./test_file1.py
+def bundle_function():
+    """A function in the bundle."""
+    pass
+@inline ./test_file2.py
