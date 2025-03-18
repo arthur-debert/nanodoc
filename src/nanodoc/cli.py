@@ -15,7 +15,7 @@ from .version import VERSION
 
 # v2 import
 try:
-    from .v2.cli import process_v2
+    from .v2.core import process_v2
 
     V2_AVAILABLE = True
 except ImportError:

@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from nanodoc.v2.cli import process_v2
+from nanodoc.v2.core import process_v2
 from nanodoc.v2.document import Document
 
 
