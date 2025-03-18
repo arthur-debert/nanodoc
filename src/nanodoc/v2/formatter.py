@@ -20,13 +20,15 @@ from nanodoc.v2.structures import Document
 DEFAULT_THEME = "neutral"
 
 # Initialize logger
-logger = logging.getLogger("nanodoc")
+logger = logging.getLogger("formatter")
 
 
 def _get_themes_dir():
     """Return the path to the themes directory."""
     module_dir = pathlib.Path(__file__).parent.parent.absolute()
-    return module_dir / "themes"
+    themes_dir = module_dir / "themes"
+    logger.debug("Using themes directory: %s", themes_dir)
+    return themes_dir
 
 
 def get_available_themes() -> list[str]:
@@ -43,7 +45,7 @@ def get_available_themes() -> list[str]:
             if file.endswith(".yaml"):
                 themes.append(file.replace(".yaml", ""))
 
-    logger.debug(f"Available themes: {themes}")
+    logger.debug("Found available themes: %s", themes)
     return themes
 
 
@@ -56,28 +58,33 @@ def load_theme(theme_name=DEFAULT_THEME) -> Theme:
     Returns:
         Theme: A Rich Theme object.
     """
+    logger.debug("Loading theme: %s", theme_name)
     themes_dir = _get_themes_dir()
     theme_path = themes_dir / f"{theme_name}.yaml"
 
     # Fall back to default theme if the requested theme doesn't exist
     if not theme_path.exists():
-        logger.warning(f"Theme '{theme_name}' not found, using default theme")
+        logger.warning(
+            "Theme '%s' not found, falling back to default theme", theme_name
+        )
         theme_path = themes_dir / f"{DEFAULT_THEME}.yaml"
 
     # Load the theme from YAML
     try:
         with open(theme_path, encoding="utf-8") as f:
             theme_data = yaml.safe_load(f)
+            logger.debug("Loaded theme data from %s", theme_path)
 
         # Convert the YAML data to a Rich Theme
         styles = {}
         for key, value in theme_data.items():
             styles[key] = Style.parse(value)
+            logger.debug("Parsed style %s: %s", key, value)
 
-        logger.debug(f"Theme '{theme_name}' loaded successfully")
+        logger.debug("Theme '%s' loaded successfully", theme_name)
         return Theme(styles)
     except Exception as e:
-        logger.error(f"Error loading theme: {e}")
+        logger.error("Error loading theme: %s", e)
         # Return a minimal default theme if there's an error
         return Theme(
             {
@@ -98,6 +105,7 @@ def create_themed_console(theme_name=None) -> Console:
     """
     if theme_name is None:
         theme_name = DEFAULT_THEME
+    logger.debug("Creating console with theme: %s", theme_name)
 
     theme = load_theme(theme_name)
     return Console(theme=theme)
@@ -121,12 +129,20 @@ def apply_theme_to_document(
     Returns:
         Document: The document with theming information
     """
+    logger.debug(
+        "Applying theme to document (theme: %s, rich: %s)",
+        theme_name or "default",
+        use_rich_formatting,
+    )
+
     if not use_rich_formatting:
+        logger.debug("Rich formatting disabled, skipping theme application")
         return document
 
     # Store theme info in the document for later use
     document.theme_name = theme_name
     document.use_rich_formatting = use_rich_formatting
+    logger.debug("Theme information stored in document")
 
     return document
 
@@ -144,6 +160,10 @@ def format_with_line_numbers(
     Returns:
         str: Content with line numbers added
     """
+    logger.debug(
+        "Adding line numbers (start: %d, format: %s)", start_number, number_format
+    )
+
     lines = content.split("\n")
     numbered_lines = []
 
@@ -151,6 +171,7 @@ def format_with_line_numbers(
         line_num = start_number + i
         numbered_lines.append(f"{number_format.format(line_num)}{line}")
 
+    logger.debug("Added line numbers to %d lines", len(lines))
     return "\n".join(numbered_lines)
 
 
@@ -159,37 +180,40 @@ def enhance_rendering(
     theme_name: Optional[str] = None,
     use_rich_formatting: bool = True,
 ) -> str:
-    """Enhance rendered content with Rich formatting.
+    """Enhance rendered content with Rich formatting."""
+    logger.debug(
+        "Enhancing content with theme: %s (rich: %s)",
+        theme_name or "default",
+        use_rich_formatting,
+    )
 
-    Args:
-        plain_content: Plain text content to enhance
-        theme_name: Theme to use for styling
-        use_rich_formatting: Whether to use Rich for formatting
-
-    Returns:
-        str: Enhanced content with Rich formatting
-    """
     if not use_rich_formatting:
+        logger.debug("Rich formatting disabled, returning plain content")
         return plain_content
 
     # Create a string buffer to capture the output
     from io import StringIO
 
     buffer = StringIO()
+
     # Create a new console with the theme
     theme = load_theme(theme_name or DEFAULT_THEME)
     console_buffer = Console(file=buffer, theme=theme)
 
     # Process the content line by line to apply styles
     lines = plain_content.split("\n")
+    styled_count = 0
+
     for line in lines:
         # Apply heading styles
         if line.startswith("# "):
             console_buffer.print(line, style="heading.1")
+            styled_count += 1
         elif line.startswith("## "):
             console_buffer.print(line, style="heading.2")
-        # Add more styling rules as needed
+            styled_count += 1
         else:
             console_buffer.print(line)
 
+    logger.debug("Applied styling to %d lines", styled_count)
     return buffer.getvalue()

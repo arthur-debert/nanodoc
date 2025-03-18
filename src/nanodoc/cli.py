@@ -15,7 +15,7 @@ from .version import VERSION
 
 # v2 import
 try:
-    from .v2.cli import process_v2
+    from .v2.core import process_v2
 
     V2_AVAILABLE = True
 except ImportError:
@@ -31,22 +31,46 @@ logger.setLevel(logging.INFO)  # Set default level to INFO
 
 def setup_logging(to_stderr=False, enabled=False):
     """Configure logging based on requirements."""
-    global logger
-    if not logger.hasHandlers():
-        level = logging.DEBUG if enabled else logging.INFO
-        logger.setLevel(level)
+    # Configure root logger first
+    level = logging.DEBUG if enabled else logging.INFO
 
-        stream = sys.stderr if to_stderr else sys.stdout
-        handler = logging.StreamHandler(stream)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-    else:
-        level = logging.DEBUG if enabled else logging.INFO
-        logger.setLevel(level)
-    return logger
+    # Configure basic logging
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(sys.stderr if to_stderr else sys.stdout)],
+    )
+
+    # Configure all module loggers
+    module_names = [
+        "nanodoc",  # Main logger
+        "cli",  # V2 CLI
+        "document",  # V2 Document
+        "formatter",  # V2 Formatter
+        "renderer",  # V2 Renderer
+        "resolver",  # V2 Resolver
+        "extractor",  # V2 Extractor
+    ]
+
+    for name in module_names:
+        module_logger = logging.getLogger(name)
+        module_logger.setLevel(level)
+        module_logger.propagate = False  # Prevent duplicate logging
+
+        # Remove any existing handlers to prevent duplicate logging
+        module_logger.handlers.clear()
+
+        # Add handler if the logger doesn't have one
+        if not module_logger.handlers:
+            stream = sys.stderr if to_stderr else sys.stdout
+            handler = logging.StreamHandler(stream)
+            fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            formatter = logging.Formatter(fmt)
+            handler.setFormatter(formatter)
+            module_logger.addHandler(handler)
+
+    # Return main logger for compatibility
+    return logging.getLogger("nanodoc")
 
 
 # Define Click context settings
