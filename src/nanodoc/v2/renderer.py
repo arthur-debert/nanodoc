@@ -57,7 +57,12 @@ def render_document(
 
             # Add file header
             file_basename = os.path.basename(item.filepath)
-            rendered_parts.append(f"# {file_basename}\n\n")
+            # Create a nicer format like "Filename (filename.ext)"
+            file_name_without_ext = os.path.splitext(file_basename)[0]
+            nice_name = file_name_without_ext.replace("_", " ").replace("-", " ")
+            nice_name = nice_name.title()
+            nice_header = f"{nice_name} ({file_basename})"
+            rendered_parts.append(f"\n{nice_header}\n\n")
 
         # Add the content with optional line numbers
         content_to_add = item.content

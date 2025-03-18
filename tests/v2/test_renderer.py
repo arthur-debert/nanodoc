@@ -30,9 +30,13 @@ def test_render_document_basic():
     result = render_document(document)
 
     # Check result
-    assert "# file1.txt" in result
     assert "Content of file 1" in result
-    assert "# file2.txt" in result
+    assert "File2 (file2.txt)" in result
+    assert "Content of file 2" in result
+
+    assert "File1 (file1.txt)" in result
+    assert "Content of file 1" in result
+    assert "File2 (file2.txt)" in result
     assert "Content of file 2" in result
 
 
@@ -66,12 +70,12 @@ def test_render_document_with_inline_content():
     result = render_document(document)
 
     # Check result
-    assert "# bundle.txt" in result
+    assert "Bundle (bundle.txt)" in result
     assert "Bundle content" in result
     # Inlined content should not have its own header
-    assert "# inlined.txt" not in result
+    assert "Inlined (inlined.txt)" not in result
     assert "Inlined content" in result
-    assert "# regular.txt" in result
+    assert "Regular (regular.txt)" in result
     assert "Regular content" in result
 
 
@@ -90,7 +94,7 @@ def test_render_document_with_line_numbers():
     result = render_document(document, include_line_numbers=True)
 
     # Check result
-    assert "# file1.txt" in result
+    assert "File1 (file1.txt)" in result
     assert "   1 | Line 1" in result
     assert "   2 | Line 2" in result
     assert "   3 | Line 3" in result

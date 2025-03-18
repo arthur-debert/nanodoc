@@ -137,7 +137,7 @@ def test_milestone_4():
             with tempfile.NamedTemporaryFile(
                 suffix=".py", delete=False, mode="w"
             ) as temp:
-                temp.write(f"# File {i+1}\n\ndef function_{i+1}():\n    pass\n")
+                temp.write(f"# File {i + 1}\n\ndef function_{i + 1}():\n    pass\n")
                 test_files.append(temp.name)
 
         # Process the files through the pipeline
@@ -159,8 +159,8 @@ def test_milestone_4():
 
         # Check that content is included
         for i in range(3):
-            assert f"File {i+1}" in rendered
-            assert f"function_{i+1}" in rendered
+            assert f"File {i + 1}" in rendered
+            assert f"function_{i + 1}" in rendered
     finally:
         for file_path in test_files:
             if os.path.exists(file_path):
@@ -217,7 +217,7 @@ def test_milestone_6():
             with tempfile.NamedTemporaryFile(
                 suffix=".py", delete=False, mode="w"
             ) as temp:
-                temp.write(f"# File {i+1}\n\ndef function_{i+1}():\n    pass\n")
+                temp.write(f"# File {i + 1}\n\ndef function_{i + 1}():\n    pass\n")
                 test_files.append(temp.name)
 
         # Test basic output
@@ -228,8 +228,8 @@ def test_milestone_6():
             check=True,
         )
         for i in range(3):
-            assert f"File {i+1}" in result.stdout
-            assert f"function_{i+1}" in result.stdout
+            assert f"File {i + 1}" in result.stdout
+            assert f"function_{i + 1}" in result.stdout
 
         # Test with TOC
         result = subprocess.run(

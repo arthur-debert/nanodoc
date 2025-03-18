@@ -32,7 +32,11 @@ def resolve_files(
         ValueError: If a range specifier is invalid
     """
     if bundle_extensions is None:
-        bundle_extensions = [".ndoc"]
+        # Default bundle extensions to recognize:
+        # - .ndoc (primary extension for v2)
+        # - .bundle (any file ending in .bundle)
+        # - .bundle.* (any file ending in .bundle.something)
+        bundle_extensions = [".ndoc", ".bundle"]
 
     result = []
 
@@ -41,8 +45,17 @@ def resolve_files(
         path, ranges = _parse_path_and_ranges(file_path)
 
         # Determine if this file is a bundle
+        is_bundle = False
+
+        # Check direct extension match
         _, ext = os.path.splitext(path)
-        is_bundle = ext.lower() in bundle_extensions
+        if ext.lower() in bundle_extensions:
+            is_bundle = True
+
+        # Check for .bundle.* pattern (e.g., .bundle.txt, .bundle.md)
+        basename = os.path.basename(path)
+        if ".bundle." in basename.lower():
+            is_bundle = True
 
         # Create FileContent object
         file_content = FileContent(filepath=path, ranges=ranges, is_bundle=is_bundle)

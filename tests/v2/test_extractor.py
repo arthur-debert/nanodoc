@@ -278,3 +278,32 @@ def test_gather_content_with_original_source(tmp_path):
     assert result[0].is_bundle is False
     assert result[0].original_source == "/path/to/source.txt"
     assert result[0].content == file_content
+
+
+def test_resolve_files_with_custom_bundle_extensions():
+    """Test resolving files with custom bundle extensions."""
+    file_paths = ["/path/to/file1.ndoc", "/path/to/file2.txt"]
+    result = resolve_files(file_paths, bundle_extensions=[".ndoc", ".bundle"])
+
+    assert len(result) == 2
+    assert result[0].is_bundle is True
+    assert result[1].is_bundle is False
+
+
+def test_resolve_files_with_bundle_extensions():
+    """Test resolving files with various bundle extensions."""
+    file_paths = [
+        "/path/to/file1.ndoc",  # Default bundle extension
+        "/path/to/file2.bundle",  # Direct .bundle extension
+        "/path/to/file3.bundle.txt",  # .bundle.* pattern
+        "/path/to/file4.txt",  # Regular file
+    ]
+
+    # Use default bundle extensions
+    result = resolve_files(file_paths)
+
+    assert len(result) == 4
+    assert result[0].is_bundle is True  # .ndoc file
+    assert result[1].is_bundle is True  # .bundle file
+    assert result[2].is_bundle is True  # .bundle.txt file
+    assert result[3].is_bundle is False  # .txt file
