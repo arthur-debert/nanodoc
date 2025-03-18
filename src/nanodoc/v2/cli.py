@@ -4,10 +4,10 @@ This module provides the bridge between the CLI and the v2 implementation.
 """
 
 import logging
-import os
 import sys
 from typing import Optional
 
+from nanodoc.v2.boot import configure_logging
 from nanodoc.v2.document import CircularDependencyError, build_document
 from nanodoc.v2.extractor import gather_content, resolve_files
 from nanodoc.v2.formatter import apply_theme_to_document
@@ -16,33 +16,6 @@ from nanodoc.v2.resolver import resolve_paths
 
 # Initialize logger
 logger = logging.getLogger("cli")
-
-
-def configure_logging(verbose: bool = False):
-    """Configure logging based on environment and CLI flags."""
-    log_level = logging.WARNING  # Default level
-
-    # Check environment variable or verbose flag
-    if os.environ.get("NANODOC_VERBOSE") or verbose:
-        log_level = logging.DEBUG
-
-    # Configure root logger
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
-    # Ensure all our module loggers are set to the same level
-    module_names = ["cli", "document", "formatter", "renderer", "resolver", "extractor"]
-    for name in module_names:
-        module_logger = logging.getLogger(name)
-        module_logger.setLevel(log_level)
-
-    logger.debug(
-        "Logging configured with level: %s",
-        "DEBUG" if log_level == logging.DEBUG else "WARNING",
-    )
 
 
 def process_v2(
@@ -69,6 +42,9 @@ def process_v2(
         FileNotFoundError: If a file cannot be found
         ValueError: If there are invalid arguments or parameters
     """
+    # Configure logging with default settings
+    configure_logging()
+
     logger.debug("Entering process_v2")
     logger.info(f"Processing with v2 implementation: {sources}")
 
