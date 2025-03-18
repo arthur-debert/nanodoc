@@ -37,8 +37,27 @@ def process_v2(
     """
     logger.info(f"Processing with v2 implementation: {sources}")
 
+    # Filter sources to remove any CLI options that might have been passed
+    # accidentally. This is a safeguard in case the main CLI didn't properly
+    # separate options from sources.
+    filtered_sources = [
+        source
+        for source in sources
+        if not source.startswith("--") and not source.startswith("-")
+    ]
+
+    if len(filtered_sources) != len(sources):
+        invalid_sources = set(sources) - set(filtered_sources)
+        logger.warning(
+            f"Filtered out {len(sources) - len(filtered_sources)} "
+            f"invalid sources: {invalid_sources}"
+        )
+
+    if not filtered_sources:
+        raise ValueError("No valid source files provided")
+
     # Stage 1: Resolve Paths
-    resolved_paths = resolve_paths(sources)
+    resolved_paths = resolve_paths(filtered_sources)
     logger.debug(f"Resolved paths: {resolved_paths}")
 
     # Stage 2: Resolve Files
