@@ -66,9 +66,18 @@ architecture.
 - **Focus:** Add the finishing touches and ensure the redesigned Nanodoc meets
   all functional requirements.
 
-## Milestone 6: Documentation and Cleanup
+## Milestone 6: CLI Integration
 
 - **Deliverables:**
+  - Implement CLI integration
+  - Test CLI integration
+- **Focus:** Make the new implementation accessible through the command line.
+
+## Milestone 7: Documentation and Cleanup
+
+- **Deliverables:**
+  - Refactor existing code to integrate with the new architecture.
+  - Comprehensive integration tests.
   - Update documentation (README, usage instructions).
   - Code cleanup and refactoring.
   - Final testing and bug fixes.
@@ -76,17 +85,15 @@ architecture.
 
 ## Progress Tracking
 
-| Stage | Description                    | Status      | Completion Date |
-| ----- | ------------------------------ | ----------- | --------------- |
-| 0     | Setup and Infrastructure       | Not Started |                 |
-| 1     | Path Resolution                | Completed   | 2024-03-17      |
-| 2     | Content Extraction             | Completed   | 2024-03-17      |
-| 3     | Document Construction          | Completed   | 2024-05-02      |
-| 4     | Content Formatting             | Not Started |                 |
-| 5     | Rendering                      | Not Started |                 |
-| 6     | Pipeline Integration           | Not Started |                 |
-| 7     | CLI Integration                | Not Started |                 |
-| 8     | Documentation and Finalization | Not Started |                 |
+| Milestone | Description                            | Status      | Completion Date |
+| --------- | -------------------------------------- | ----------- | --------------- |
+| 1         | Core Data Structures & Path Resolution | Completed   | 2024-03-17      |
+| 2         | File Resolving & Content Gathering     | Completed   | 2024-03-17      |
+| 3         | Building the Document                  | Completed   | 2024-05-02      |
+| 4         | Rendering and TOC Generation           | Completed   | 2024-05-05      |
+| 5         | Formatting, Theming, and Options       | Completed   | 2024-05-05      |
+| 6         | CLI Integration                        | Completed   | 2024-05-09      |
+| 7         | Documentation and Cleanup              | Not Started |                 |
 
 ## Testing Strategy
 

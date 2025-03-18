@@ -13,6 +13,14 @@ from .files import TXT_EXTENSIONS, get_files_from_args
 from .formatting import create_themed_console, get_available_themes
 from .version import VERSION
 
+# v2 import
+try:
+    from .v2.cli import process_v2
+
+    V2_AVAILABLE = True
+except ImportError:
+    V2_AVAILABLE = False
+
 # Initialize console for rich output - will be updated with theme later
 console = Console()
 
@@ -97,25 +105,29 @@ class NanodocGroup(click.Group):
     type=click.Choice(get_available_themes()),
     help="Select theme for rendering",
 )
+@click.option(
+    "--use-v2",
+    is_flag=True,
+    help="Use the v2 implementation of nanodoc",
+)
 @click.argument("sources", nargs=-1, required=False)
 @click.version_option(version=VERSION)
 @click.pass_context
-def cli(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, sources):
-    """A minimalist document bundler for hints, reminders and docs."""
-    # Set up logging based on verbose flag
-    setup_logging(to_stderr=True, enabled=v)
+def cli(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, use_v2, sources):
+    """Nanodoc: A tool for creating documentation from source files.
 
-    logger.info(f"CLI called with theme: {theme}")
-
-    # Store theme in context for use by subcommands
+    SOURCES are files, globs, or directories to include in the output.
+    """
+    # Store configuration in context object
     ctx.ensure_object(dict)
+    ctx.obj["verbose"] = v
     ctx.obj["theme"] = theme
+    ctx.obj["use_v2"] = use_v2
 
-    # Update console with selected theme if provided
-    global console
-    if theme:
-        logger.info(f"Creating console with theme: {theme}")
-        console = create_themed_console(theme)
+    # Set up logging based on verbose flag
+    if v:
+        setup_logging(to_stderr=True, enabled=True)
+        logger.debug("Verbose mode enabled")
 
     # If no subcommand is provided, run the process command with the given options
     if ctx.invoked_subcommand is None and sources:
@@ -129,6 +141,7 @@ def cli(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, sources):
             sequence=sequence,
             style=style,
             txt_ext=txt_ext,
+            use_v2=use_v2,
             sources=sources,
         )
     elif ctx.invoked_subcommand is None:
@@ -166,9 +179,16 @@ def cli(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, sources):
     type=click.Choice(get_available_themes()),
     help="Select theme for rendering",
 )
+@click.option(
+    "--use-v2",
+    is_flag=True,
+    help="Use the v2 implementation of nanodoc",
+)
 @click.argument("sources", nargs=-1, required=True)
 @click.pass_context
-def process(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, sources):
+def process(
+    ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, use_v2, sources
+):
     """Process source files and generate documentation.
 
     SOURCES are the files or directories to process.
@@ -198,6 +218,28 @@ def process(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, sources)
         else:  # n >= 2
             line_number_mode = "all"
 
+        # Check if v2 implementation should be used
+        if use_v2 or (ctx.obj and ctx.obj.get("use_v2", False)):
+            if not V2_AVAILABLE:
+                logger.warning("V2 implementation requested but not available")
+                click.echo(
+                    "Warning: V2 implementation not available, using v1 instead",
+                    err=True,
+                )
+            else:
+                logger.info("Using v2 implementation")
+                # Use the v2 implementation
+                result = process_v2(
+                    sources=list(sources),
+                    line_number_mode=line_number_mode,
+                    generate_toc=toc,
+                    theme=theme,
+                    show_header=not no_header,
+                )
+                console.print(result)
+                return
+
+        # If v2 not requested or not available, continue with v1 implementation
         # Process additional file extensions if provided
         extensions = list(TXT_EXTENSIONS)  # Create a copy of the default extensions
         if txt_ext:
@@ -218,26 +260,24 @@ def process(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, sources)
             content_items = get_files_from_args(sources)
 
         # Process the files and print the result
-        if not content_items:
-            click.echo("Error: No valid source files found.", err=True)
-            sys.exit(1)
-
-        output = process_all(
+        result = process_all(
             content_items,
-            line_number_mode,
-            toc,
-            not no_header,
-            sequence,
-            style,
+            line_number_mode=line_number_mode,
+            generate_toc=toc,
+            show_header=not no_header,
+            sequence=sequence,
+            style=style,
         )
-        logger.info("Rendering output with console")
-        console.print(output)
-
+        console.print(result)
     except Exception as e:
-        err_msg = f"Error: {e}"
-        logger.error(f"Error in process command: {e}", exc_info=True)
-        click.echo(err_msg, err=True)
-        sys.exit(1)
+        logger.error(f"Error processing files: {e}", exc_info=v)
+        if v:
+            # In verbose mode, show the full traceback
+            raise
+        else:
+            # In normal mode, show a friendly error message
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
 
 
 def _get_docs_dir():
