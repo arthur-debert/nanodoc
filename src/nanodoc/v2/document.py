@@ -6,12 +6,16 @@ creates new FileContent objects for inlined content, flattens the structure into
 a Document object, and detects circular dependencies.
 """
 
+import logging
 import os
 import re
 from typing import Optional
 
 from nanodoc.v2.extractor import gather_content, resolve_files
 from nanodoc.v2.structures import Document, FileContent
+
+# Initialize logger
+logger = logging.getLogger("document")
 
 
 class CircularDependencyError(Exception):
@@ -39,6 +43,8 @@ def build_document(file_contents: list[FileContent]) -> Document:
     Raises:
         CircularDependencyError: If a circular dependency is detected
     """
+    logger.debug("Starting document build with %d file contents", len(file_contents))
+
     # Initialize document with empty content items
     document = Document(content_items=[])
 
@@ -47,13 +53,16 @@ def build_document(file_contents: list[FileContent]) -> Document:
 
     # Process each file content
     for file_content in file_contents:
-        # Process content (handling bundles recursively)
+        logger.debug("Processing file: %s", file_content.filepath)
         process_content(
             file_content=file_content,
             document=document,
             processed_files=processed_files,
         )
 
+    logger.debug(
+        "Document build complete with %d content items", len(document.content_items)
+    )
     return document
 
 
@@ -75,21 +84,27 @@ def process_content(
         CircularDependencyError: If a circular dependency is detected
     """
     filepath = file_content.filepath
+    logger.debug(
+        "Processing content from %s (parent: %s)", filepath, parent_bundle or "None"
+    )
 
     # If this file is already being processed in the current branch, we have a cycle
     if filepath in processed_files:
         parent_info = f" from {parent_bundle}" if parent_bundle else ""
         msg = f"Circular dependency detected: {filepath}"
         msg += f" included{parent_info}"
+        logger.error(msg)
         raise CircularDependencyError(msg)
 
     # If it's not a bundle file, add it directly to the document
     if not file_content.is_bundle:
+        logger.debug("Adding non-bundle file directly: %s", filepath)
         document.content_items.append(file_content)
         return
 
     # Mark this file as being processed
     processed_files.add(filepath)
+    logger.debug("Processing bundle file: %s", filepath)
 
     try:
         # Parse and process directives
@@ -101,6 +116,7 @@ def process_content(
     finally:
         # Remove from processed set after we're done with this branch
         processed_files.remove(filepath)
+        logger.debug("Completed processing bundle: %s", filepath)
 
 
 def process_bundle_directives(
@@ -115,24 +131,23 @@ def process_bundle_directives(
         document: Document object to update
         processed_files: Set of already processed file paths
     """
+    logger.debug("Processing directives in bundle: %s", file_content.filepath)
+
     # Parse lines looking for directives
     lines = file_content.content.splitlines()
     current_content = []
 
-    for line in lines:
+    for line_num, line in enumerate(lines, 1):
         # Check for inline directive: @inline <file_path>[:<range>]
         inline_match = re.match(r"@inline\s+(.+)", line.strip())
         if inline_match:
-            # If we have accumulated content, add it first
+            logger.debug(
+                "Found @inline directive at line %d: %s",
+                line_num,
+                inline_match.group(1),
+            )
             if current_content:
-                inline_content = FileContent(
-                    filepath=file_content.filepath,
-                    ranges=[],  # Not applicable for inline content
-                    content="\n".join(current_content) + "\n",
-                    is_bundle=False,
-                    original_source=file_content.filepath,
-                )
-                document.content_items.append(inline_content)
+                _add_current_content(current_content, file_content, document)
                 current_content = []
 
             # Process the inline directive
@@ -148,16 +163,13 @@ def process_bundle_directives(
         # Check for include directive: @include <file_path>[:<range>]
         include_match = re.match(r"@include\s+(.+)", line.strip())
         if include_match:
-            # If we have accumulated content, add it first
+            logger.debug(
+                "Found @include directive at line %d: %s",
+                line_num,
+                include_match.group(1),
+            )
             if current_content:
-                inline_content = FileContent(
-                    filepath=file_content.filepath,
-                    ranges=[],  # Not applicable for inline content
-                    content="\n".join(current_content) + "\n",
-                    is_bundle=False,
-                    original_source=file_content.filepath,
-                )
-                document.content_items.append(inline_content)
+                _add_current_content(current_content, file_content, document)
                 current_content = []
 
             # Process the include directive
@@ -175,14 +187,26 @@ def process_bundle_directives(
 
     # Add any remaining content
     if current_content:
-        inline_content = FileContent(
-            filepath=file_content.filepath,
-            ranges=[],  # Not applicable for inline content
-            content="\n".join(current_content) + "\n",
-            is_bundle=False,
-            original_source=file_content.filepath,
-        )
-        document.content_items.append(inline_content)
+        _add_current_content(current_content, file_content, document)
+
+
+def _add_current_content(
+    current_content: list[str],
+    file_content: FileContent,
+    document: Document,
+) -> None:
+    """Helper to add accumulated content to document."""
+    inline_content = FileContent(
+        filepath=file_content.filepath,
+        ranges=[],  # Not applicable for inline content
+        content="\n".join(current_content) + "\n",
+        is_bundle=False,
+        original_source=file_content.filepath,
+    )
+    document.content_items.append(inline_content)
+    logger.debug(
+        "Added %d lines of content from %s", len(current_content), file_content.filepath
+    )
 
 
 def process_inline_directive(
@@ -204,17 +228,21 @@ def process_inline_directive(
         processed_files: Set of already processed file paths
         parent_bundle: Path of the parent bundle
     """
+    logger.debug("Processing @inline directive: %s from %s", inline_path, parent_bundle)
+
     # Resolve the path (handle relative paths)
     if not os.path.isabs(inline_path):
         resolved_path = os.path.join(base_path, inline_path)
     else:
         resolved_path = inline_path
+    logger.debug("Resolved inline path: %s", resolved_path)
 
     # Create a FileContent object for the inlined file
     inlined_files = resolve_files([resolved_path])
 
     if not inlined_files:
         # Handle case where the file doesn't exist
+        logger.error("Could not find inlined file: %s", inline_path)
         error_msg = f"ERROR: Could not find inlined file: {inline_path}\n"
         error_content = FileContent(
             filepath=parent_bundle,
@@ -229,6 +257,7 @@ def process_inline_directive(
     try:
         # Get content for the inlined file
         inlined_with_content = gather_content(inlined_files)
+        logger.debug("Gathered %d content items from inline", len(inlined_with_content))
 
         # Mark inlined content as being from the original source
         for content in inlined_with_content:
@@ -244,6 +273,7 @@ def process_inline_directive(
             )
     except FileNotFoundError:
         # Handle case where the file doesn't exist or can't be read
+        logger.error("Could not find or read inlined file: %s", inline_path)
         error_msg = f"ERROR: Could not find inlined file: {inline_path}\n"
         error_content = FileContent(
             filepath=parent_bundle,
@@ -273,17 +303,23 @@ def process_include_directive(
         processed_files: Set of already processed file paths
         parent_bundle: Path of the parent bundle
     """
+    logger.debug(
+        "Processing @include directive: %s from %s", include_path, parent_bundle
+    )
+
     # Resolve the path (handle relative paths)
     if not os.path.isabs(include_path):
         resolved_path = os.path.join(base_path, include_path)
     else:
         resolved_path = include_path
+    logger.debug("Resolved include path: %s", resolved_path)
 
     # Create a FileContent object for the included file
     included_files = resolve_files([resolved_path])
 
     if not included_files:
         # Handle case where the file doesn't exist
+        logger.error("Could not find included file: %s", include_path)
         error_msg = f"ERROR: Could not find included file: {include_path}\n"
         error_content = FileContent(
             filepath=parent_bundle,
@@ -298,6 +334,9 @@ def process_include_directive(
     try:
         # Get content for the included file
         included_with_content = gather_content(included_files)
+        logger.debug(
+            "Gathered %d content items from include", len(included_with_content)
+        )
 
         # Process the included content (handle nested bundles)
         for content in included_with_content:
@@ -309,6 +348,7 @@ def process_include_directive(
             )
     except FileNotFoundError:
         # Handle case where the file doesn't exist or can't be read
+        logger.error("Could not find or read included file: %s", include_path)
         error_msg = f"ERROR: Could not find included file: {include_path}\n"
         error_content = FileContent(
             filepath=parent_bundle,
