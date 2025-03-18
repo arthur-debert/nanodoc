@@ -61,6 +61,8 @@ architecture.
 - **Deliverables:**
   - Implement formatting options (line numbers, etc.).
   - Implement theming/styling capabilities.
+  - Refactor existing code to integrate with the new architecture.
+  - Comprehensive integration tests.
 - **Focus:** Add the finishing touches and ensure the redesigned Nanodoc meets
   all functional requirements.
 
@@ -89,7 +91,7 @@ architecture.
 | 2         | File Resolving & Content Gathering     | Completed   | 2024-03-17      |
 | 3         | Building the Document                  | Completed   | 2024-05-02      |
 | 4         | Rendering and TOC Generation           | Completed   | 2024-05-05      |
-| 5         | Formatting, Theming, and Options       | Not Started |                 |
+| 5         | Formatting, Theming, and Options       | Completed   | 2024-05-05      |
 | 6         | CLI Integration                        | Not Started |                 |
 | 7         | Documentation and Cleanup              | Not Started |                 |
 

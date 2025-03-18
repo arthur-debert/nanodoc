@@ -4,7 +4,7 @@ This module defines the core data structures used throughout the Nanodoc v2
 implementation, including Range and FileContent.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 # A Range can be represented as a simple tuple (start, end) where
@@ -38,7 +38,12 @@ class Document:
     Attributes:
         content_items: Ordered list of content blocks
         toc: Table of contents data
+        theme_name: Name of the theme to use for styling
+        use_rich_formatting: Whether to use Rich formatting
     """
 
     content_items: list[FileContent]
     toc: list = None  # Will be defined in more detail later
+    theme_name: Optional[str] = None
+    use_rich_formatting: bool = False
+    formatting_options: dict = field(default_factory=dict)

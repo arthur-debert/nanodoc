@@ -8,6 +8,10 @@ including basic concatenation of FileContent content and TOC generation.
 import os
 import re
 
+from nanodoc.v2.formatter import (
+    enhance_rendering,
+    format_with_line_numbers,
+)
 from nanodoc.v2.structures import Document
 
 
@@ -56,10 +60,12 @@ def render_document(
             rendered_parts.append(f"# {file_basename}\n\n")
 
         # Add the content with optional line numbers
+        content_to_add = item.content
         if include_line_numbers:
-            rendered_parts.append(_add_line_numbers(item.content))
-        else:
-            rendered_parts.append(item.content)
+            # Use the formatter's line numbering function
+            content_to_add = format_with_line_numbers(content_to_add)
+
+        rendered_parts.append(content_to_add)
 
         # Ensure content ends with a newline
         if rendered_parts and not rendered_parts[-1].endswith("\n"):
@@ -68,7 +74,18 @@ def render_document(
         # Track the source for the next iteration
         prev_original_source = item.original_source or item.filepath
 
-    return "".join(rendered_parts)
+    # Join all parts to create the final content
+    plain_content = "".join(rendered_parts)
+
+    # Apply theming if requested
+    if hasattr(document, "use_rich_formatting") and document.use_rich_formatting:
+        return enhance_rendering(
+            plain_content,
+            theme_name=document.theme_name,
+            use_rich_formatting=document.use_rich_formatting,
+        )
+
+    return plain_content
 
 
 def generate_toc(document: Document) -> str:
@@ -149,6 +166,8 @@ def _extract_headings(document: Document) -> dict[str, list[tuple[str, int]]]:
     return headings_by_file
 
 
+# This function is no longer used directly - formatter.format_with_line_numbers
+# is used instead, but keeping it here to avoid breaking tests
 def _add_line_numbers(content: str) -> str:
     """Add line numbers to content.
 
@@ -158,11 +177,4 @@ def _add_line_numbers(content: str) -> str:
     Returns:
         Content with line numbers
     """
-    lines = content.split("\n")
-    numbered_lines = []
-
-    for i, line in enumerate(lines):
-        line_num = i + 1
-        numbered_lines.append(f"{line_num:4d} | {line}")
-
-    return "\n".join(numbered_lines)
+    return format_with_line_numbers(content)
