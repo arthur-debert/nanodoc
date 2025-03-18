@@ -92,7 +92,7 @@ architecture.
 | 3         | Building the Document                  | Completed   | 2024-05-02      |
 | 4         | Rendering and TOC Generation           | Completed   | 2024-05-05      |
 | 5         | Formatting, Theming, and Options       | Completed   | 2024-05-05      |
-| 6         | CLI Integration                        | Not Started |                 |
+| 6         | CLI Integration                        | Completed   | 2024-05-09      |
 | 7         | Documentation and Cleanup              | Not Started |                 |
 
 ## Testing Strategy
