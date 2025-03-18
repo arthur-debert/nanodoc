@@ -1,71 +1,37 @@
 """Tests for the CLI integration of Nanodoc v2."""
 
 import os
+import tempfile
 from unittest.mock import MagicMock, mock_open, patch
-
-import pytest
 
 from nanodoc.v2.cli import process_v2
 
 
-@pytest.mark.skip(reason="Issues with Rich console theme mocking")
 def test_process_v2_basic():
-    """Test the basic functionality of process_v2."""
+    """Test the basic functionality of process_v2 with a theme."""
+    # Create a temporary test file
+    with tempfile.NamedTemporaryFile(suffix=".py", mode="w+") as f:
+        f.write("def test_function():\n    return True\n")
+        f.flush()
 
-    # Define a simple enhance function to replace the original
-    def mock_enhance(plain_content, **kwargs):
-        return "rendered content"
-
-    # Use regular patches instead of patch.multiple
-    with (
-        patch("nanodoc.v2.resolver.os.path.isfile", return_value=True),
-        patch("nanodoc.v2.resolver.os.path.isdir", return_value=False),
-        patch("nanodoc.v2.resolver.resolve_paths") as mock_resolve_paths,
-        patch("nanodoc.v2.extractor.open", mock_open(read_data="file content")),
-        patch("nanodoc.v2.extractor.resolve_files") as mock_resolve_files,
-        patch("nanodoc.v2.extractor.gather_content") as mock_gather_content,
-        patch("nanodoc.v2.document.build_document") as mock_build_document,
-        patch("nanodoc.v2.formatter.apply_theme_to_document") as mock_format,
-        patch("nanodoc.v2.renderer.render_document") as mock_render,
-        patch("nanodoc.v2.formatter.enhance_rendering", side_effect=mock_enhance),
-    ):
-        # Set up the mocks
-        mock_resolve_paths.return_value = ["path1", "path2"]
-        mock_resolve_files.return_value = ["file_content1", "file_content2"]
-        mock_gather_content.return_value = ["content_item1", "content_item2"]
-
-        # Create document mock
-        document_mock = MagicMock()
-        document_mock.content_items = ["content_item1", "content_item2"]
-        mock_build_document.return_value = document_mock
-
-        # Set up formatter/renderer mocks
-        mock_format.return_value = document_mock
-        mock_render.return_value = "plain content"
-
-        # Call the function
+        # Call the process_v2 function with a theme
         result = process_v2(
-            sources=["source1", "source2"],
+            sources=[f.name],
             line_number_mode="file",
             generate_toc=True,
             theme="neutral",
             show_header=True,
         )
 
-        # Verify the result
-        assert result == "rendered content"
+        # Basic verification
+        assert "def test_function()" in result
+        assert "return True" in result
 
-        # Verify the calls
-        mock_resolve_paths.assert_called_once_with(["source1", "source2"])
-        mock_resolve_files.assert_called_once_with(["path1", "path2"])
-        mock_gather_content.assert_called_once_with(["file_content1", "file_content2"])
-        mock_build_document.assert_called_once_with(["content_item1", "content_item2"])
-        mock_format.assert_called_once_with(
-            document_mock, theme_name="neutral", use_rich_formatting=True
-        )
-        mock_render.assert_called_once_with(
-            document_mock, include_toc=True, include_line_numbers=True
-        )
+        # Check line numbers are included (line_number_mode="file")
+        assert "1 |" in result or "1|" in result
+
+        # Check file name is in the output (from show_header=True)
+        assert os.path.basename(f.name) in result
 
 
 def test_process_v2_without_formatting():

@@ -166,7 +166,7 @@ def test_format_with_line_numbers_custom_format():
 def test_enhance_rendering():
     """Test enhancing rendered content with Rich formatting."""
     with (
-        patch("nanodoc.v2.formatter.create_themed_console") as mock_console,
+        patch("nanodoc.v2.formatter.load_theme") as mock_load_theme,
         patch("rich.console.Console.print") as mock_print,
     ):
         content = "# Heading 1\nContent\n## Heading 2\nMore content"
@@ -174,8 +174,8 @@ def test_enhance_rendering():
         # since we're mocking the console output
         enhance_rendering(content, theme_name="test-theme")
 
-        # Check that the console was created
-        mock_console.assert_called_once()
+        # Check that the theme was loaded
+        mock_load_theme.assert_called_once()
 
         # Check that the content was printed
         assert mock_print.call_count == 4

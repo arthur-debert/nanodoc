@@ -172,14 +172,13 @@ def enhance_rendering(
     if not use_rich_formatting:
         return plain_content
 
-    # Create a console with the specified theme
-    console = create_themed_console(theme_name)
-
     # Create a string buffer to capture the output
     from io import StringIO
 
     buffer = StringIO()
-    console_buffer = Console(file=buffer, theme=console.theme)
+    # Create a new console with the theme
+    theme = load_theme(theme_name or DEFAULT_THEME)
+    console_buffer = Console(file=buffer, theme=theme)
 
     # Process the content line by line to apply styles
     lines = plain_content.split("\n")
