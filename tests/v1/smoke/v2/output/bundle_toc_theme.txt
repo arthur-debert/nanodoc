@@ -1,0 +1,11 @@
+# Table of Contents
+
+- main.ndoc
+  - Main file
+  - @include sub.ndoc
+
+# Main file
+def main():
+    print("Hello world")
+
+# @include sub.ndoc

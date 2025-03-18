@@ -9,7 +9,6 @@ import logging
 import os
 import re
 
-from nanodoc.formatting import create_header
 from nanodoc.v2.formatter import (
     enhance_rendering,
     format_with_line_numbers,
@@ -18,6 +17,22 @@ from nanodoc.v2.structures import Document
 
 # Initialize logger
 logger = logging.getLogger("nanodoc")
+
+
+def create_header(text: str, style: str = None) -> str:
+    """Create a header for a file.
+
+    A simpler V2 implementation that just returns the text as is,
+    since we handle styling through the formatter module.
+
+    Args:
+        text: The text to use for the header
+        style: The style to apply (ignored in V2)
+
+    Returns:
+        The header text
+    """
+    return text
 
 
 def render_document(
@@ -105,14 +120,20 @@ def render_document(
 
 
 def generate_toc(document: Document) -> str:
-    """Generate a table of contents from a Document.
+    """Generate a table of contents for a Document.
 
     Args:
         document: Document object to generate TOC for
 
     Returns:
-        Table of contents as a string
+        str: Table of contents as a string
     """
+    toc_parts = []
+
+    # Add TOC header
+    toc_parts.append(create_header("Table of Contents", style="filename"))
+    toc_parts.append("\n")
+
     # Extract headings from content
     headings = _extract_headings(document)
 
@@ -122,26 +143,22 @@ def generate_toc(document: Document) -> str:
         logger.debug("No headings found for TOC")
         return ""
 
-    # Create the TOC header using the same function as the test
-    toc_header = create_header("TOC", style="filename")
-    toc_lines = [f"{toc_header}\n\n"]
-
     for file_path, file_headings in headings.items():
         # Add file entry
         filename = os.path.basename(file_path)
-        toc_lines.append(f"- {filename}\n")
+        toc_parts.append(f"- {filename}\n")
 
         # Add headings for this file
         for heading, _ in file_headings:
             # Indent heading
-            toc_lines.append(f"  - {heading}\n")
+            toc_parts.append(f"  - {heading}\n")
 
-    toc_lines.append("\n")  # Add blank line after TOC
+    toc_parts.append("\n")  # Add blank line after TOC
 
     # Store TOC data in the document for future reference
     document.toc = headings
 
-    toc_content = "".join(toc_lines)
+    toc_content = "".join(toc_parts)
     logger.debug(f"Generated TOC content: {toc_content}")
     return toc_content
 
@@ -215,4 +232,10 @@ def _add_line_numbers(content: str) -> str:
     Returns:
         Content with line numbers
     """
-    return format_with_line_numbers(content)
+    lines = content.split("\n")
+    numbered_lines = []
+
+    for i, line in enumerate(lines, start=1):
+        numbered_lines.append(f"{i:4d}: {line}")
+
+    return "\n".join(numbered_lines)

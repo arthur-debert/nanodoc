@@ -1,36 +1,103 @@
-"""Test configuration module."""
+"""Global pytest fixtures."""
 
-import logging
 import os
-import sys
+from pathlib import Path
 
 import pytest
 
-from tests.boot import (
-    MODULE_LOGGERS,
-    cleanup_test_logging,
-    configure_test_logging,
-)
+from nanodoc.v1.data import ContentItem
 
-# Add the src directory to the Python path
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
-)
-
-# Set verbose logging for all tests
-os.environ["NANODOC_VERBOSE"] = "1"
-
-
-@pytest.fixture(autouse=True)
-def setup_logging():
-    """Configure logging for all tests automatically."""
-    configure_test_logging(MODULE_LOGGERS)
-    yield
-    cleanup_test_logging(MODULE_LOGGERS)
+# Import test utilities from the same directory
+utils_path = os.path.join(os.path.dirname(__file__), "utils.py")
+with open(utils_path) as f:
+    exec(f.read(), globals())
 
 
 @pytest.fixture
-def caplog(caplog):
-    """Fixture to capture log messages."""
-    caplog.set_level(logging.DEBUG)
-    return caplog
+def fixtures_dir() -> Path:
+    """Get the fixtures directory path."""
+    return Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(
+    params=[
+        "cake.txt",
+        "incident.txt",
+        "new-telephone.txt",
+        "test_file1.py",
+        "test_file2.py",
+        "test_bundle.ndoc",
+    ]
+)
+def fixture_file(request) -> str:
+    """A parametrized fixture that provides access to test fixture files.
+
+    Usage:
+        def test_something(fixture_file):
+            # fixture_file will be each of the files in sequence
+            content = read_fixture(fixture_file)
+            ...
+    """
+    return request.param
+
+
+@pytest.fixture
+def fixture_content(fixture_file: str) -> str:
+    """Get the content of a fixture file.
+
+    This fixture depends on fixture_file, so it will also be parametrized.
+
+    Usage:
+        def test_something(fixture_file, fixture_content):
+            # fixture_file is the name
+            # fixture_content is the actual content
+            assert "some text" in fixture_content
+    """
+    return read_fixture(fixture_file)
+
+
+@pytest.fixture
+def fixture_path(fixture_file: str) -> Path:
+    """Get the path to a fixture file.
+
+    This fixture depends on fixture_file, so it will also be parametrized.
+
+    Usage:
+        def test_something(fixture_file, fixture_path):
+            # fixture_file is the name
+            # fixture_path is the full path
+            assert fixture_path.exists()
+    """
+    return get_fixture_path(fixture_file)
+
+
+FIXTURE_FILES = [
+    "cake.txt",
+    "incident.txt",
+    "new-telephone.txt",
+    "test_file1.py",
+    "test_file2.py",
+    "test_bundle.ndoc",
+]
+
+
+@pytest.fixture(params=FIXTURE_FILES)
+def fixture_content_item(request) -> ContentItem:
+    """A parametrized fixture that provides ContentItem instances for test files.
+
+    This is the preferred way to access fixture files in tests. It provides
+    a complete ContentItem object that can be used with the nanodoc functions.
+
+    The fixture is parametrized, so tests using it will run once for each
+    fixture file.
+
+    Usage:
+        def test_something(fixture_content_item):
+            # fixture_content_item is a ContentItem instance
+            result = run_all([fixture_content_item], ...)
+            assert result ...
+
+    Returns:
+        ContentItem instance for the current fixture file
+    """
+    return create_fixture_content_item(request.param)

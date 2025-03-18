@@ -1,0 +1,175 @@
+
+Core (core.py)
+
+   1 | import logging
+   2 | import os
+   3 | from typing import Optional
+   4 |
+   5 | from .data import (
+   6 |     ContentItem,
+   7 |     get_content,
+   8 |     is_full_file,
+   9 |     line_range_to_string,
+  10 |     normalize_line_range,
+  11 | )
+  12 | from .formatting import create_header
+  13 | from .toc import generate_table_of_contents
+  14 |
+  15 | logger = logging.getLogger("nanodoc")
+  16 | logger.setLevel(logging.CRITICAL)  # Start with logging disabled
+  17 |
+  18 |
+  19 | def process_file(
+  20 |     content_item: ContentItem,
+  21 |     line_number_mode: Optional,
+  22 |     line_counter: int,
+  23 |     show_header: bool = True,
+  24 |     sequence: Optional = None,
+  25 |     seq_index: int = 0,
+  26 |     style: Optional = None,
+  27 | ) -> tuple:
+  28 |     """Process a single ContentItem and format its content.
+  29 |
+  30 |     Args:
+  31 |         content_item (ContentItem): The ContentItem to process.
+  32 |         line_number_mode (str): The line numbering mode ('file', 'all',
+  33 |                                or None).
+  34 |         line_counter (int): The current global line counter.
+  35 |         show_header (bool): Whether to show the header.
+  36 |         sequence (str): The header sequence type (numerical, letter, roman,
+  37 |                         or None).
+  38 |         seq_index (int): The index of the file in the sequence.
+  39 |         style (str): The header style (filename, path, nice, or None).
+  40 |
+  41 |     Returns:
+  42 |         tuple: (str, int) Processed file content with header and line
+  43 |                numbers, and the number of lines in the file.
+  44 |     """
+  45 |     logger.debug(
+  46 |         f"Processing file: {content_item.file_path}, "
+  47 |         f"line_number_mode: {line_number_mode}, "
+  48 |         f"line_counter: {line_counter}, "
+  49 |         f"ranges: {}"
+  50 |     )
+  51 |     try:
+  52 |         # Get the content from the ContentItem
+  53 |         get_content(content_item)
+  54 |
+  55 |         # We need to get all lines to determine the actual line numbers
+  56 |         with open(content_item.file_path) as f:
+  57 |             all_lines = f.readlines()
+  58 |
+  59 |         # Create a list of lines to include with their original line numbers
+  60 |         lines_with_numbers = []
+  61 |         for range_obj in content_item.ranges:
+  62 |             max_lines = len(all_lines)
+  63 |             start, end = normalize_line_range(range_obj, max_lines)
+  64 |             for i in range(start - 1, end):
+  65 |                 if i < len(all_lines):
+  66 |                     lines_with_numbers.append((i + 1, all_lines))
+  67 |
+  68 |         # Sort by line number to maintain order
+  69 |         lines_with_numbers.sort(key=lambda x: x[0])
+  70 |     except FileNotFoundError:
+  71 |         return f"Error: File not found: {content_item.file_path}\n", 0
+  72 |
+  73 |     output = ""
+  74 |     if show_header:
+  75 |         header = (
+  76 |             "\n"
+  77 |             + create_header(
+  78 |                 os.path.basename(content_item.file_path),
+  79 |                 sequence=sequence,
+  80 |                 seq_index=seq_index,
+  81 |                 style=style,
+  82 |                 original_path=content_item.file_path,
+  83 |             )
+  84 |             + "\n\n"
+  85 |         )
+  86 |         output = header
+  87 |
+  88 |     for i, (line_num, line) in enumerate(lines_with_numbers):
+  89 |         line_number = ""
+  90 |         if line_number_mode == "all":
+  91 |             line_number = f"{line_counter + i + 1:4d}: "
+  92 |         elif line_number_mode == "file":
+  93 |             line_number = f"{line_num:4d}: "
+  94 |         output += line_number + line
+  95 |
+  96 |     # Add a blank line if this is a partial content item (not a full file)
+  97 |     if not (len(content_item.ranges) == 1 and is_full_file(content_item.ranges[0])):
+  98 |         output += "\n"
+  99 |
+ 100 |     return output, len(lines_with_numbers)
+ 101 |
+ 102 |
+ 103 | def process_all(
+ 104 |     content_items: list[ContentItem],
+ 105 |     line_number_mode: Optional = None,
+ 106 |     generate_toc: bool = False,
+ 107 |     show_header: bool = True,
+ 108 |     sequence: Optional = None,
+ 109 |     style: Optional = None,
+ 110 | ) -> str:
+ 111 |     """Process all ContentItems and combine them into a single document.
+ 112 |
+ 113 |     This is the main entry point for both command-line usage and testing.
+ 114 |
+ 115 |     Args:
+ 116 |         content_items (list): list of ContentItem objects.
+ 117 |         line_number_mode (str): Line numbering mode ('file', 'all', or None).
+ 118 |         generate_toc (bool): Whether to generate a table of contents.
+ 119 |         show_header (bool): Whether to show headers.
+ 120 |         sequence (str): The header sequence type (numerical, letter, roman,
+ 121 |                         or None).
+ 122 |         style (str): The header style (filename, path, nice, or None).
+ 123 |
+ 124 |     Returns:
+ 125 |         str: The combined content of all files with formatting.
+ 126 |     """
+ 127 |     logger.debug(
+ 128 |         f"Processing all files, line_number_mode: {line_number_mode}, "
+ 129 |         f"generate_toc: {generate_toc}"
+ 130 |     )
+ 131 |     output_buffer = ""
+ 132 |     line_counter = 0
+ 133 |
+ 134 |     # Group ContentItems by file path
+ 135 |     file_groups = {}
+ 136 |     for item in content_items:
+ 137 |         if item.file_path not in file_groups:
+ 138 |             file_groups = []
+ 139 |         file_groups.append(item)
+ 140 |
+ 141 |     # Generate table of contents if needed
+ 142 |     toc = ""
+ 143 |     if generate_toc:
+ 144 |         toc, _ = generate_table_of_contents(content_items, style)
+ 145 |
+ 146 |     # Reset line counter for actual file processing
+ 147 |     line_counter = 0
+ 148 |
+ 149 |     # Process each file group
+ 150 |     for file_index, (_, items) in enumerate(file_groups.items()):
+ 151 |         # Process each ContentItem for this file
+ 152 |         for item in items:
+ 153 |             if line_number_mode == "file":
+ 154 |                 line_counter = 0
+ 155 |
+ 156 |             file_output, num_lines = process_file(
+ 157 |                 item,
+ 158 |                 line_number_mode,
+ 159 |                 line_counter,
+ 160 |                 show_header,
+ 161 |                 sequence,
+ 162 |                 file_index,
+ 163 |                 style,
+ 164 |             )
+ 165 |             output_buffer += file_output
+ 166 |             line_counter += num_lines
+ 167 |
+ 168 |     if generate_toc:
+ 169 |         output_buffer = toc + output_buffer
+ 170 |
+ 171 |     return output_buffer
+ 172 |

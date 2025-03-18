@@ -1,77 +1,24 @@
-"""Command-line interface for nanodoc using Click."""
+"""Command-line interface for nanodoc."""
 
 import logging
-import os
-import pathlib
 import sys
 
 import click
-from rich.console import Console
 
-from .core import process_all
-from .files import TXT_EXTENSIONS, get_files_from_args
-from .formatting import create_themed_console, get_available_themes
-from .version import VERSION
+from . import VERSION
+from .v1.core import run as run_v1
 
-# v2 import
+# Initialize logger
+logger = logging.getLogger("nanodoc")
+
+# Try importing v2 implementation
 try:
-    from .v2.core import process_v2
+    from .v2.core import run as run_v2
 
     V2_AVAILABLE = True
 except ImportError:
     V2_AVAILABLE = False
-
-# Initialize console for rich output - will be updated with theme later
-console = Console()
-
-# Initialize logger
-logger = logging.getLogger("nanodoc")
-logger.setLevel(logging.INFO)  # Set default level to INFO
-
-
-def setup_logging(to_stderr=False, enabled=False):
-    """Configure logging based on requirements."""
-    # Configure root logger first
-    level = logging.DEBUG if enabled else logging.INFO
-
-    # Configure basic logging
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(sys.stderr if to_stderr else sys.stdout)],
-    )
-
-    # Configure all module loggers
-    module_names = [
-        "nanodoc",  # Main logger
-        "cli",  # V2 CLI
-        "document",  # V2 Document
-        "formatter",  # V2 Formatter
-        "renderer",  # V2 Renderer
-        "resolver",  # V2 Resolver
-        "extractor",  # V2 Extractor
-    ]
-
-    for name in module_names:
-        module_logger = logging.getLogger(name)
-        module_logger.setLevel(level)
-        module_logger.propagate = False  # Prevent duplicate logging
-
-        # Remove any existing handlers to prevent duplicate logging
-        module_logger.handlers.clear()
-
-        # Add handler if the logger doesn't have one
-        if not module_logger.handlers:
-            stream = sys.stderr if to_stderr else sys.stdout
-            handler = logging.StreamHandler(stream)
-            fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            formatter = logging.Formatter(fmt)
-            handler.setFormatter(formatter)
-            module_logger.addHandler(handler)
-
-    # Return main logger for compatibility
-    return logging.getLogger("nanodoc")
-
+    logger.warning("V2 implementation not available")
 
 # Define Click context settings
 CONTEXT_SETTINGS = {
@@ -80,397 +27,78 @@ CONTEXT_SETTINGS = {
 }
 
 
-# Custom Group class that handles the "help" command differently
-class NanodocGroup(click.Group):
-    def get_command(self, ctx, cmd_name):
-        # First try to get the command normally
-        rv = click.Group.get_command(self, ctx, cmd_name)
-        if rv is not None:
-            return rv
-
-        # If the command is not found and it's "help", handle it specially
-        if cmd_name == "help":
-            return self.commands["help"]
-
-        return None
+def setup_logging(verbose: bool) -> None:
+    """Set up logging based on verbosity level."""
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.WARNING)
 
 
-# For backward compatibility, we need to handle the case where options are passed
-# directly to the main command instead of to the 'process' subcommand
-@click.group(
-    cls=NanodocGroup, context_settings=CONTEXT_SETTINGS, invoke_without_command=True
-)
-@click.option("-v", is_flag=True, help="Enable verbose mode")
-@click.option(
-    "-n",
-    count=True,
-    help="Line number mode (one -n for file, two for all)",
-)
-@click.option("--toc", is_flag=True, help="Generate table of contents")
-@click.option("--no-header", is_flag=True, help="Hide file headers")
-@click.option(
-    "--sequence",
-    type=click.Choice(["numerical", "letter", "roman"]),
-    help="Add sequence numbers to headers",
-)
+@click.command()
+@click.argument("sources", nargs=-1, type=click.Path(exists=True))
+@click.option("-v", "--verbose", is_flag=True, help="Enable verbose output.")
+@click.option("--toc", is_flag=True, help="Generate table of contents.")
+@click.option("-n", count=True, help="Line number mode (one -n for file, two for all)")
+@click.option("--theme", type=str, help="Theme to use for output.")
+@click.option("--no-header", is_flag=True, help="Don't show file headers.")
+@click.option("--sequence", type=click.Choice(["numerical", "letter", "roman"]))
 @click.option(
     "--style",
     type=click.Choice(["filename", "path", "nice"]),
     default="nice",
-    help="Header style: nice, filename or path",
+    help="Header style",
 )
-@click.option(
-    "--txt-ext",
-    multiple=True,
-    help="Add file extensions to search for",
-)
-@click.option(
-    "--theme",
-    type=click.Choice(get_available_themes()),
-    help="Select theme for rendering",
-)
-@click.option(
-    "--use-v2",
-    is_flag=True,
-    default=True,
-    help="Use v2 implementation (default: True)",
-)
-@click.argument("sources", nargs=-1, required=False)
+@click.option("--txt-ext", multiple=True, help="Add file extensions to search for")
+@click.option("--use-v2", is_flag=True, help="Use v2 implementation.")
 @click.version_option(version=VERSION)
-@click.pass_context
-def cli(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, use_v2, sources):
-    """Nanodoc: A tool for creating documentation from source files.
+def main(
+    sources: list[str],
+    verbose: bool,
+    toc: bool,
+    n: int,
+    theme: str,
+    no_header: bool,
+    sequence: str,
+    style: str,
+    txt_ext: list[str],
+    use_v2: bool,
+) -> None:
+    """Process source files and generate documentation."""
+    setup_logging(verbose)
 
-    SOURCES are files, globs, or directories to include in the output.
-    """
-    # Store configuration in context object
-    ctx.ensure_object(dict)
-    ctx.obj["verbose"] = v
-    ctx.obj["theme"] = theme
-    ctx.obj["use_v2"] = use_v2
+    if not sources:
+        click.echo("No source files provided.", err=True)
+        sys.exit(1)
 
-    # Set up logging based on verbose flag
-    if v:
-        setup_logging(to_stderr=True, enabled=True)
-        logger.debug("Verbose mode enabled")
+    # Convert -n/-nn to line number mode
+    line_number_mode = None
+    if n == 1:
+        line_number_mode = "file"
+    elif n >= 2:
+        line_number_mode = "all"
 
-    # If no subcommand is provided, run the process command with the given options
-    if ctx.invoked_subcommand is None and sources:
-        # Call the process command with the provided options
-        ctx.invoke(
-            process,
-            v=v,
-            n=n,
-            toc=toc,
-            no_header=no_header,
-            sequence=sequence,
-            style=style,
-            txt_ext=txt_ext,
-            use_v2=use_v2,
-            sources=sources,
-        )
-    elif ctx.invoked_subcommand is None:
-        # If no sources and no subcommand, show help
-        click.echo(ctx.get_help())
-
-
-@cli.command()
-@click.option("-v", is_flag=True, help="Enable verbose mode")
-@click.option(
-    "-n",
-    count=True,
-    help="Line number mode (one -n for file, two for all)",
-)
-@click.option("--toc", is_flag=True, help="Generate table of contents")
-@click.option("--no-header", is_flag=True, help="Hide file headers")
-@click.option(
-    "--sequence",
-    type=click.Choice(["numerical", "letter", "roman"]),
-    help="Add sequence numbers to headers",
-)
-@click.option(
-    "--style",
-    type=click.Choice(["filename", "path", "nice"]),
-    default="nice",
-    help="Header style: nice, filename or path",
-)
-@click.option(
-    "--txt-ext",
-    multiple=True,
-    help="Add file extensions to search for",
-)
-@click.option(
-    "--theme",
-    type=click.Choice(get_available_themes()),
-    help="Select theme for rendering",
-)
-@click.option(
-    "--use-v2",
-    is_flag=True,
-    default=True,
-    help="Use v2 implementation (default: True)",
-)
-@click.argument("sources", nargs=-1, required=True)
-@click.pass_context
-def process(
-    ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, use_v2, sources
-):
-    """Process source files and generate documentation.
-
-    SOURCES are the files or directories to process.
-    """
     try:
-        # Set up logging based on verbose flag
-        setup_logging(to_stderr=True, enabled=v)
+        # Choose implementation
+        run_impl = run_v2 if use_v2 and V2_AVAILABLE else run_v1
+        logger.info(f"Using {'v2' if use_v2 and V2_AVAILABLE else 'v1'} implementation")
 
-        logger.info(f"Process command called with theme: {theme}")
-
-        # Update console with theme if provided at command level
-        global console
-        if theme:
-            logger.info(f"Creating console with theme from command: {theme}")
-            console = create_themed_console(theme)
-        # Otherwise use theme from parent context if available
-        elif ctx.obj and "theme" in ctx.obj and ctx.obj["theme"]:
-            theme_name = ctx.obj["theme"]
-            logger.info(f"Creating console with theme from context: {theme_name}")
-            console = create_themed_console(theme_name)
-
-        # Process line numbering mode
-        if n == 0:
-            line_number_mode = None
-        elif n == 1:
-            line_number_mode = "file"
-        else:  # n >= 2
-            line_number_mode = "all"
-
-        # Check if v2 implementation should be used
-        if use_v2 or (ctx.obj and ctx.obj.get("use_v2", False)):
-            if not V2_AVAILABLE:
-                logger.warning("V2 implementation requested but not available")
-                click.echo(
-                    "Warning: V2 implementation not available, using v1 instead",
-                    err=True,
-                )
-            else:
-                logger.info("Using v2 implementation")
-                # Use the v2 implementation
-                result = process_v2(
-                    sources=list(sources),
-                    line_number_mode=line_number_mode,
-                    generate_toc=toc,
-                    theme=theme,
-                    show_header=not no_header,
-                )
-                console.print(result)
-                return
-
-        # If v2 not requested or not available, continue with v1 implementation
-        # Process additional file extensions if provided
-        extensions = list(TXT_EXTENSIONS)  # Create a copy of the default extensions
-        if txt_ext:
-            for ext in txt_ext:
-                # Add a leading dot if not present
-                if not ext.startswith("."):
-                    ext = "." + ext
-                # Only add if not already in the list
-                if ext not in extensions:
-                    extensions.append(ext)
-
-        # Get verified content items from arguments
-        if txt_ext:
-            # Only pass extensions if custom extensions were provided
-            content_items = get_files_from_args(sources, extensions=extensions)
-        else:
-            # Use default extensions
-            content_items = get_files_from_args(sources)
-
-        # Process the files and print the result
-        result = process_all(
-            content_items,
+        # Run the selected implementation with unified interface
+        result = run_impl(
+            sources=list(sources),
             line_number_mode=line_number_mode,
             generate_toc=toc,
+            theme=theme,
             show_header=not no_header,
             sequence=sequence,
             style=style,
+            txt_ext=txt_ext,
         )
-        console.print(result)
+
+        click.echo(result)
+
     except Exception as e:
-        logger.error(f"Error processing files: {e}", exc_info=v)
-        if v:
-            # In verbose mode, show the full traceback
-            raise
-        else:
-            # In normal mode, show a friendly error message
-            click.echo(f"Error: {e}", err=True)
-            sys.exit(1)
-
-
-def _get_docs_dir():
-    """Return the path to the docs directory."""
-    module_dir = pathlib.Path(__file__).parent.absolute()
-    return module_dir / "docs"
-
-
-def _get_guides_dir():
-    """Return the path to the guides directory."""
-    module_dir = pathlib.Path(__file__).parent.absolute()
-    guides_dir = module_dir / "docs" / "guides"
-
-    # Create the guides directory if it doesn't exist
-    if not guides_dir.exists():
-        os.makedirs(guides_dir, exist_ok=True)
-
-    return guides_dir
-
-
-@cli.command("help")
-@click.argument("topic", required=False)
-@click.option(
-    "--theme",
-    type=click.Choice(get_available_themes()),
-    help="Select theme for rendering",
-)
-@click.pass_context
-def show_help(ctx, topic, theme):
-    """Show help for a specific topic.
-
-    TOPIC is the name of the guide to display.
-    """
-    # Set up logging
-    setup_logging(to_stderr=True)
-
-    logger.info(f"Help command called with theme: {theme}")
-
-    # Update console with theme if provided at command level
-    global console
-    if theme:
-        logger.info(f"Creating console with theme from command: {theme}")
-        console = create_themed_console(theme)
-    # Otherwise use theme from parent context if available
-    elif ctx.obj and "theme" in ctx.obj and ctx.obj["theme"]:
-        theme_name = ctx.obj["theme"]
-        logger.info(f"Creating console with theme from context: {theme_name}")
-        console = create_themed_console(theme_name)
-
-    if not topic:
-        # Show general help using Rich for formatting
-        from .help import _render_content, get_help_content
-
-        found, content = get_help_content()
-        if found:
-            logger.info("Rendering help content with _render_content")
-            _render_content(content)
-        else:
-            # Fallback to simple help if rich help content not found
-            logger.info("Help content not found, using fallback")
-            console.print("\n# nanodoc\n")
-            msg = "A minimalist document bundler for hints, reminders and docs.\n"
-            console.print(msg)
-
-            # Import here to avoid circular imports
-            from .help import get_options_section, get_topics_section
-
-            # Show options section
-            console.print("## OPTIONS\n")
-            console.print(get_options_section())
-
-            # Show topics section
-            console.print("## HELP TOPICS\n")
-            console.print(get_topics_section())
-        return
-
-    # Look for the topic in the guides directory
-    from .help import get_guide_content
-
-    logger.info(f"Looking for guide: {topic}")
-    found, content = get_guide_content(topic)
-
-    if found:
-        logger.info(f"Guide found: {topic}")
-        # For tests compatibility, use simple output format
-        # This matches the expected format in the tests
-        click.echo(f"\n{topic.upper()} GUIDE\n")
-        click.echo("=" * 80)
-        click.echo(content)
-    else:
-        logger.info(f"Guide not found: {topic}")
-        # For tests compatibility, use simple error output
-        click.echo(f"Guide '{topic}' not found. Available guides:", err=True)
-
-        # Check if any guides exist
-        guides_dir = _get_guides_dir()
-        guides_exist = False
-        for ext in TXT_EXTENSIONS:
-            for guide_path in guides_dir.glob(f"*{ext}"):
-                guides_exist = True
-                guide_name = guide_path.name.replace(ext, "")
-                click.echo(f"  - {guide_name}", err=True)
-
-        if not guides_exist:
-            click.echo("  No guides available.", err=True)
-
-        sys.exit(1)
-
-
-@cli.command("guide")
-@click.argument("topic", required=False)
-@click.option(
-    "--theme",
-    type=click.Choice(get_available_themes()),
-    help="Select theme for rendering",
-)
-@click.pass_context
-def show_guide(ctx, topic, theme):
-    """Show help for a specific topic (alias for 'help' command)."""
-    # Set up logging
-    setup_logging(to_stderr=True)
-
-    logger.info(f"Guide command called with theme: {theme}")
-
-    # Just call the help command with the same topic and theme
-    ctx.invoke(show_help, topic=topic, theme=theme)
-
-
-@cli.command("version")
-def show_version():
-    """Show the version of nanodoc."""
-    click.echo(f"nanodoc version {VERSION}")
-
-
-def main():
-    """Main entry point for the nanodoc application."""
-    try:
-        # Set up basic logging
-        setup_logging(to_stderr=True)
-
-        # Check if the first argument is a command
-        if len(sys.argv) > 1 and sys.argv[1] in cli.commands:
-            command_name = sys.argv[1]
-            logger.info(f"Running command: {command_name}")
-
-            # Get the command
-            command = cli.commands[command_name]
-
-            # Run the command with the remaining arguments
-            command.main(sys.argv[2:], standalone_mode=False)
-        else:
-            # Run the CLI normally
-            logger.info("Running main CLI")
-            cli(standalone_mode=False)
-    except click.exceptions.Abort:
-        # Handle keyboard interrupts gracefully
-        logger.info("Command aborted")
-        sys.exit(1)
-    except click.exceptions.ClickException as e:
-        # Handle Click exceptions
-        logger.error(f"Click exception: {e}")
-        e.show()
-        sys.exit(e.exit_code)
-    except Exception as e:
-        # Handle other exceptions
-        logger.error(f"Unexpected error: {e}", exc_info=True)
-        click.echo(f"Error: {e}", err=True)
+        logger.error(str(e))
         sys.exit(1)
 
 

@@ -136,7 +136,7 @@ def test_milestone_5():
     )
 
     # Verify line numbers are present
-    assert "   1 |" in rendered_with_lines
+    assert "   1:" in rendered_with_lines
     assert "def function_1" in rendered_with_lines
 
     # Test with rich formatting and theming
@@ -262,3 +262,244 @@ def test_milestone_7():
 
     # Verify line numbers
     assert "1:" in result.stdout
+
+
+def test_resolve_single_file(fixture_content_item):
+    """Test resolving a single file path."""
+    paths = resolve_paths([fixture_content_item.file_path])
+    assert len(paths) == 1
+    assert paths[0] == fixture_content_item.file_path
+
+
+def test_resolve_multiple_files(fixture_content_item):
+    """Test resolving multiple file paths."""
+    paths = resolve_paths([fixture_content_item.file_path])
+    assert len(paths) == 1
+    assert fixture_content_item.file_path in paths
+
+
+def test_resolve_absolute_path(fixture_content_item):
+    """Test resolving an absolute path."""
+    abs_path = resolve_paths([fixture_content_item.file_path])[0]
+    assert Path(abs_path).is_absolute()
+
+
+def test_basic_output(fixture_content_item):
+    """Test basic CLI output."""
+    result = subprocess.run(
+        ["python", "-m", "nanodoc", "--use-v2", fixture_content_item.file_path],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    # Check that the output contains the content
+    assert result.returncode == 0
+
+    # Check that file name is in output
+    filename = os.path.basename(fixture_content_item.file_path)
+    if not fixture_content_item.original_arg.endswith(".ndoc"):
+        assert filename in result.stdout
+
+    # Check for key content by looking for smaller distinct snippets
+    if "cake.txt" in fixture_content_item.file_path:
+        assert "appalling" in result.stdout
+        assert "cake consumption" in result.stdout
+    elif "incident.txt" in fixture_content_item.file_path:
+        assert "Team" in result.stdout
+        assert "Palmer" in result.stdout
+    elif "new-telephone.txt" in fixture_content_item.file_path:
+        assert "All Employees" in result.stdout
+        assert "funny meme" in result.stdout
+    elif "test_file1.py" in fixture_content_item.file_path:
+        assert "Test File 1" in result.stdout
+        assert "function_1" in result.stdout
+    elif "test_file2.py" in fixture_content_item.file_path:
+        assert "Test File 2" in result.stdout
+        assert "CONSTANT" in result.stdout
+    elif "test_bundle.ndoc" in fixture_content_item.file_path:
+        assert "Test Bundle" in result.stdout
+        assert "bundle_function" in result.stdout
+        # For bundles, check that included content is present
+        assert "function_1" in result.stdout
+
+
+def test_toc_generation(fixture_content_item):
+    """Test table of contents generation."""
+    result = subprocess.run(
+        [
+            "python",
+            "-m",
+            "nanodoc",
+            "--use-v2",
+            "--toc",
+            fixture_content_item.file_path,
+        ],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    # Check that the output contains TOC and content
+    assert result.returncode == 0
+    assert "Table of Contents" in result.stdout
+
+    # Check that file name is in output
+    filename = os.path.basename(fixture_content_item.file_path)
+    if not fixture_content_item.original_arg.endswith(".ndoc"):
+        assert filename in result.stdout
+
+    # Check for key content by looking for smaller distinct snippets
+    if "cake.txt" in fixture_content_item.file_path:
+        assert "appalling" in result.stdout
+        assert "cake consumption" in result.stdout
+    elif "incident.txt" in fixture_content_item.file_path:
+        assert "Team" in result.stdout
+        assert "Palmer" in result.stdout
+    elif "new-telephone.txt" in fixture_content_item.file_path:
+        assert "All Employees" in result.stdout
+        assert "funny meme" in result.stdout
+    elif "test_file1.py" in fixture_content_item.file_path:
+        assert "Test File 1" in result.stdout
+        assert "function_1" in result.stdout
+    elif "test_file2.py" in fixture_content_item.file_path:
+        assert "Test File 2" in result.stdout
+        assert "CONSTANT" in result.stdout
+    elif "test_bundle.ndoc" in fixture_content_item.file_path:
+        assert "Test Bundle" in result.stdout
+        assert "bundle_function" in result.stdout
+        # For bundles, check that included content is present
+        assert "function_1" in result.stdout
+
+
+def test_line_number_mode(fixture_content_item):
+    """Test line number display modes."""
+    result = subprocess.run(
+        ["python", "-m", "nanodoc", "--use-v2", "-n", fixture_content_item.file_path],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    # Check that line numbers are included
+    assert result.returncode == 0
+    assert "1:" in result.stdout
+
+    # Check that file name is in output
+    filename = os.path.basename(fixture_content_item.file_path)
+    if not fixture_content_item.original_arg.endswith(".ndoc"):
+        assert filename in result.stdout
+
+    # Check for key content by looking for smaller distinct snippets
+    if "cake.txt" in fixture_content_item.file_path:
+        assert "appalling" in result.stdout
+        assert "cake consumption" in result.stdout
+    elif "incident.txt" in fixture_content_item.file_path:
+        assert "Team" in result.stdout
+        assert "Palmer" in result.stdout
+    elif "new-telephone.txt" in fixture_content_item.file_path:
+        assert "All Employees" in result.stdout
+        assert "funny meme" in result.stdout
+    elif "test_file1.py" in fixture_content_item.file_path:
+        assert "Test File 1" in result.stdout
+        assert "function_1" in result.stdout
+    elif "test_file2.py" in fixture_content_item.file_path:
+        assert "Test File 2" in result.stdout
+        assert "CONSTANT" in result.stdout
+    elif "test_bundle.ndoc" in fixture_content_item.file_path:
+        assert "Test Bundle" in result.stdout
+        assert "bundle_function" in result.stdout
+        # For bundles, check that included content is present
+        assert "function_1" in result.stdout
+
+
+def test_theme_option(fixture_content_item):
+    """Test theme application."""
+    cmd = [
+        "python",
+        "-m",
+        "nanodoc",
+        "--use-v2",
+        "--theme",
+        "neutral",
+        fixture_content_item.file_path,
+    ]
+    result = subprocess.run(cmd, text=True, capture_output=True, check=True)
+
+    # Check that the output contains the content with theme applied
+    assert result.returncode == 0
+
+    # Check that file name is in output
+    filename = os.path.basename(fixture_content_item.file_path)
+    if not fixture_content_item.original_arg.endswith(".ndoc"):
+        assert filename in result.stdout
+
+    # Check for key content by looking for smaller distinct snippets
+    if "cake.txt" in fixture_content_item.file_path:
+        assert "appalling" in result.stdout
+        assert "cake consumption" in result.stdout
+    elif "incident.txt" in fixture_content_item.file_path:
+        assert "Team" in result.stdout
+        assert "Palmer" in result.stdout
+    elif "new-telephone.txt" in fixture_content_item.file_path:
+        assert "All Employees" in result.stdout
+        assert "funny meme" in result.stdout
+    elif "test_file1.py" in fixture_content_item.file_path:
+        assert "Test File 1" in result.stdout
+        assert "function_1" in result.stdout
+    elif "test_file2.py" in fixture_content_item.file_path:
+        assert "Test File 2" in result.stdout
+        assert "CONSTANT" in result.stdout
+    elif "test_bundle.ndoc" in fixture_content_item.file_path:
+        assert "Test Bundle" in result.stdout
+        assert "bundle_function" in result.stdout
+        # For bundles, check that included content is present
+        assert "function_1" in result.stdout
+
+
+def test_multiple_options(fixture_content_item):
+    """Test multiple options together."""
+    cmd = [
+        "python",
+        "-m",
+        "nanodoc",
+        "--use-v2",
+        "--toc",
+        "-n",
+        "--theme",
+        "neutral",
+        fixture_content_item.file_path,
+    ]
+    result = subprocess.run(cmd, text=True, capture_output=True, check=True)
+
+    # Check that all features are working together
+    assert result.returncode == 0
+    assert "Table of Contents" in result.stdout
+    assert "1:" in result.stdout
+
+    # Check that file name is in output
+    filename = os.path.basename(fixture_content_item.file_path)
+    if not fixture_content_item.original_arg.endswith(".ndoc"):
+        assert filename in result.stdout
+
+    # Check for key content by looking for smaller distinct snippets
+    if "cake.txt" in fixture_content_item.file_path:
+        assert "appalling" in result.stdout
+        assert "cake consumption" in result.stdout
+    elif "incident.txt" in fixture_content_item.file_path:
+        assert "Team" in result.stdout
+        assert "Palmer" in result.stdout
+    elif "new-telephone.txt" in fixture_content_item.file_path:
+        assert "All Employees" in result.stdout
+        assert "funny meme" in result.stdout
+    elif "test_file1.py" in fixture_content_item.file_path:
+        assert "Test File 1" in result.stdout
+        assert "function_1" in result.stdout
+    elif "test_file2.py" in fixture_content_item.file_path:
+        assert "Test File 2" in result.stdout
+        assert "CONSTANT" in result.stdout
+    elif "test_bundle.ndoc" in fixture_content_item.file_path:
+        assert "Test Bundle" in result.stdout
+        assert "bundle_function" in result.stdout
+        # For bundles, check that included content is present
+        assert "function_1" in result.stdout

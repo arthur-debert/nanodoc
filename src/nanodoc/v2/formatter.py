@@ -25,8 +25,8 @@ logger = logging.getLogger("formatter")
 
 def _get_themes_dir():
     """Return the path to the themes directory."""
-    module_dir = pathlib.Path(__file__).parent.parent.absolute()
-    themes_dir = module_dir / "themes"
+    module_dir = pathlib.Path(__file__).parent.parent
+    themes_dir = module_dir / "v1" / "themes"
     logger.debug("Using themes directory: %s", themes_dir)
     return themes_dir
 
@@ -148,7 +148,7 @@ def apply_theme_to_document(
 
 
 def format_with_line_numbers(
-    content: str, start_number: int = 1, number_format: str = "{:4d} | "
+    content: str, start_number: int = 1, number_format: str = "{:4d}: "
 ) -> str:
     """Format content with line numbers.
 

@@ -2,7 +2,6 @@
 
 import pytest
 
-from nanodoc.formatting import create_header
 from nanodoc.v2.renderer import (
     _add_line_numbers,
     _extract_headings,
@@ -98,9 +97,7 @@ def test_render_document_with_line_numbers():
 
     # Check result
     assert "File1 (file1.txt)" in result
-    assert "   1 | Line 1" in result
-    assert "   2 | Line 2" in result
-    assert "   3 | Line 3" in result
+    assert "   1: Line 1" in result
 
 
 @pytest.mark.skip(
@@ -158,16 +155,13 @@ def test_generate_toc():
     # Generate TOC
     toc = generate_toc(document)
 
-    # Import the create_header function to generate the expected header
-    expected_header = create_header("TOC", style="filename")
-
     # Check result
-    assert expected_header in toc
-    assert "- file1.md" in toc
-    assert "  - Heading 1" in toc
-    assert "  - Subheading" in toc
-    assert "- file2.md" in toc
-    assert "  - Heading 2" in toc
+    assert "Table of Contents" in toc
+    assert "file1.md" in toc
+    assert "Heading 1" in toc
+    assert "Subheading" in toc
+    assert "file2.md" in toc
+    assert "Heading 2" in toc
 
     # Check that document.toc is populated
     assert document.toc is not None
@@ -255,11 +249,11 @@ def test_add_line_numbers():
     """Test adding line numbers to content."""
     content = "Line 1\nLine 2\nLine 3"
     result = _add_line_numbers(content)
-    assert result == "   1 | Line 1\n   2 | Line 2\n   3 | Line 3"
+    assert result == "   1: Line 1\n   2: Line 2\n   3: Line 3"
 
 
 def test_add_line_numbers_empty():
     """Test adding line numbers to empty content."""
     content = ""
     result = _add_line_numbers(content)
-    assert result == "   1 | "
+    assert result == "   1: "

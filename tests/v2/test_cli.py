@@ -10,19 +10,19 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from nanodoc.v2.core import process_v2
+from nanodoc.v2.core import run
 from nanodoc.v2.document import Document
 
 
-def test_process_v2_basic():
-    """Test the basic functionality of process_v2 with a theme."""
+def test_run_basic():
+    """Test the basic functionality of run with a theme."""
     # Create a temporary test file
     with tempfile.NamedTemporaryFile(suffix=".py", mode="w+") as f:
         f.write("def test_function():\n    return True\n")
         f.flush()
 
-        # Call the process_v2 function with a theme
-        result = process_v2(
+        # Call the run function with a theme
+        result = run(
             sources=[f.name],
             line_number_mode="file",
             generate_toc=True,
@@ -35,14 +35,14 @@ def test_process_v2_basic():
         assert "return True" in result
 
         # Check line numbers are included (line_number_mode="file")
-        assert "1 |" in result or "1|" in result
+        assert "1:" in result
 
         # Check file name is in the output (from show_header=True)
         assert os.path.basename(f.name) in result
 
 
-def test_process_v2_without_formatting():
-    """Test process_v2 without formatting options."""
+def test_run_without_formatting():
+    """Test run without formatting options."""
 
     # Define a simple renderer function to replace the original
     def simple_render(document, **kwargs):
@@ -66,7 +66,7 @@ def test_process_v2_without_formatting():
         patch("nanodoc.v2.renderer.render_document", side_effect=simple_render),
     ):
         # Call the function without formatting options
-        result = process_v2(
+        result = run(
             sources=["source1"],
             line_number_mode=None,
             generate_toc=False,
@@ -82,14 +82,14 @@ def test_process_v2_without_formatting():
         # on mock calls. Instead we verify the output is unthemed.
 
 
-def test_process_v2_integration(tmp_path):
-    """Test the integration of process_v2 with actual files."""
+def test_run_integration(tmp_path):
+    """Test the integration of run with actual files."""
     # Create a temporary test file
     test_file = tmp_path / "test.txt"
     test_file.write_text("This is a test file\nWith multiple lines\n")
 
-    # Call the process_v2 function with the actual file
-    result = process_v2(
+    # Call the run function with the actual file
+    result = run(
         sources=[str(test_file)],
         line_number_mode="file",
         generate_toc=False,
@@ -116,10 +116,10 @@ def sample_files(tmp_path):
     return [str(file1), str(file2)]
 
 
-def test_process_v2_with_toc(sample_files):
+def test_run_with_toc(sample_files):
     """Test that TOC generation works when generate_toc=True is passed."""
     # This test bypasses command line argument processing
-    result = process_v2(
+    result = run(
         sources=sample_files,
         line_number_mode="all",
         generate_toc=True,
@@ -128,17 +128,17 @@ def test_process_v2_with_toc(sample_files):
     )
 
     # Verify TOC is present in the output
-    assert "TOC" in result
+    assert "Table of Contents" in result
     assert "file1.md" in result
     assert "file2.md" in result
     assert "Heading 1" in result
     assert "Heading 2" in result
 
 
-def test_process_v2_without_toc(sample_files):
+def test_run_without_toc(sample_files):
     """Test that TOC is not generated when generate_toc=False is passed."""
     # This test bypasses command line argument processing
-    result = process_v2(
+    result = run(
         sources=sample_files,
         line_number_mode="all",
         generate_toc=False,
@@ -183,8 +183,8 @@ def test_toc_flag_propagation(
     # Setup a mock return value
     mock_render.return_value = "Mocked content"
 
-    # Call process_v2 with generate_toc=True
-    process_v2(
+    # Call run with generate_toc=True
+    run(
         sources=sample_files,
         line_number_mode="all",
         generate_toc=True,
@@ -227,8 +227,8 @@ def test_line_number_flag_propagation(
     # Setup a mock return value
     mock_render.return_value = "Mocked content"
 
-    # Call process_v2 with line_number_mode="all"
-    process_v2(
+    # Call run with line_number_mode="all"
+    run(
         sources=sample_files,
         line_number_mode="all",
         generate_toc=False,

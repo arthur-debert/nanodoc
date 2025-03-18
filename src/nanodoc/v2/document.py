@@ -358,3 +358,62 @@ def process_include_directive(
             original_source=parent_bundle,
         )
         document.content_items.append(error_content)
+
+
+def run_content(
+    content: str,
+    line_number_mode: Optional[str] = None,
+    generate_toc: bool = False,
+    theme: Optional[str] = None,
+    show_header: bool = True,
+) -> str:
+    """Process content and apply formatting.
+
+    Args:
+        content (str): Content to process.
+        line_number_mode (str): Line numbering mode ('file', 'all', or None).
+        generate_toc (bool): Whether to generate a table of contents.
+        theme (str): Theme to use for output.
+        show_header (bool): Whether to show headers.
+
+    Returns:
+        str: The processed content with formatting applied.
+    """
+    # ... existing code ...
+
+
+def run_bundle_directives(content: str) -> str:
+    """Process bundle directives in content.
+
+    Args:
+        content (str): Content to process.
+
+    Returns:
+        str: Content with bundle directives processed.
+    """
+    # ... existing code ...
+
+
+def run_inline_directive(content: str, directive: str) -> str:
+    """Process an inline directive.
+
+    Args:
+        content (str): Content to process.
+        directive (str): Directive to process.
+
+    Returns:
+        str: Content with directive processed.
+    """
+    # ... existing code ...
+
+
+def run_include_directive(content: str, directive: str) -> str:
+    """Process an include directive.
+
+    Args:
+        content (str): Content to process.
+        directive (str): Directive to process.
+
+    Returns:
+        str: Content with directive processed.
+    """

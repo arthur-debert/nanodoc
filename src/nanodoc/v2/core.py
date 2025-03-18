@@ -18,24 +18,30 @@ from nanodoc.v2.resolver import resolve_paths
 logger = logging.getLogger("cli")
 
 
-def process_v2(
+def run(
     sources: list[str],
     line_number_mode: Optional[str] = None,
     generate_toc: bool = False,
     theme: Optional[str] = None,
     show_header: bool = True,
+    sequence: Optional[str] = None,
+    style: Optional[str] = "nice",
+    txt_ext: Optional[list[str]] = None,
 ) -> str:
-    """Process files using the v2 implementation.
+    """Process source files and generate documentation using v2 implementation.
 
     Args:
-        sources: List of file paths or globs to process
-        line_number_mode: Line numbering mode ("file", "all", or None)
-        generate_toc: Whether to generate a table of contents
-        theme: Theme name to use for rendering
-        show_header: Whether to show file headers
+        sources (List[str]): List of source file paths.
+        line_number_mode (str): Line numbering mode ('file', 'all', or None).
+        generate_toc (bool): Whether to generate a table of contents.
+        theme (str): Theme to use for output.
+        show_header (bool): Whether to show headers.
+        sequence (str): The header sequence type (numerical, letter, roman).
+        style (str): The header style (filename, path, nice).
+        txt_ext (List[str]): Additional file extensions to process.
 
     Returns:
-        str: The processed document content
+        str: The combined content of all files with formatting.
 
     Raises:
         CircularDependencyError: If a circular dependency is detected
@@ -45,7 +51,7 @@ def process_v2(
     # Configure logging with default settings
     configure_logging()
 
-    logger.debug("Entering process_v2")
+    logger.debug("Entering v2 implementation")
     logger.info(f"Processing with v2 implementation: {sources}")
 
     # Stage 1: Resolve Paths

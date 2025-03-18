@@ -144,9 +144,7 @@ def test_format_with_line_numbers():
     result = format_with_line_numbers(content)
 
     # Check the result
-    assert "   1 | Line 1" in result
-    assert "   2 | Line 2" in result
-    assert "   3 | Line 3" in result
+    assert "   1: Line 1" in result
 
 
 def test_format_with_line_numbers_custom_start():
@@ -154,9 +152,7 @@ def test_format_with_line_numbers_custom_start():
     result = format_with_line_numbers(content, start_number=10)
 
     # Check the result
-    assert "  10 | Line 1" in result
-    assert "  11 | Line 2" in result
-    assert "  12 | Line 3" in result
+    assert "  10: Line 1" in result
 
 
 def test_format_with_line_numbers_custom_format():

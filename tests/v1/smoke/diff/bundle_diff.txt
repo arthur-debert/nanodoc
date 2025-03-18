@@ -1,0 +1,12 @@
+--- /Users/adebert/h/nanodoc/tests/smoke/v1/output/bundle.txt	2025-03-18 03:10:37
++++ /Users/adebert/h/nanodoc/tests/smoke/v2/output/bundle.txt	2025-03-18 03:10:38
+@@ -1,9 +1,6 @@
+-
+-Main (main.py)
+-
+ # Main file
+ def main():
+     print("Hello world")
+
+-# @include sub.py
++# @include sub.ndoc
