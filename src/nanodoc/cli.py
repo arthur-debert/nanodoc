@@ -108,7 +108,8 @@ class NanodocGroup(click.Group):
 @click.option(
     "--use-v2",
     is_flag=True,
-    help="Use the v2 implementation of nanodoc",
+    default=True,
+    help="Use v2 implementation (default: True)",
 )
 @click.argument("sources", nargs=-1, required=False)
 @click.version_option(version=VERSION)
@@ -182,7 +183,8 @@ def cli(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, use_v2, sour
 @click.option(
     "--use-v2",
     is_flag=True,
-    help="Use the v2 implementation of nanodoc",
+    default=True,
+    help="Use v2 implementation (default: True)",
 )
 @click.argument("sources", nargs=-1, required=True)
 @click.pass_context

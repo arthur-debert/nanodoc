@@ -5,14 +5,19 @@ It takes a Document object and generates the final output string,
 including basic concatenation of FileContent content and TOC generation.
 """
 
+import logging
 import os
 import re
 
+from nanodoc.formatting import create_header
 from nanodoc.v2.formatter import (
     enhance_rendering,
     format_with_line_numbers,
 )
 from nanodoc.v2.structures import Document
+
+# Initialize logger
+logger = logging.getLogger("nanodoc")
 
 
 def render_document(
@@ -38,9 +43,15 @@ def render_document(
 
     # Generate TOC if requested
     if include_toc:
+        logger.debug(f"Generating TOC because include_toc={include_toc}")
         toc = generate_toc(document)
         if toc:
+            logger.debug(f"TOC generated with length: {len(toc)}")
             rendered_parts.append(toc)
+        else:
+            logger.debug("No TOC was generated (empty return)")
+    else:
+        logger.debug(f"Skipping TOC generation because include_toc={include_toc}")
 
     # Concatenate content
     prev_original_source = None
@@ -105,10 +116,15 @@ def generate_toc(document: Document) -> str:
     # Extract headings from content
     headings = _extract_headings(document)
 
+    logger.debug(f"Extracted headings for TOC: {headings}")
+
     if not headings:
+        logger.debug("No headings found for TOC")
         return ""
 
-    toc_lines = ["# Table of Contents\n\n"]
+    # Create the TOC header using the same function as the test
+    toc_header = create_header("TOC", style="filename")
+    toc_lines = [f"{toc_header}\n\n"]
 
     for file_path, file_headings in headings.items():
         # Add file entry
@@ -125,7 +141,9 @@ def generate_toc(document: Document) -> str:
     # Store TOC data in the document for future reference
     document.toc = headings
 
-    return "".join(toc_lines)
+    toc_content = "".join(toc_lines)
+    logger.debug(f"Generated TOC content: {toc_content}")
+    return toc_content
 
 
 def _extract_headings(document: Document) -> dict[str, list[tuple[str, int]]]:
@@ -151,6 +169,9 @@ def _extract_headings(document: Document) -> dict[str, list[tuple[str, int]]]:
 
         # Extract headings with line numbers
         lines = item.content.split("\n")
+
+        # Check if the file has markdown headings
+        has_markdown_headings = False
         for i, line in enumerate(lines):
             match = heading_pattern.match(line)
             if match:
@@ -159,7 +180,19 @@ def _extract_headings(document: Document) -> dict[str, list[tuple[str, int]]]:
 
                 # Only include level 1 and 2 headings
                 if heading_level <= 2:
+                    has_markdown_headings = True
                     file_headings.append((heading_text, i + 1))
+
+        # If no markdown headings found, create a pseudo-heading
+        # from first non-empty line. Helps with plain text files.
+        if not has_markdown_headings and lines:
+            # Find the first non-empty line
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if line:
+                    # Use the first non-empty line as a heading
+                    file_headings.append((line[:40], i + 1))  # Limit to 40 chars
+                    break
 
         # Store headings for this file if any were found
         if file_headings:

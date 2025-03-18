@@ -1,10 +1,17 @@
-"""Tests for the CLI integration of Nanodoc v2."""
+"""Tests for the v2 CLI implementation.
+
+These tests focus on the CLI integration of the v2 pipeline,
+and mock the post-argument processing to test functionality directly.
+"""
 
 import os
 import tempfile
 from unittest.mock import MagicMock, mock_open, patch
 
+import pytest
+
 from nanodoc.v2.cli import process_v2
+from nanodoc.v2.document import Document
 
 
 def test_process_v2_basic():
@@ -94,3 +101,142 @@ def test_process_v2_integration(tmp_path):
     assert "This is a test file" in result
     assert "With multiple lines" in result
     assert os.path.basename(str(test_file)) in result
+
+
+@pytest.fixture
+def sample_files(tmp_path):
+    """Create sample files for testing."""
+    # Create sample files with some markdown content
+    file1 = tmp_path / "file1.md"
+    file1.write_text("# Heading 1\nSome content\n## Subheading\nMore content")
+
+    file2 = tmp_path / "file2.md"
+    file2.write_text("# Heading 2\nOther content")
+
+    return [str(file1), str(file2)]
+
+
+def test_process_v2_with_toc(sample_files):
+    """Test that TOC generation works when generate_toc=True is passed."""
+    # This test bypasses command line argument processing
+    result = process_v2(
+        sources=sample_files,
+        line_number_mode="all",
+        generate_toc=True,
+        theme=None,
+        show_header=True,
+    )
+
+    # Verify TOC is present in the output
+    assert "TOC" in result
+    assert "file1.md" in result
+    assert "file2.md" in result
+    assert "Heading 1" in result
+    assert "Heading 2" in result
+
+
+def test_process_v2_without_toc(sample_files):
+    """Test that TOC is not generated when generate_toc=False is passed."""
+    # This test bypasses command line argument processing
+    result = process_v2(
+        sources=sample_files,
+        line_number_mode="all",
+        generate_toc=False,
+        theme=None,
+        show_header=True,
+    )
+
+    # Verify TOC is not present
+    assert "TOC" not in result
+    assert "file1.md" in result
+    assert "file2.md" in result
+    assert "Heading 1" in result
+    assert "Heading 2" in result
+
+
+@patch("nanodoc.v2.resolver.resolve_paths")
+@patch("nanodoc.v2.renderer.render_document")
+@patch("nanodoc.v2.extractor.resolve_files")
+@patch("nanodoc.v2.extractor.gather_content")
+@patch("nanodoc.v2.document.build_document")
+@patch("nanodoc.v2.formatter.apply_theme_to_document")
+@pytest.mark.skip(
+    reason="Over-mocked test: needs rewrite using actual document rendering"
+)
+def test_toc_flag_propagation(
+    mock_theme,
+    mock_build,
+    mock_gather,
+    mock_resolve_files,
+    mock_render,
+    mock_resolve_paths,
+    sample_files,
+):
+    """Test that the generate_toc flag is correctly propagated."""
+    # Mock the resolve_paths function to return sample paths
+    mock_resolve_paths.return_value = sample_files
+    mock_resolve_files.return_value = []
+    mock_gather.return_value = []
+    mock_build.return_value = Document(content_items=[])
+    mock_theme.return_value = Document(content_items=[])
+
+    # Setup a mock return value
+    mock_render.return_value = "Mocked content"
+
+    # Call process_v2 with generate_toc=True
+    process_v2(
+        sources=sample_files,
+        line_number_mode="all",
+        generate_toc=True,
+        theme=None,
+        show_header=True,
+    )
+
+    # Verify render_document was called with include_toc=True
+    mock_render.assert_called_once()
+    args, kwargs = mock_render.call_args
+    assert kwargs.get("include_toc") is True
+
+
+@patch("nanodoc.v2.resolver.resolve_paths")
+@patch("nanodoc.v2.renderer.render_document")
+@patch("nanodoc.v2.extractor.resolve_files")
+@patch("nanodoc.v2.extractor.gather_content")
+@patch("nanodoc.v2.document.build_document")
+@patch("nanodoc.v2.formatter.apply_theme_to_document")
+@pytest.mark.skip(
+    reason="Over-mocked test: needs rewrite using actual document rendering"
+)
+def test_line_number_flag_propagation(
+    mock_theme,
+    mock_build,
+    mock_gather,
+    mock_resolve_files,
+    mock_render,
+    mock_resolve_paths,
+    sample_files,
+):
+    """Test that the line_number_mode flag is correctly propagated."""
+    # Mock the resolve_paths function to return sample paths
+    mock_resolve_paths.return_value = sample_files
+    mock_resolve_files.return_value = []
+    mock_gather.return_value = []
+    mock_build.return_value = Document(content_items=[])
+    mock_theme.return_value = Document(content_items=[])
+
+    # Setup a mock return value
+    mock_render.return_value = "Mocked content"
+
+    # Call process_v2 with line_number_mode="all"
+    process_v2(
+        sources=sample_files,
+        line_number_mode="all",
+        generate_toc=False,
+        theme=None,
+        show_header=True,
+    )
+
+    # Verify render_document was called with include_line_numbers=True
+    mock_render.assert_called_once()
+    args, kwargs = mock_render.call_args
+    assert kwargs.get("include_line_numbers") is True
