@@ -219,23 +219,3 @@ def _extract_headings(document: Document) -> dict[str, list[tuple[str, int]]]:
                 headings_by_file[file_path] = file_headings
 
     return headings_by_file
-
-
-# This function is no longer used directly - formatter.format_with_line_numbers
-# is used instead, but keeping it here to avoid breaking tests
-def _add_line_numbers(content: str) -> str:
-    """Add line numbers to content.
-
-    Args:
-        content: Content to add line numbers to
-
-    Returns:
-        Content with line numbers
-    """
-    lines = content.split("\n")
-    numbered_lines = []
-
-    for i, line in enumerate(lines, start=1):
-        numbered_lines.append(f"{i:4d}: {line}")
-
-    return "\n".join(numbered_lines)
