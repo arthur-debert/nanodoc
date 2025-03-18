@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from nanodoc.v1.data import ContentItem, LineRange
+from nanodoc.v2.structures import FileContent
 
 
 def get_fixtures_dir() -> Path:
@@ -40,25 +40,34 @@ def read_fixture(fixture_name: str) -> str:
         return f.read()
 
 
-def create_fixture_content_item(fixture_name: str) -> ContentItem:
-    """Create a ContentItem from a fixture file.
+def create_fixture_content_item(fixture_name: str) -> FileContent:
+    """Create a FileContent from a fixture file.
 
     This is the preferred way to access fixture files in tests, as it provides
-    a complete ContentItem object that can be used with the nanodoc functions.
+    a complete FileContent object that can be used with the nanodoc functions.
 
     Args:
         fixture_name: Name of the fixture file (e.g. "cake.txt")
 
     Returns:
-        ContentItem instance representing the fixture file
+        FileContent instance representing the fixture file
     """
     path = get_fixture_path(fixture_name)
     with open(path) as f:
-        content = f.readlines()
+        content = f.read()
 
-    return ContentItem(
-        original_arg=fixture_name,
-        file_path=str(path),
-        ranges=[LineRange(start=1, end=len(content))],
+    # Calculate the number of lines
+    num_lines = len(content.splitlines()) or 1
+
+    file_content = FileContent(
+        filepath=str(path),
+        ranges=[(1, num_lines)],
         content=content,
+        is_bundle=fixture_name.endswith(".ndoc"),
+        original_source=fixture_name,
     )
+
+    # Add file_path property for compatibility with v1 tests
+    file_content.file_path = file_content.filepath
+
+    return file_content

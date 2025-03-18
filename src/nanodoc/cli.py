@@ -6,19 +6,10 @@ import sys
 import click
 
 from . import VERSION
-from .v1.core import run as run_v1
+from .v2.core import run
 
 # Initialize logger
 logger = logging.getLogger("nanodoc")
-
-# Try importing v2 implementation
-try:
-    from .v2.core import run as run_v2
-
-    V2_AVAILABLE = True
-except ImportError:
-    V2_AVAILABLE = False
-    logger.warning("V2 implementation not available")
 
 # Define Click context settings
 CONTEXT_SETTINGS = {
@@ -50,7 +41,6 @@ def setup_logging(verbose: bool) -> None:
     help="Header style",
 )
 @click.option("--txt-ext", multiple=True, help="Add file extensions to search for")
-@click.option("--use-v2", is_flag=True, help="Use v2 implementation.")
 @click.version_option(version=VERSION)
 def main(
     sources: list[str],
@@ -62,7 +52,6 @@ def main(
     sequence: str,
     style: str,
     txt_ext: list[str],
-    use_v2: bool,
 ) -> None:
     """Process source files and generate documentation."""
     setup_logging(verbose)
@@ -79,12 +68,11 @@ def main(
         line_number_mode = "all"
 
     try:
-        # Choose implementation
-        run_impl = run_v2 if use_v2 and V2_AVAILABLE else run_v1
-        logger.info(f"Using {'v2' if use_v2 and V2_AVAILABLE else 'v1'} implementation")
+        # Using v2 implementation
+        logger.info("Using v2 implementation")
 
-        # Run the selected implementation with unified interface
-        result = run_impl(
+        # Run implementation with unified interface
+        result = run(
             sources=list(sources),
             line_number_mode=line_number_mode,
             generate_toc=toc,

@@ -130,7 +130,7 @@ class NanodocGroup(click.Group):
     help="Select theme for rendering",
 )
 @click.option(
-    "--use-v2",
+    " ",
     is_flag=True,
     default=True,
     help="Use v2 implementation (default: True)",
@@ -205,7 +205,7 @@ def cli(ctx, v, n, toc, no_header, sequence, style, txt_ext, theme, use_v2, sour
     help="Select theme for rendering",
 )
 @click.option(
-    "--use-v2",
+    " ",
     is_flag=True,
     default=True,
     help="Use v2 implementation (default: True)",

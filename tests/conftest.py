@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from nanodoc.v1.data import ContentItem
+from nanodoc.v2.structures import FileContent
 
 # Import test utilities from the same directory
 utils_path = os.path.join(os.path.dirname(__file__), "utils.py")
@@ -82,22 +82,22 @@ FIXTURE_FILES = [
 
 
 @pytest.fixture(params=FIXTURE_FILES)
-def fixture_content_item(request) -> ContentItem:
-    """A parametrized fixture that provides ContentItem instances for test files.
+def fixture_content_item(request) -> FileContent:
+    """A parametrized fixture that provides FileContent instances for test files.
 
     This is the preferred way to access fixture files in tests. It provides
-    a complete ContentItem object that can be used with the nanodoc functions.
+    a complete FileContent object that can be used with the nanodoc functions.
 
     The fixture is parametrized, so tests using it will run once for each
     fixture file.
 
     Usage:
         def test_something(fixture_content_item):
-            # fixture_content_item is a ContentItem instance
+            # fixture_content_item is a FileContent instance
             result = run_all([fixture_content_item], ...)
             assert result ...
 
     Returns:
-        ContentItem instance for the current fixture file
+        FileContent instance for the current fixture file
     """
     return create_fixture_content_item(request.param)
