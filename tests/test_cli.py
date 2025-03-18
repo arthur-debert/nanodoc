@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from nanodoc.v2.core import run
-from nanodoc.v2.document import Document
+from nanodoc.core import run
+from nanodoc.document import Document
 
 
 def test_run_basic():
@@ -50,20 +50,20 @@ def test_run_without_formatting():
 
     # Use patch to replace the actual functions
     with (
-        patch("nanodoc.v2.resolver.os.path.isfile", return_value=True),
-        patch("nanodoc.v2.resolver.os.path.isdir", return_value=False),
-        patch("nanodoc.v2.extractor.open", mock_open(read_data="file content")),
-        patch("nanodoc.v2.resolver.resolve_paths", return_value=["path1"]),
-        patch("nanodoc.v2.extractor.resolve_files", return_value=["file_content"]),
-        patch("nanodoc.v2.extractor.gather_content", return_value=["content_item"]),
+        patch("nanodoc.resolver.os.path.isfile", return_value=True),
+        patch("nanodoc.resolver.os.path.isdir", return_value=False),
+        patch("nanodoc.extractor.open", mock_open(read_data="file content")),
+        patch("nanodoc.resolver.resolve_paths", return_value=["path1"]),
+        patch("nanodoc.extractor.resolve_files", return_value=["file_content"]),
+        patch("nanodoc.extractor.gather_content", return_value=["content_item"]),
         # These patches need to use side_effect or return_value, not wraps
         patch(
-            "nanodoc.v2.document.build_document",
+            "nanodoc.document.build_document",
             return_value=MagicMock(content_items=["content_item"]),
         ),
         # We need to let the actual function run to test it's called properly
         # So we don't mock it here
-        patch("nanodoc.v2.renderer.render_document", side_effect=simple_render),
+        patch("nanodoc.renderer.render_document", side_effect=simple_render),
     ):
         # Call the function without formatting options
         result = run(
@@ -154,12 +154,12 @@ def test_run_without_toc(sample_files):
     assert "Heading 2" in result
 
 
-@patch("nanodoc.v2.resolver.resolve_paths")
-@patch("nanodoc.v2.renderer.render_document")
-@patch("nanodoc.v2.extractor.resolve_files")
-@patch("nanodoc.v2.extractor.gather_content")
-@patch("nanodoc.v2.document.build_document")
-@patch("nanodoc.v2.formatter.apply_theme_to_document")
+@patch("nanodoc.resolver.resolve_paths")
+@patch("nanodoc.renderer.render_document")
+@patch("nanodoc.extractor.resolve_files")
+@patch("nanodoc.extractor.gather_content")
+@patch("nanodoc.document.build_document")
+@patch("nanodoc.formatter.apply_theme_to_document")
 @pytest.mark.skip(
     reason="Over-mocked test: needs rewrite using actual document rendering"
 )
@@ -198,12 +198,12 @@ def test_toc_flag_propagation(
     assert kwargs.get("include_toc") is True
 
 
-@patch("nanodoc.v2.resolver.resolve_paths")
-@patch("nanodoc.v2.renderer.render_document")
-@patch("nanodoc.v2.extractor.resolve_files")
-@patch("nanodoc.v2.extractor.gather_content")
-@patch("nanodoc.v2.document.build_document")
-@patch("nanodoc.v2.formatter.apply_theme_to_document")
+@patch("nanodoc.resolver.resolve_paths")
+@patch("nanodoc.renderer.render_document")
+@patch("nanodoc.extractor.resolve_files")
+@patch("nanodoc.extractor.gather_content")
+@patch("nanodoc.document.build_document")
+@patch("nanodoc.formatter.apply_theme_to_document")
 @pytest.mark.skip(
     reason="Over-mocked test: needs rewrite using actual document rendering"
 )

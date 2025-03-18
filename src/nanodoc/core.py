@@ -7,12 +7,12 @@ import logging
 import sys
 from typing import Optional
 
-from nanodoc.v2.boot import configure_logging
-from nanodoc.v2.document import CircularDependencyError, build_document
-from nanodoc.v2.extractor import gather_content, resolve_files
-from nanodoc.v2.formatter import apply_theme_to_document
-from nanodoc.v2.renderer import render_document
-from nanodoc.v2.resolver import resolve_paths
+from nanodoc.boot import configure_logging
+from nanodoc.document import CircularDependencyError, build_document
+from nanodoc.extractor import gather_content, resolve_files
+from nanodoc.formatter import apply_theme_to_document
+from nanodoc.renderer import render_document
+from nanodoc.resolver import resolve_paths
 
 # Initialize logger
 logger = logging.getLogger("cli")

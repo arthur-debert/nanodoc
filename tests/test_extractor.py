@@ -2,13 +2,13 @@
 
 import pytest
 
-from nanodoc.v2.extractor import (
+from nanodoc.extractor import (
     _apply_ranges,
     _parse_path_and_ranges,
     gather_content,
     resolve_files,
 )
-from nanodoc.v2.structures import FileContent
+from nanodoc.structures import FileContent
 
 
 def test_parse_path_and_ranges_no_ranges():

@@ -10,13 +10,14 @@ from pathlib import Path
 
 import pytest
 
-from nanodoc.v2.document import build_document
-from nanodoc.v2.extractor import gather_content, resolve_files
-from nanodoc.v2.formatter import apply_theme_to_document
-from nanodoc.v2.renderer import render_document
-from nanodoc.v2.resolver import resolve_paths
+from nanodoc.document import build_document
+from nanodoc.extractor import gather_content, resolve_files
+from nanodoc.formatter import apply_theme_to_document
+from nanodoc.renderer import render_document
+from nanodoc.resolver import resolve_paths
 
-FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+# Update fixtures directory path to use the tests/fixtures directory
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 def test_milestone_1():

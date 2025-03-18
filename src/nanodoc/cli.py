@@ -6,7 +6,7 @@ import sys
 import click
 
 from . import VERSION
-from .v2.core import run
+from .core import run
 
 # Initialize logger
 logger = logging.getLogger("nanodoc")

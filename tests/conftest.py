@@ -1,103 +1,104 @@
-"""Global pytest fixtures."""
+"""Test configuration for Nanodoc v2."""
 
 import os
-from pathlib import Path
+import tempfile
 
 import pytest
 
-from nanodoc.v2.structures import FileContent
-
-# Import test utilities from the same directory
-utils_path = os.path.join(os.path.dirname(__file__), "utils.py")
-with open(utils_path) as f:
-    exec(f.read(), globals())
+from .utils import create_fixture_content_item
 
 
 @pytest.fixture
-def fixtures_dir() -> Path:
-    """Get the fixtures directory path."""
-    return Path(__file__).parent / "fixtures"
-
-
-@pytest.fixture(
-    params=[
-        "cake.txt",
-        "incident.txt",
-        "new-telephone.txt",
-        "test_file1.py",
-        "test_file2.py",
-        "test_bundle.ndoc",
-    ]
-)
-def fixture_file(request) -> str:
-    """A parametrized fixture that provides access to test fixture files.
-
-    Usage:
-        def test_something(fixture_file):
-            # fixture_file will be each of the files in sequence
-            content = read_fixture(fixture_file)
-            ...
-    """
-    return request.param
+def temp_dir():
+    """Provide a temporary directory for tests."""
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        yield tmpdirname
 
 
 @pytest.fixture
-def fixture_content(fixture_file: str) -> str:
-    """Get the content of a fixture file.
-
-    This fixture depends on fixture_file, so it will also be parametrized.
-
-    Usage:
-        def test_something(fixture_file, fixture_content):
-            # fixture_file is the name
-            # fixture_content is the actual content
-            assert "some text" in fixture_content
-    """
-    return read_fixture(fixture_file)
+def fixtures_dir():
+    """Provide the path to the test fixtures directory."""
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "fixtures"))
 
 
 @pytest.fixture
-def fixture_path(fixture_file: str) -> Path:
-    """Get the path to a fixture file.
+def sample_file(temp_dir):
+    """Create a sample text file in the temporary directory."""
+    file_path = os.path.join(temp_dir, "sample.txt")
+    content = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n"
 
-    This fixture depends on fixture_file, so it will also be parametrized.
+    with open(file_path, "w") as f:
+        f.write(content)
 
-    Usage:
-        def test_something(fixture_file, fixture_path):
-            # fixture_file is the name
-            # fixture_path is the full path
-            assert fixture_path.exists()
-    """
-    return get_fixture_path(fixture_file)
+    return file_path
 
 
-FIXTURE_FILES = [
-    "cake.txt",
-    "incident.txt",
-    "new-telephone.txt",
+@pytest.fixture
+def sample_hidden_file(temp_dir):
+    """Create a sample hidden file in the temporary directory."""
+    file_path = os.path.join(temp_dir, ".hidden.txt")
+    content = "Hidden content\n"
+
+    with open(file_path, "w") as f:
+        f.write(content)
+
+    return file_path
+
+
+@pytest.fixture
+def nested_directory_structure(temp_dir):
+    """Create a nested directory structure for testing."""
+    # Create directories
+    dir1 = os.path.join(temp_dir, "dir1")
+    dir2 = os.path.join(temp_dir, "dir2")
+    subdir = os.path.join(dir2, "subdir")
+    hidden_dir = os.path.join(temp_dir, ".hidden_dir")
+
+    os.makedirs(dir1, exist_ok=True)
+    os.makedirs(dir2, exist_ok=True)
+    os.makedirs(subdir, exist_ok=True)
+    os.makedirs(hidden_dir, exist_ok=True)
+
+    # Create files
+    file1 = os.path.join(dir1, "file1.txt")
+    file2 = os.path.join(dir1, "file2.md")
+    file3 = os.path.join(dir2, "file3.txt")
+    file4 = os.path.join(subdir, "file4.txt")
+    hidden_file = os.path.join(dir2, ".hidden.txt")
+    hidden_dir_file = os.path.join(hidden_dir, "file.txt")
+
+    # Write content to files
+    for file_path in [file1, file2, file3, file4, hidden_file, hidden_dir_file]:
+        with open(file_path, "w") as f:
+            f.write(f"Content of {os.path.basename(file_path)}\n")
+
+    return {
+        "base_dir": temp_dir,
+        "dir1": dir1,
+        "dir2": dir2,
+        "subdir": subdir,
+        "hidden_dir": hidden_dir,
+        "files": [file1, file2, file3, file4, hidden_file, hidden_dir_file],
+    }
+
+
+# Add fixture_content_item parametrized fixture
+test_files = [
     "test_file1.py",
     "test_file2.py",
     "test_bundle.ndoc",
+    "cake.txt",
+    "incident.txt",
+    "new-telephone.txt",
 ]
 
 
-@pytest.fixture(params=FIXTURE_FILES)
-def fixture_content_item(request) -> FileContent:
-    """A parametrized fixture that provides FileContent instances for test files.
+@pytest.fixture(params=test_files)
+def fixture_content_item(request):
+    """Provide test fixture content items for parametrized tests.
 
-    This is the preferred way to access fixture files in tests. It provides
-    a complete FileContent object that can be used with the nanodoc functions.
-
-    The fixture is parametrized, so tests using it will run once for each
-    fixture file.
-
-    Usage:
-        def test_something(fixture_content_item):
-            # fixture_content_item is a FileContent instance
-            result = run_all([fixture_content_item], ...)
-            assert result ...
-
-    Returns:
-        FileContent instance for the current fixture file
+    This fixture will create a FileContent object for each test file,
+    allowing tests to run multiple times with different input files.
     """
-    return create_fixture_content_item(request.param)
+    fixture_name = request.param
+    return create_fixture_content_item(fixture_name)

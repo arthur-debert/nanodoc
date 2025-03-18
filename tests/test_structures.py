@@ -1,6 +1,6 @@
 """Tests for core data structures in Nanodoc v2."""
 
-from nanodoc.v2.structures import Document, FileContent
+from nanodoc.structures import Document, FileContent
 
 
 def test_range_type():

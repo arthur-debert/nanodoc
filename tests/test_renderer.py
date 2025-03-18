@@ -2,13 +2,13 @@
 
 import pytest
 
-from nanodoc.v2.renderer import (
+from nanodoc.renderer import (
     _add_line_numbers,
     _extract_headings,
     generate_toc,
     render_document,
 )
-from nanodoc.v2.structures import Document, FileContent
+from nanodoc.structures import Document, FileContent
 
 
 def test_render_document_basic():

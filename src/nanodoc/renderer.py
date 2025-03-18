@@ -9,11 +9,11 @@ import logging
 import os
 import re
 
-from nanodoc.v2.formatter import (
+from nanodoc.formatter import (
     enhance_rendering,
     format_with_line_numbers,
 )
-from nanodoc.v2.structures import Document
+from nanodoc.structures import Document
 
 # Initialize logger
 logger = logging.getLogger("nanodoc")

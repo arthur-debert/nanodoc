@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from nanodoc.v2.resolver import get_files_from_directory, resolve_paths
+from nanodoc.resolver import get_files_from_directory, resolve_paths
 
 
 def test_resolve_single_file(sample_file):

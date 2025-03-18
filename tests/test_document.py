@@ -2,13 +2,13 @@
 
 import pytest
 
-from nanodoc.v2.document import (
+from nanodoc.document import (
     CircularDependencyError,
     build_document,
     process_include_directive,
     process_inline_directive,
 )
-from nanodoc.v2.structures import Document, FileContent
+from nanodoc.structures import Document, FileContent
 
 
 def test_build_document_with_regular_files():
@@ -50,7 +50,7 @@ def test_build_document_with_bundle_file(tmp_path):
 
     # Create a bundle file
     bundle_file = bundle_dir / "bundle.ndoc"
-    bundle_file.write_text("Bundle header\n" "@inline inlined.txt\n" "Bundle footer\n")
+    bundle_file.write_text("Bundle header\n@inline inlined.txt\nBundle footer\n")
 
     # Create FileContent objects
     bundle_content = FileContent(
@@ -138,7 +138,7 @@ def test_circular_dependency_detection(tmp_path):
     test_dir.mkdir()
 
     circular_file = test_dir / "circular.ndoc"
-    circular_file.write_text("Header\n" "@include circular.ndoc\n" "Footer\n")
+    circular_file.write_text("Header\n@include circular.ndoc\nFooter\n")
 
     # Create FileContent
     file_content = FileContent(
@@ -166,13 +166,13 @@ def test_nested_bundles(tmp_path):
     # Create a nested bundle
     nested_bundle = test_dir / "nested.ndoc"
     nested_bundle.write_text(
-        "Nested bundle header\n" "@inline content.txt\n" "Nested bundle footer\n"
+        "Nested bundle header\n@inline content.txt\nNested bundle footer\n"
     )
 
     # Create a main bundle that includes the nested bundle
     main_bundle = test_dir / "main.ndoc"
     main_bundle.write_text(
-        "Main bundle header\n" "@include nested.ndoc\n" "Main bundle footer\n"
+        "Main bundle header\n@include nested.ndoc\nMain bundle footer\n"
     )
 
     # Create FileContent for main bundle
@@ -204,9 +204,7 @@ def test_missing_inline_file(tmp_path):
 
     # Create a bundle that references a non-existent file
     bundle_file = test_dir / "bundle.ndoc"
-    bundle_file.write_text(
-        "Bundle header\n" "@inline non_existent.txt\n" "Bundle footer\n"
-    )
+    bundle_file.write_text("Bundle header\n@inline non_existent.txt\nBundle footer\n")
 
     # Create FileContent
     bundle_content = FileContent(

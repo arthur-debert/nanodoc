@@ -5,7 +5,7 @@ from unittest.mock import mock_open, patch
 import pytest
 from rich.theme import Theme
 
-from nanodoc.v2.formatter import (
+from nanodoc.formatter import (
     apply_theme_to_document,
     create_themed_console,
     enhance_rendering,
@@ -13,7 +13,7 @@ from nanodoc.v2.formatter import (
     get_available_themes,
     load_theme,
 )
-from nanodoc.v2.structures import Document, FileContent
+from nanodoc.structures import Document, FileContent
 
 OVER_MOCKED_REASON = "Over-mocked test: test is meanlingess, no need to mock"
 
@@ -79,7 +79,7 @@ def test_load_theme_with_fallback():
 @pytest.mark.skip(reason=OVER_MOCKED_REASON)
 def test_create_themed_console():
     """Test creating a themed console."""
-    with patch("nanodoc.v2.formatter.load_theme") as mock_load_theme:
+    with patch("nanodoc.formatter.load_theme") as mock_load_theme:
         mock_load_theme.return_value = Theme({"heading": ""})
         console = create_themed_console("test-theme")
         mock_load_theme.assert_called_once_with("test-theme")
@@ -89,7 +89,7 @@ def test_create_themed_console():
 @pytest.mark.skip(reason=OVER_MOCKED_REASON)
 def test_create_themed_console_with_default():
     """Test creating a themed console with default theme."""
-    with patch("nanodoc.v2.formatter.load_theme") as mock_load_theme:
+    with patch("nanodoc.formatter.load_theme") as mock_load_theme:
         mock_load_theme.return_value = Theme({"heading": ""})
         console = create_themed_console()
         mock_load_theme.assert_called_once_with("neutral")
@@ -175,7 +175,7 @@ def test_format_with_line_numbers_custom_format():
 def test_enhance_rendering():
     """Test enhancing rendered content with Rich formatting."""
     with (
-        patch("nanodoc.v2.formatter.load_theme") as mock_load_theme,
+        patch("nanodoc.formatter.load_theme") as mock_load_theme,
         patch("rich.console.Console.print") as mock_print,
     ):
         content = "# Heading 1\nContent\n## Heading 2\nMore content"

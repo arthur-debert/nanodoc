@@ -6,13 +6,13 @@ with minimal mocking to ensure the components work together correctly.
 
 import pytest
 
-from nanodoc.v2.formatter import (
+from nanodoc.formatter import (
     apply_theme_to_document,
     enhance_rendering,
     get_available_themes,
 )
-from nanodoc.v2.renderer import render_document
-from nanodoc.v2.structures import Document, FileContent
+from nanodoc.renderer import render_document
+from nanodoc.structures import Document, FileContent
 
 
 @pytest.mark.skip(reason="Theme functionality requires v1 theme files")

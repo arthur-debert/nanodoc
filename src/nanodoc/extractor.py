@@ -7,7 +7,7 @@ and extracts content based on line ranges.
 
 import os
 
-from nanodoc.v2.structures import FileContent, Range
+from nanodoc.structures import FileContent, Range
 
 
 def resolve_files(

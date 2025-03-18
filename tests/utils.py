@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from nanodoc.v2.structures import FileContent
+from nanodoc.structures import FileContent
 
 
 def get_fixtures_dir() -> Path:

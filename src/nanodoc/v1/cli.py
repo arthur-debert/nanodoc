@@ -15,7 +15,7 @@ from .formatting import create_themed_console, get_available_themes
 
 # v2 import
 try:
-    from .v2.core import process_v2
+    from .core import process_v2
 
     V2_AVAILABLE = True
 except ImportError:

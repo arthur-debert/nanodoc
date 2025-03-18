@@ -11,8 +11,8 @@ import os
 import re
 from typing import Optional
 
-from nanodoc.v2.extractor import gather_content, resolve_files
-from nanodoc.v2.structures import Document, FileContent
+from nanodoc.extractor import gather_content, resolve_files
+from nanodoc.structures import Document, FileContent
 
 # Initialize logger
 logger = logging.getLogger("document")

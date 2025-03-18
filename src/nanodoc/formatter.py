@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.style import Style
 from rich.theme import Theme
 
-from nanodoc.v2.structures import Document
+from nanodoc.structures import Document
 
 # Default theme name
 DEFAULT_THEME = "neutral"
