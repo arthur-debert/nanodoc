@@ -17,7 +17,7 @@ from rich.theme import Theme
 from nanodoc.structures import Document
 
 # Default theme name
-DEFAULT_THEME = "neutral"
+DEFAULT_THEME = "classic"
 
 # Initialize logger
 logger = logging.getLogger("formatter")
@@ -25,8 +25,8 @@ logger = logging.getLogger("formatter")
 
 def _get_themes_dir():
     """Return the path to the themes directory."""
-    module_dir = pathlib.Path(__file__).parent.parent
-    themes_dir = module_dir / "v1" / "themes"
+    module_dir = pathlib.Path(__file__).parent
+    themes_dir = module_dir / "themes"
     logger.debug("Using themes directory: %s", themes_dir)
     return themes_dir
 

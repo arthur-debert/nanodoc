@@ -2,7 +2,6 @@
 
 from unittest.mock import mock_open, patch
 
-import pytest
 from rich.theme import Theme
 
 from nanodoc.formatter import (
@@ -18,18 +17,16 @@ from nanodoc.structures import Document, FileContent
 OVER_MOCKED_REASON = "Over-mocked test: test is meanlingess, no need to mock"
 
 
-@pytest.mark.skip(reason=OVER_MOCKED_REASON)
 def test_get_available_themes():
     """Test getting available themes."""
     with patch("os.listdir") as mock_listdir:
-        mock_listdir.return_value = ["neutral.yaml", "classic-dark.yaml"]
+        mock_listdir.return_value = ["classic.yaml", "classic-dark.yaml"]
         themes = get_available_themes()
-        assert "neutral" in themes
+        assert "classic" in themes
         assert "classic-dark" in themes
         assert len(themes) == 2
 
 
-@pytest.mark.skip(reason=OVER_MOCKED_REASON)
 def test_load_theme():
     """Test loading a theme from a YAML file."""
     theme_data = """
@@ -54,7 +51,6 @@ def test_load_theme():
         assert "code" in theme.styles
 
 
-@pytest.mark.skip(reason=OVER_MOCKED_REASON)
 def test_load_theme_with_fallback():
     """Test loading a theme with fallback to default."""
     theme_data = """
@@ -76,7 +72,6 @@ def test_load_theme_with_fallback():
         assert "heading" in theme.styles
 
 
-@pytest.mark.skip(reason=OVER_MOCKED_REASON)
 def test_create_themed_console():
     """Test creating a themed console."""
     with patch("nanodoc.formatter.load_theme") as mock_load_theme:
@@ -86,13 +81,12 @@ def test_create_themed_console():
         assert console is not None
 
 
-@pytest.mark.skip(reason=OVER_MOCKED_REASON)
 def test_create_themed_console_with_default():
     """Test creating a themed console with default theme."""
     with patch("nanodoc.formatter.load_theme") as mock_load_theme:
-        mock_load_theme.return_value = Theme({"heading": ""})
+        mock_load_theme.return_value = Theme({})
         console = create_themed_console()
-        mock_load_theme.assert_called_once_with("neutral")
+        mock_load_theme.assert_called_once_with("classic")
         assert console is not None
 
 
@@ -166,12 +160,6 @@ def test_format_with_line_numbers_custom_format():
     assert "Line 3: Line 3" in result
 
 
-@pytest.mark.skip(
-    reason=(
-        "Over-mocked test: mocks console and theme loading, "
-        "needs rewrite using actual console output"
-    )
-)
 def test_enhance_rendering():
     """Test enhancing rendered content with Rich formatting."""
     with (

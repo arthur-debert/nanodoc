@@ -168,7 +168,6 @@ def test_line_number_mode(fixture_content_item):
         assert "function_1" in result.stdout
 
 
-@pytest.mark.skip(reason="Theme functionality requires v1 theme files")
 def test_theme_option(fixture_content_item):
     """Test theme application."""
     cmd = [
@@ -176,7 +175,7 @@ def test_theme_option(fixture_content_item):
         "-m",
         "nanodoc",
         "--theme",
-        "neutral",
+        "classic",
         fixture_content_item.file_path,
     ]
 
@@ -211,7 +210,6 @@ def test_theme_option(fixture_content_item):
         assert "function_1" in result.stdout
 
 
-@pytest.mark.skip(reason="Theme functionality requires v1 theme files")
 def test_multiple_options(fixture_content_item):
     """Test multiple options together."""
     cmd = [
@@ -221,7 +219,7 @@ def test_multiple_options(fixture_content_item):
         "--toc",
         "-n",
         "--theme",
-        "neutral",
+        "classic",
         fixture_content_item.file_path,
     ]
 

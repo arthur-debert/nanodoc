@@ -4,8 +4,6 @@ This module focuses on testing the theming and rendering functionality
 with minimal mocking to ensure the components work together correctly.
 """
 
-import pytest
-
 from nanodoc.formatter import (
     apply_theme_to_document,
     enhance_rendering,
@@ -15,7 +13,6 @@ from nanodoc.renderer import render_document
 from nanodoc.structures import Document, FileContent
 
 
-@pytest.mark.skip(reason="Theme functionality requires v1 theme files")
 def test_formatting_with_theme():
     """Test the full formatting pipeline with a theme."""
     # Create a simple document structure
@@ -29,7 +26,7 @@ def test_formatting_with_theme():
 
     # Apply theme to document
     themed_doc = apply_theme_to_document(
-        document, theme_name="neutral", use_rich_formatting=True
+        document, theme_name="classic", use_rich_formatting=True
     )
 
     # Render the document
@@ -46,11 +43,10 @@ def test_formatting_with_theme():
     assert "def test_function()" in final_output
     assert "return True" in final_output
     # Since we're using a real theme, this should work without mocking
-    assert themed_doc.theme_name == "neutral"
+    assert themed_doc.theme_name == "classic"
     assert themed_doc.use_rich_formatting is True
 
 
-@pytest.mark.skip(reason="Theme functionality requires v1 theme files")
 def test_all_themes():
     """Test rendering with all available themes."""
     # Create a simple document with headings to test theme styling
@@ -87,7 +83,6 @@ def test_all_themes():
         assert "More content" in final_output
 
 
-@pytest.mark.skip(reason="Theme functionality requires v1 theme files")
 def test_theme_with_real_file(tmp_path):
     """Test theming with a real file from disk."""
     # Create a temporary test file
@@ -108,7 +103,7 @@ def test_theme_with_real_file(tmp_path):
 
     # Apply theme and render
     themed_doc = apply_theme_to_document(
-        document, theme_name="neutral", use_rich_formatting=True
+        document, theme_name="classic", use_rich_formatting=True
     )
     rendered = render_document(themed_doc)
     final_output = enhance_rendering(

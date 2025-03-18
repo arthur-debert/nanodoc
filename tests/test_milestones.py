@@ -118,7 +118,6 @@ def test_milestone_4():
     assert "function_2" in rendered
 
 
-@pytest.mark.skip(reason="Theme functionality requires v1 theme files")
 def test_milestone_5():
     """Test formatting, theming, and options."""
     test_file = str(FIXTURES_DIR / "test_file1.py")
@@ -143,7 +142,7 @@ def test_milestone_5():
 
     # Test with rich formatting and theming
     themed_document = apply_theme_to_document(
-        document, theme_name="neutral", use_rich_formatting=True
+        document, theme_name="classic", use_rich_formatting=True
     )
     themed_rendered = render_document(
         themed_document, include_toc=False, include_line_numbers=False
@@ -217,37 +216,41 @@ def test_milestone_6():
         )
 
 
-@pytest.mark.skip(
-    reason=(
-        "Bundle processing needs to be fixed to properly handle relative paths "
-        "and content inclusion from @include/@inline directives"
-    )
-)
+@pytest.mark.skip(reason="Not implemented yet")
 def test_milestone_7():
-    """Test bundle processing."""
-    bundle_file = str(FIXTURES_DIR / "test_bundle.ndoc")
+    """Test bundle processing with include/inline directives."""
+    test_file = str(FIXTURES_DIR / "test_bundle.ndoc")
 
-    result = subprocess.run(
-        [
-            "python",
-            "-m",
-            "nanodoc",
-            "--toc",
-            bundle_file,
-        ],
-        text=True,
-        capture_output=True,
-        check=True,
-    )
+    # Process through the pipeline
+    paths = resolve_paths([test_file])
+    file_contents = resolve_files(paths)
+    content_items = gather_content(file_contents)
+    document = build_document(content_items)
 
-    # Verify TOC
-    assert "Table of Contents" in result.stdout
+    # Test the rendered output
+    rendered = render_document(document)
 
-    # Verify all module content is included
-    assert "Test Bundle" in result.stdout
-    assert "function_1" in result.stdout
-    assert "function_2" in result.stdout
-    assert "bundle_function" in result.stdout
+    # The bundle should include content from:
+    # 1. The bundle file itself
+    # 2. The included file1.py
+    assert "bundle_function" in rendered
+    assert "function_1" in rendered
+
+    # Test that the document structure is correct:
+    # 1. Bundle is processed first
+    # 2. Included content maintains proper relationship
+    assert len(document.content_items) >= 2
+
+    # The first item should be the bundle
+    assert document.content_items[0].is_bundle is True
+    assert "test_bundle.ndoc" in document.content_items[0].filepath
+
+    # Second item should be inlined content
+    if len(document.content_items) > 1:
+        assert document.content_items[1].is_bundle is False
+        # Check that it has original_source pointing to the bundle
+        if hasattr(document.content_items[1], "original_source"):
+            assert document.content_items[1].original_source is not None
 
 
 def test_resolve_single_file(fixture_content_item):
@@ -398,7 +401,6 @@ def test_line_number_mode(fixture_content_item):
         assert "function_1" in result.stdout
 
 
-@pytest.mark.skip(reason="Theme functionality requires v1 theme files")
 def test_theme_option(fixture_content_item):
     """Test theme application."""
     cmd = [
@@ -406,7 +408,7 @@ def test_theme_option(fixture_content_item):
         "-m",
         "nanodoc",
         "--theme",
-        "neutral",
+        "classic",
         fixture_content_item.file_path,
     ]
     result = subprocess.run(cmd, text=True, capture_output=True, check=True)
@@ -448,7 +450,7 @@ def test_multiple_options(fixture_content_item):
         "--toc",
         "-n",
         "--theme",
-        "neutral",
+        "classic",
         fixture_content_item.file_path,
     ]
     result = subprocess.run(cmd, text=True, capture_output=True, check=True)

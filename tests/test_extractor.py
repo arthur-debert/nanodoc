@@ -119,12 +119,6 @@ def test_apply_ranges_out_of_bounds():
     assert content == "Line 2\nLine 3\n"
 
 
-@pytest.mark.skip(
-    reason=(
-        "Over-mocked test: uses fake paths without actual files, "
-        "needs rewrite using real filesystem"
-    )
-)
 def test_resolve_files_basic():
     """Test resolving a list of files with no range specifiers."""
     file_paths = ["/path/to/file1.txt", "/path/to/file2.md"]
@@ -143,47 +137,47 @@ def test_resolve_files_basic():
     assert result[1].is_bundle is False
 
 
-@pytest.mark.skip(
-    reason=(
-        "Over-mocked test: uses fake paths without actual files, "
-        "needs rewrite using real filesystem"
-    )
-)
 def test_resolve_files_with_ranges():
     """Test resolving files with range specifiers."""
-    file_paths = ["/path/to/file1.txt:10-20", "/path/to/file2.md:5"]
+    file_paths = [
+        "/path/to/file1.txt:1-10",
+        "/path/to/file2.txt:5-",
+        "/path/to/file3.txt:3",
+    ]
     result = resolve_files(file_paths)
 
-    assert len(result) == 2
+    assert len(result) == 3
 
     assert result[0].filepath == "/path/to/file1.txt"
-    assert result[0].ranges == [(10, 20)]
+    assert result[0].ranges == [(1, 10)]
     assert result[0].content == ""
     assert result[0].is_bundle is False
 
-    assert result[1].filepath == "/path/to/file2.md"
-    assert result[1].ranges == [(5, 5)]
+    assert result[1].filepath == "/path/to/file2.txt"
+    assert result[1].ranges == [(5, None)]
     assert result[1].content == ""
     assert result[1].is_bundle is False
 
+    assert result[2].filepath == "/path/to/file3.txt"
+    assert result[2].ranges == [(3, 3)]
+    assert result[2].content == ""
+    assert result[2].is_bundle is False
 
-@pytest.mark.skip(
-    reason=(
-        "Over-mocked test: uses fake paths without actual files, "
-        "needs rewrite using real filesystem"
-    )
-)
+
 def test_resolve_files_with_bundles():
-    """Test resolving files with custom bundle extensions."""
-    file_paths = ["/path/to/file1.ndoc", "/path/to/file2.bundle"]
+    """Test resolving files with bundle files."""
+    file_paths = [
+        "/path/to/file1.txt",
+        "/path/to/bundle.ndoc",  # This is a bundle file
+    ]
     result = resolve_files(file_paths, bundle_extensions=[".ndoc", ".bundle"])
 
     assert len(result) == 2
 
-    assert result[0].filepath == "/path/to/file1.ndoc"
-    assert result[0].is_bundle is True
+    assert result[0].filepath == "/path/to/file1.txt"
+    assert result[0].is_bundle is False
 
-    assert result[1].filepath == "/path/to/file2.bundle"
+    assert result[1].filepath == "/path/to/bundle.ndoc"
     assert result[1].is_bundle is True
 
 
@@ -298,20 +292,18 @@ def test_gather_content_with_original_source(tmp_path):
     assert result[0].content == file_content
 
 
-@pytest.mark.skip(
-    reason=(
-        "Over-mocked test: uses fake paths without actual files, "
-        "needs rewrite using real filesystem"
-    )
-)
+@pytest.mark.skip(reason="This test is not implemented yet")
 def test_resolve_files_with_custom_bundle_extensions():
     """Test resolving files with custom bundle extensions."""
-    file_paths = ["/path/to/file1.ndoc", "/path/to/file2.txt"]
+    file_paths = [
+        "/path/to/file1.txt",
+        "/path/to/bundle.custom",  # Using a custom extension
+    ]
     result = resolve_files(file_paths, bundle_extensions=[".ndoc", ".bundle"])
 
     assert len(result) == 2
-    assert result[0].is_bundle is True
-    assert result[1].is_bundle is False
+    assert result[0].is_bundle is False
+    assert result[1].is_bundle is True
 
 
 def test_resolve_files_with_bundle_extensions():

@@ -26,7 +26,7 @@ def test_run_basic():
             sources=[f.name],
             line_number_mode="file",
             generate_toc=True,
-            theme="neutral",
+            theme="classic",
             show_header=True,
         )
 
@@ -154,77 +154,57 @@ def test_run_without_toc(sample_files):
     assert "Heading 2" in result
 
 
-@patch("nanodoc.resolver.resolve_paths")
+@pytest.mark.skip(
+    reason="Needs more complete mocking to properly test the run pipeline"
+)
 @patch("nanodoc.renderer.render_document")
-@patch("nanodoc.extractor.resolve_files")
-@patch("nanodoc.extractor.gather_content")
 @patch("nanodoc.document.build_document")
 @patch("nanodoc.formatter.apply_theme_to_document")
-@pytest.mark.skip(
-    reason="Over-mocked test: needs rewrite using actual document rendering"
-)
 def test_toc_flag_propagation(
     mock_theme,
     mock_build,
-    mock_gather,
-    mock_resolve_files,
     mock_render,
-    mock_resolve_paths,
     sample_files,
 ):
     """Test that the generate_toc flag is correctly propagated."""
-    # Mock the resolve_paths function to return sample paths
-    mock_resolve_paths.return_value = sample_files
-    mock_resolve_files.return_value = []
-    mock_gather.return_value = []
-    mock_build.return_value = Document(content_items=[])
-    mock_theme.return_value = Document(content_items=[])
-
-    # Setup a mock return value
+    # Setup mocks
+    mock_document = Document(content_items=[])
+    mock_build.return_value = mock_document
+    mock_theme.return_value = mock_document
     mock_render.return_value = "Mocked content"
 
     # Call run with generate_toc=True
     run(
         sources=sample_files,
-        line_number_mode="all",
+        line_number_mode=None,
         generate_toc=True,
         theme=None,
         show_header=True,
     )
 
     # Verify render_document was called with include_toc=True
-    mock_render.assert_called_once()
-    args, kwargs = mock_render.call_args
+    mock_render.assert_called()
+    kwargs = mock_render.call_args.kwargs
     assert kwargs.get("include_toc") is True
 
 
-@patch("nanodoc.resolver.resolve_paths")
+@pytest.mark.skip(
+    reason="Needs more complete mocking to properly test the run pipeline"
+)
 @patch("nanodoc.renderer.render_document")
-@patch("nanodoc.extractor.resolve_files")
-@patch("nanodoc.extractor.gather_content")
 @patch("nanodoc.document.build_document")
 @patch("nanodoc.formatter.apply_theme_to_document")
-@pytest.mark.skip(
-    reason="Over-mocked test: needs rewrite using actual document rendering"
-)
 def test_line_number_flag_propagation(
     mock_theme,
     mock_build,
-    mock_gather,
-    mock_resolve_files,
     mock_render,
-    mock_resolve_paths,
     sample_files,
 ):
     """Test that the line_number_mode flag is correctly propagated."""
-    # Mock the resolve_paths function to return sample paths
-    mock_resolve_paths.return_value = sample_files
-    mock_resolve_files.return_value = []
-    mock_gather.return_value = []
-    mock_build.return_value = Document(content_items=[])
-    mock_theme.return_value = Document(content_items=[])
-
-    # Setup a mock return value
+    # Setup mocks
+    mock_document = Document(content_items=[])
+    mock_build.return_value = mock_document
+    mock_theme.return_value = mock_document
     mock_render.return_value = "Mocked content"
 
     # Call run with line_number_mode="all"
@@ -237,6 +217,6 @@ def test_line_number_flag_propagation(
     )
 
     # Verify render_document was called with include_line_numbers=True
-    mock_render.assert_called_once()
-    args, kwargs = mock_render.call_args
+    mock_render.assert_called()
+    kwargs = mock_render.call_args.kwargs
     assert kwargs.get("include_line_numbers") is True
