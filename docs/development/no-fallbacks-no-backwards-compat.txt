@@ -1,2 +1,0 @@
-if we  are renaming functions or other names, don't keep old names for backwards compatibility, replace the calls with the new ones.
-if code is broken because of type expectations, don't work around it (try do adapt  a type into the other), find the root call and correct the type sent there
