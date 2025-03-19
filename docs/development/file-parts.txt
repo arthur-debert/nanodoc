@@ -18,5 +18,5 @@ Multiples:
 
 Invalid Lines:
     If any line reference is not found we raised an error, even if other in the multiple are found
-Repeted Lines:
+Repeated Lines:
     We will not check for multiple repeated lines, nor any ordering issues

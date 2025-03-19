@@ -6,6 +6,7 @@ import sys
 import click
 
 from . import VERSION
+from .boot import configure_logging
 from .core import run
 
 # Initialize logger
@@ -16,14 +17,6 @@ CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
     "max_content_width": 100,
 }
-
-
-def setup_logging(verbose: bool) -> None:
-    """Set up logging based on verbosity level."""
-    if verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.WARNING)
 
 
 @click.command()
@@ -54,7 +47,7 @@ def main(
     txt_ext: list[str],
 ) -> None:
     """Process source files and generate documentation."""
-    setup_logging(verbose)
+    configure_logging(verbose)
 
     if not sources:
         click.echo("No source files provided.", err=True)

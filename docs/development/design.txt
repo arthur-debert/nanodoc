@@ -1,0 +1,95 @@
+Intro
+
+Nanodoc is a minimalist document bundler designed for stitching hints, reminders and short docs.  Useful for prompts, personalized docs highlights for your teams or a note to your future self
+
+No config, nothing to learn nor remember. Short , simple, sweet.
+
+  $ nanodoc <file1>...<file_n>
+
+  The Design
+
+The program is started being passed the sources args, that is one or more documents to be combined:
+  Once in possession of the sources, nanodoc will generate information (if requested) like document title in breaking pages or TOCS.
+  With the full content to use (sources content + auto generated contents) nanodoc will render the output according to configs and themes.
+Paths → Resolve Files → Gather Content → Build Document → Apply Formatting → Render Document.
+  In the broadest way possible, there are four stages:
+    0. Argument parsing
+    1. Resolve Paths
+    2. Resolve Files
+    3. Gather Document
+    4. Build Document
+    5. Apply Formatting
+    6. Render Document
+    7. Display
+
+  Each of these has a clear  input and output.
+
+    0. CLI parsing: sys.argvs -> Program run info (args and settings)
+
+      We parse the argvs provided, and transform them into python objects. From now on, the entire application can run as operating on files and strings, regardless of it being a terminal program, a GUI or a web app.
+      This gives us greater testability and better code since 99% of the program doesn't have to deal with shell peculiarities.
+
+
+    1. Collecting Files: args as list -> absolute  file paths
+
+      Args can be files, dirs or file bundles. Dirs must be expanded, and bundles declare includes.  Hence this phase is more than using the arg list, but expanding it into paths, including dirs and bundle files. A file bundle is a file containing a list of files to include, allowing you to group related documents together.
+
+    2. Load content: absolute file paths-> FileContents
+
+      Content comprises file ranges. For full files that's range (0,-1), but it can include one or more specific ranges or single lines (all modeled as ranges)
+
+      Now we can resolve paths and ranges into actual strings , generating FileContents. `FileContents` can be thought of as a data structure containing the file path, the actual string content, and the range of lines extracted from the file. For example: `FileContents = { path: "/path/to/file.txt", content: "This is the content...", range: [1, 10] }`
+
+    3. Enrich Content: FileContents ?
+
+      Nanodoc has options to insert metadata , things like file headers and TOCs. In this phase we create the auto generated content. Examples of metadata include document title, author, creation date, or custom tags.
+
+    4. Render content -> FileContents -> output string
+
+      Now with the full set of content, we can render them using themes and other flags. Themes define the overall look and feel of the output, controlling things like fonts, colors, and formatting.
+
+    5. Content Display: output string -> sys.stdout
+
+      This final step just prepares the content string for terminal display. In the future it could output to disk or do other things.
+
+    Benefits.
+
+    1. Shell isolation:
+
+Testing and handling shell programs is possible, but more cumbersome and error prone that testing strings inputs and outputs.
+
+This design means that from stages 1-4 there are no shell specific, it's all string and files at the boundary.
+
+Hence, we only need to account for shell in testing :
+
+  * Test that sys.argvs -> parsed results work.
+  * Final content display.
+  * A handful of e2e tests for sanity check.
+
+This is a big deal, and a great complexity saver. The caveat is clear: nothing in the middle of the application can or should know or do anything shell related.
+
+    2. Rich and decoupled processing
+
+It isolates common things like file validation, formatting, etc into self contained modules that can be internally changed without interfering with the subsequent  ones. Decoupling simplifies testing, maintenance, and allows for independent changes to modules without affecting others.
+
+Data is progressively enriched, but keeping it's history, for example when formatting, we have a list of strings to include, but also know from which file they came, which allows us to do things like adding file title headers.
+
+That is, instead for using "flat string lists" we keep that content metadata which is used in formatting and up to the last stages. For example, initially, you might have `["line 1", "line 2"]`. After enrichment, this could become `[{path: "/path/to/file.txt", content: "line 1", line_number: 1}, {path: "/path/to/file.txt", content: "line 2", line_number: 2}]`.
+
+  Practical Implications
+
+  1. Testing shell boundaries:
+
+    - have test for sys_to_run where we validate many cli args and parameters are correctly transformed to the entry point run execution. `sys_to_run` represents the function that takes `sys.argv` as input and transforms it into the internal program representation.
+    - have tests from string -> std out, where we make sure we're displaying that data correctly.
+    - a couple of e2d tests for sanity check
+
+  2. Centralized Flow
+
+    - the main core.run method will orchestrate the 4 stages by passing data from the previous one to the current and passing that return to the next state.
+    - stages should not be cross calling code , that is, the formatting code should not be dealing with files paths and reading files, just like the file gathering part doesn't need to use the formatting code.
+
+    This gives us, among other benefits, the higher level testability that we can treat stages as blackboxes. too.
+
+
+    The implementation has: Resolve Paths → Resolve Files → Gather Content → Build Document → Apply Formatting → Render Document.

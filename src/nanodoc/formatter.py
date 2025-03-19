@@ -164,6 +164,10 @@ def format_with_line_numbers(
         "Adding line numbers (start: %d, format: %s)", start_number, number_format
     )
 
+    # Handle empty content case
+    if not content:
+        return ""
+
     lines = content.split("\n")
     numbered_lines = []
 
