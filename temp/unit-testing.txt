@@ -1,0 +1,47 @@
+As parte of a longer stretch of code quality, we're reviewing the testing we're done.
+
+As a general note, out test suite has a few significant shortcomings:
+
+1. Many high level integration tests then actual unit tets, making for brittle changes and slow recoverty
+2. Much reliance on mocking and patching, most of which are really not testing anything really.
+
+
+We'll tackle this in stages.
+
+1. Do cover simple functions well.
+
+Terminal are functions that don't call other functions in this code base, wheareas semi-terminal functions call only terminal functions.
+
+These means that that those are great to target with unit tetsing, as they are very isolated.  And these are 70% of the functions in the code base.
+
+Terminal Functions:
+  boot.configure_logging
+  document.add_current_content
+  extractor.resolve_files
+  extractor.apply_ranges
+  extractor.parse_path_and_ranges
+  formatter.get_themes_dir
+  formatter.apply_theme_to_document
+  formatter.format_with_line_numbers
+  legacy.run_content
+  legacy.run_bundle_directives
+  legacy.run_inline_directive
+  legacy.run_include_directive
+  renderer.create_header
+  renderer.extract_headings
+  resolver.get_files_from_directory
+
+Semi-terminal Functions:
+  extractor.gather_content
+  formatter.get_available_themes
+  formatter.load_theme
+  formatter.create_themed_console
+  formatter.enhance_rendering
+
+
+  For each of these:
+
+  create a test file in tests/module/test_f_<function_name>.py
+  then look at the other tests for this module. if they are teesting the functions directly move them to the test_f_<function_name>.py file.
+
+  let's just do this now, no new code, new fixtures, just move the tests better.
