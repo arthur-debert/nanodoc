@@ -17,7 +17,7 @@ from nanodoc.renderer import render_document
 from nanodoc.resolver import resolve_paths
 
 # Update fixtures directory path to use the tests/fixtures directory
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
+FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 
 def test_milestone_1():

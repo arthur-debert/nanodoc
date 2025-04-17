@@ -1,5 +1,0 @@
-pytest
-no classes, only functions
-fixtures in tests/fixtures.py
-if  fixtures are used, add to the top of tests/conftest.py
-after any changes, run tests, with pytest .

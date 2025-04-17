@@ -145,27 +145,3 @@ def get_files_from_directory(
                 result.append(os.path.abspath(path))
 
     return result
-
-
-def _matches_pattern(path: str, pattern: str) -> bool:
-    """Simple pattern matching for file paths.
-
-    Args:
-        path: File path to check
-        pattern: Pattern to match against (e.g., "*.txt")
-
-    Returns:
-        True if the path matches the pattern, False otherwise
-    """
-    # For *.txt pattern, check if file ends with .txt
-    if pattern.startswith("*."):
-        ext = pattern[1:]  # Extract extension including the dot
-        return path.endswith(ext)
-    # For specific filename, check exact match
-    elif "*" not in pattern and "?" not in pattern and "[" not in pattern:
-        return os.path.basename(path) == pattern
-    # For more complex patterns, use glob
-    else:
-        import fnmatch
-
-        return fnmatch.fnmatch(path, pattern)

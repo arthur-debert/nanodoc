@@ -6,8 +6,9 @@ and extracts content based on line ranges.
 """
 
 import os
+from typing import Optional
 
-from nanodoc.structures import FileContent, Range
+from nanodoc.structures import FileContent
 
 
 def resolve_files(
@@ -42,7 +43,7 @@ def resolve_files(
 
     for file_path in file_paths:
         # Parse path and range specifier if present
-        path, ranges = _parse_path_and_ranges(file_path)
+        path, ranges = parse_path_and_ranges(file_path)
 
         # Determine if this file is a bundle
         is_bundle = False
@@ -63,6 +64,57 @@ def resolve_files(
         result.append(file_content)
 
     return result
+
+
+def apply_ranges(lines: list[str], ranges: list[tuple[int, Optional[int]]]) -> str:
+    """Apply ranges to extract relevant lines from a file.
+
+    Each range is a tuple (start, end) where:
+    - start is the 1-indexed starting line (inclusive)
+    - end is the 1-indexed ending line (exclusive) or None for EOF
+
+    Args:
+        lines: List of lines from the file
+        ranges: List of line ranges to extract
+
+    Returns:
+        Extracted content as a string
+
+    Raises:
+        ValueError: If a range is invalid
+    """
+    if not lines:
+        return ""
+
+    result = []
+
+    for start, end in ranges:
+        # Validate range
+        if start < 1:
+            raise ValueError(f"Line numbers must be positive: {start}")
+
+        # Convert to 0-based indexing
+        start_idx = max(0, start - 1)
+
+        # Special handling for single line ranges (when start == end)
+        # For single line ranges, extract just that line
+        if start == end:
+            # Check if the line exists
+            if start_idx < len(lines):
+                # Extract the single line
+                result.append(lines[start_idx])
+        else:
+            # Normal range processing
+            # If end is None, use all lines to the end
+            # Otherwise, convert end to 0-based indexing and make exclusive
+            end_idx = len(lines) if end is None else end - 1
+            end_idx = min(end_idx, len(lines))
+
+            # Extract lines for this range
+            if start_idx < end_idx:
+                result.extend(lines[start_idx:end_idx])
+
+    return "".join(result)
 
 
 def gather_content(file_contents: list[FileContent]) -> list[FileContent]:
@@ -104,7 +156,7 @@ def gather_content(file_contents: list[FileContent]) -> list[FileContent]:
             ) from e
 
         # Apply ranges to extract relevant lines
-        content = _apply_ranges(lines, updated_content.ranges)
+        content = apply_ranges(lines, updated_content.ranges)
         updated_content.content = content
 
         result.append(updated_content)
@@ -112,7 +164,9 @@ def gather_content(file_contents: list[FileContent]) -> list[FileContent]:
     return result
 
 
-def _parse_path_and_ranges(file_path: str) -> tuple[str, list[Range]]:
+def parse_path_and_ranges(
+    file_path: str,
+) -> tuple[str, list[tuple[int, Optional[int]]]]:
     """Parse a file path with potential range specifiers.
 
     When specifying a range like 10-20, the end index is exclusive. For example,
@@ -173,14 +227,16 @@ def _parse_path_and_ranges(file_path: str) -> tuple[str, list[Range]]:
             try:
                 start = int(start_str.strip())
             except ValueError as e:
-                raise ValueError(f"Invalid start line number: {start_str}") from e
+                msg = f"Invalid start line number: {start_str}"
+                raise ValueError(msg) from e
 
             # Parse end line
             if end_str.strip():
                 try:
                     end = int(end_str.strip())
                 except ValueError as e:
-                    raise ValueError(f"Invalid end line number: {end_str}") from e
+                    msg = f"Invalid end line number: {end_str}"
+                    raise ValueError(msg) from e
             else:
                 # If end is empty (e.g., "10-"), use None to indicate EOF
                 end = None
@@ -197,7 +253,8 @@ def _parse_path_and_ranges(file_path: str) -> tuple[str, list[Range]]:
         if start < 1:
             raise ValueError(f"Line numbers must be positive: {start}")
         if end is not None and end != start and end < start:
-            raise ValueError(f"End line must be >= start line: {start}-{end}")
+            msg = f"End line must be >= start line: {start}-{end}"
+            raise ValueError(msg)
 
         ranges.append((start, end))
 
@@ -206,48 +263,3 @@ def _parse_path_and_ranges(file_path: str) -> tuple[str, list[Range]]:
         return path, default_range
 
     return path, ranges
-
-
-def _apply_ranges(lines: list[str], ranges: list[Range]) -> str:
-    """Apply ranges to extract relevant lines from a file.
-
-    Each range is a tuple (start, end) where:
-    - start is the 1-indexed starting line (inclusive)
-    - end is the 1-indexed ending line (exclusive) or None for EOF
-
-    Args:
-        lines: List of lines from the file
-        ranges: List of line ranges to extract
-
-    Returns:
-        Extracted content as a string
-
-    Raises:
-        ValueError: If a range is invalid
-    """
-    if not lines:
-        return ""
-
-    result = []
-
-    for start, end in ranges:
-        # Validate range
-        if start < 1:
-            raise ValueError(f"Line numbers must be positive: {start}")
-
-        # Convert to 0-based indexing
-        start_idx = max(0, start - 1)
-
-        # Use ternary operator to determine end_idx
-        # For single line, use just that line. Otherwise for normal ranges:
-        # - If end is None, use all lines to the end
-        # - For normal ranges, subtract 1 to convert to 0-based indexing
-        end_idx = start if start == end else (len(lines) if end is None else end - 1)
-
-        end_idx = min(end_idx, len(lines))
-
-        # Extract lines for this range
-        if start_idx < end_idx:
-            result.extend(lines[start_idx:end_idx])
-
-    return "".join(result)

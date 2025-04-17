@@ -35,6 +35,64 @@ def create_header(text: str, style: str = None) -> str:
     return text
 
 
+def split_camel_case(s: str) -> str:
+    """Split a camel case string into words with spaces.
+
+    Examples:
+        wordNice -> word Nice
+        WordNice -> Word Nice
+        myHTMLFile -> my HTML File
+
+    Args:
+        s: Input string possibly in camel case
+
+    Returns:
+        String with spaces inserted between camel case words
+    """
+    # Add space before capital letters that are preceded by lowercase
+    s = re.sub(r"([a-z])([A-Z])", r"\1 \2", s)
+
+    # Handle consecutive uppercase followed by lowercase
+    # (e.g., HTMLFile -> HTML File)
+    s = re.sub(r"([A-Z])([A-Z][a-z])", r"\1 \2", s)
+
+    return s
+
+
+def get_relative_path(filepath: str) -> str:
+    """Get the path relative to the current working directory.
+
+    Args:
+        filepath: Absolute or relative file path
+
+    Returns:
+        Path relative to current working directory, or the original path
+        if it couldn't be made relative
+    """
+    try:
+        # Get current working directory
+        cwd = os.getcwd()
+
+        # Convert to absolute paths for comparison
+        abs_filepath = os.path.abspath(filepath)
+
+        # Get relative path from cwd to file
+        # os.path.relpath handles the case where the file
+        # is not under the cwd appropriately
+        rel_path = os.path.relpath(abs_filepath, cwd)
+
+        # If rel_path starts with '..' it means the file is not under cwd
+        # In that case, return the original absolute path
+        if rel_path.startswith(".."):
+            return abs_filepath
+
+        return rel_path
+    except Exception as e:
+        # If there's any error, return the original path
+        logger.warning(f"Error getting relative path for {filepath}: {e}")
+        return filepath
+
+
 def render_document(
     document: Document, include_toc: bool = False, include_line_numbers: bool = False
 ) -> str:
@@ -82,12 +140,17 @@ def render_document(
                 rendered_parts.append("\n")
 
             # Add file header
+            # Use relative path instead of just the basename
+            rel_path = get_relative_path(item.filepath)
             file_basename = os.path.basename(item.filepath)
-            # Create a nicer format like "Filename (filename.ext)"
+
+            # Create a nicer format like "Filename (path/to/filename.ext)"
             file_name_without_ext = os.path.splitext(file_basename)[0]
+            # Handle word separators: dashes, underscores, and camel case
             nice_name = file_name_without_ext.replace("_", " ").replace("-", " ")
+            nice_name = split_camel_case(nice_name)
             nice_name = nice_name.title()
-            nice_header = f"{nice_name} ({file_basename})"
+            nice_header = f"{nice_name} ({rel_path})"
             rendered_parts.append(f"\n{nice_header}\n\n")
 
         # Add the content with optional line numbers
@@ -109,7 +172,7 @@ def render_document(
     plain_content = "".join(rendered_parts)
 
     # Apply theming if requested
-    if hasattr(document, "use_rich_formatting") and document.use_rich_formatting:
+    if hasattr(document, "use_rich_formatting") and (document.use_rich_formatting):
         return enhance_rendering(
             plain_content,
             theme_name=document.theme_name,
@@ -219,23 +282,3 @@ def _extract_headings(document: Document) -> dict[str, list[tuple[str, int]]]:
                 headings_by_file[file_path] = file_headings
 
     return headings_by_file
-
-
-# This function is no longer used directly - formatter.format_with_line_numbers
-# is used instead, but keeping it here to avoid breaking tests
-def _add_line_numbers(content: str) -> str:
-    """Add line numbers to content.
-
-    Args:
-        content: Content to add line numbers to
-
-    Returns:
-        Content with line numbers
-    """
-    lines = content.split("\n")
-    numbered_lines = []
-
-    for i, line in enumerate(lines, start=1):
-        numbered_lines.append(f"{i:4d}: {line}")
-
-    return "\n".join(numbered_lines)

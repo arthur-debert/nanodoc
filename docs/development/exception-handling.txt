@@ -1,1 +1,0 @@
-this codebase is a small  and lean one. if errors are found, sys non zero immediately
