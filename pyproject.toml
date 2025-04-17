@@ -1,6 +1,6 @@
 [project]
 name = "nanodoc"
-version = "0.9.6"
+version = "0.9.7"
 description = "A minimalist document bundler designed for stitching hints, reminders and short docs."
 authors = [{ name = "Arthur Debert", email = "arthur@debert.xyz" }]
 readme = "README.txt"
@@ -18,7 +18,11 @@ classifiers = [
 ]
 
 # Dependencies
-dependencies = ["rich>=13.9.4,<14.0.0", "click>=8.1.7,<9.0.0"]
+dependencies = [
+  "rich>=13.9.4,<14.0.0",
+  "click>=8.1.7,<9.0.0",
+  "pyyaml>=6.0.0,<7.0.0",
+]
 
 [project.optional-dependencies]
 dev = [

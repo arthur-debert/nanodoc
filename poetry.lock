@@ -1145,7 +1145,6 @@ files = [
     {file = "PyYAML-6.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:39693e1f8320ae4f43943590b49779ffb98acb81f788220ea932a6b6c51004d8"},
     {file = "pyyaml-6.0.2.tar.gz", hash = "sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e"},
 ]
-markers = {main = "extra == \"dev\""}
 
 [[package]]
 name = "radon"
@@ -1488,4 +1487,4 @@ dev = ["black", "jinja2", "pre-commit", "pytest", "pytest-cov", "ruff", "twine"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9"
-content-hash = "96a9cf3d6ed77651c45b26b4a0f7358ddae74e3114f43c0eca3a0a3bdf9d77e1"
+content-hash = "a8e02911cfab66d2b8e1f31e3a8267b9201d227f12f2df4cd0875b09af80f1eb"
