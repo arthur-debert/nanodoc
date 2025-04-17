@@ -59,6 +59,40 @@ def split_camel_case(s: str) -> str:
     return s
 
 
+def get_relative_path(filepath: str) -> str:
+    """Get the path relative to the current working directory.
+
+    Args:
+        filepath: Absolute or relative file path
+
+    Returns:
+        Path relative to current working directory, or the original path
+        if it couldn't be made relative
+    """
+    try:
+        # Get current working directory
+        cwd = os.getcwd()
+
+        # Convert to absolute paths for comparison
+        abs_filepath = os.path.abspath(filepath)
+
+        # Get relative path from cwd to file
+        # os.path.relpath handles the case where the file
+        # is not under the cwd appropriately
+        rel_path = os.path.relpath(abs_filepath, cwd)
+
+        # If rel_path starts with '..' it means the file is not under cwd
+        # In that case, return the original absolute path
+        if rel_path.startswith(".."):
+            return abs_filepath
+
+        return rel_path
+    except Exception as e:
+        # If there's any error, return the original path
+        logger.warning(f"Error getting relative path for {filepath}: {e}")
+        return filepath
+
+
 def render_document(
     document: Document, include_toc: bool = False, include_line_numbers: bool = False
 ) -> str:
@@ -106,14 +140,17 @@ def render_document(
                 rendered_parts.append("\n")
 
             # Add file header
+            # Use relative path instead of just the basename
+            rel_path = get_relative_path(item.filepath)
             file_basename = os.path.basename(item.filepath)
-            # Create a nicer format like "Filename (filename.ext)"
+
+            # Create a nicer format like "Filename (path/to/filename.ext)"
             file_name_without_ext = os.path.splitext(file_basename)[0]
             # Handle word separators: dashes, underscores, and camel case
             nice_name = file_name_without_ext.replace("_", " ").replace("-", " ")
             nice_name = split_camel_case(nice_name)
             nice_name = nice_name.title()
-            nice_header = f"{nice_name} ({file_basename})"
+            nice_header = f"{nice_name} ({rel_path})"
             rendered_parts.append(f"\n{nice_header}\n\n")
 
         # Add the content with optional line numbers
