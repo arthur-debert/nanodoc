@@ -35,6 +35,30 @@ def create_header(text: str, style: str = None) -> str:
     return text
 
 
+def split_camel_case(s: str) -> str:
+    """Split a camel case string into words with spaces.
+
+    Examples:
+        wordNice -> word Nice
+        WordNice -> Word Nice
+        myHTMLFile -> my HTML File
+
+    Args:
+        s: Input string possibly in camel case
+
+    Returns:
+        String with spaces inserted between camel case words
+    """
+    # Add space before capital letters that are preceded by lowercase
+    s = re.sub(r"([a-z])([A-Z])", r"\1 \2", s)
+
+    # Handle consecutive uppercase followed by lowercase
+    # (e.g., HTMLFile -> HTML File)
+    s = re.sub(r"([A-Z])([A-Z][a-z])", r"\1 \2", s)
+
+    return s
+
+
 def render_document(
     document: Document, include_toc: bool = False, include_line_numbers: bool = False
 ) -> str:
@@ -85,7 +109,9 @@ def render_document(
             file_basename = os.path.basename(item.filepath)
             # Create a nicer format like "Filename (filename.ext)"
             file_name_without_ext = os.path.splitext(file_basename)[0]
+            # Handle word separators: dashes, underscores, and camel case
             nice_name = file_name_without_ext.replace("_", " ").replace("-", " ")
+            nice_name = split_camel_case(nice_name)
             nice_name = nice_name.title()
             nice_header = f"{nice_name} ({file_basename})"
             rendered_parts.append(f"\n{nice_header}\n\n")
@@ -109,7 +135,7 @@ def render_document(
     plain_content = "".join(rendered_parts)
 
     # Apply theming if requested
-    if hasattr(document, "use_rich_formatting") and document.use_rich_formatting:
+    if hasattr(document, "use_rich_formatting") and (document.use_rich_formatting):
         return enhance_rendering(
             plain_content,
             theme_name=document.theme_name,
