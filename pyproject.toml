@@ -1,6 +1,6 @@
 [project]
 name = "nanodoc"
-version = "0.9.5"
+version = "0.9.6"
 description = "A minimalist document bundler designed for stitching hints, reminders and short docs."
 authors = [{ name = "Arthur Debert", email = "arthur@debert.xyz" }]
 readme = "README.txt"
@@ -8,13 +8,13 @@ requires-python = ">=3.9"
 license = { file = "LICENSE" }
 keywords = ["documentation", "bundler", "minimalist", "text", "prompts"]
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Topic :: Documentation",
-    "Topic :: Text Processing :: Markup",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Topic :: Documentation",
+  "Topic :: Text Processing :: Markup",
 ]
 
 # Dependencies
@@ -22,13 +22,13 @@ dependencies = ["rich>=13.9.4,<14.0.0", "click>=8.1.7,<9.0.0"]
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit>=4.1.0,<5.0.0",
-    "black>=25.1.0,<26.0.0",
-    "pytest-cov>=4.1.0,<5.0.0",
-    "ruff>=0.3.2,<0.4.0",
-    "pytest>=8.3.5,<9.0.0",
-    "twine>=6.1.0,<7.0.0",
-    "jinja2>=3.1.6,<4.0.0",
+  "pre-commit>=4.1.0,<5.0.0",
+  "black>=25.1.0,<26.0.0",
+  "pytest-cov>=4.1.0,<5.0.0",
+  "ruff>=0.3.2,<0.4.0",
+  "pytest>=8.3.5,<9.0.0",
+  "twine>=6.1.0,<7.0.0",
+  "jinja2>=3.1.6,<4.0.0",
 ]
 
 [project.scripts]
@@ -48,19 +48,19 @@ build-backend = "poetry.core.masonry.api"
 packages = [{ include = "nanodoc", from = "src" }]
 include = ["bin/**/*", "README.txt", "LICENSE"]
 exclude = [
-    "docs/**/*",
-    "samples/**/*",
-    "tests/**/*",
-    "tmp/**/*",
-    "notes/**/*",
-    "drafts/**/*",
-    ".vscode/**/*",
-    ".VSCodeCounter/**/*",
-    ".coverage",
-    ".coverage.*",
-    "**/*.pyc",
-    "**/__pycache__/**",
-    "**/*.log",
+  "docs/**/*",
+  "samples/**/*",
+  "tests/**/*",
+  "tmp/**/*",
+  "notes/**/*",
+  "drafts/**/*",
+  ".vscode/**/*",
+  ".VSCodeCounter/**/*",
+  ".coverage",
+  ".coverage.*",
+  "**/*.pyc",
+  "**/__pycache__/**",
+  "**/*.log",
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -79,28 +79,28 @@ exclude = '/(\.git|\.hg|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist)/'
 line-length = 88
 target-version = "py39"
 exclude = [
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".tox",
-    ".venv",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "__pycache__",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".tox",
+  ".venv",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "__pycache__",
 ]
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "I",   # isort
-    "UP",  # pyupgrade
-    "N",   # pep8-naming
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "SIM", # flake8-simplify
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort
+  "UP",  # pyupgrade
+  "N",   # pep8-naming
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "SIM", # flake8-simplify
 ]
 
 [tool.ruff.format]
