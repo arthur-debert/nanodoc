@@ -1,0 +1,242 @@
+#! /usr/bin/env bash
+
+# Parse arguments
+SHOW_FUNCTIONS=false
+FILTER_DIR=""
+
+for arg in "$@"; do
+    case "$arg" in
+    "--func")
+        SHOW_FUNCTIONS=true
+        ;;
+    "pkg" | "cmd")
+        FILTER_DIR="$arg"
+        ;;
+    *)
+        echo "Usage: $0 [--func] [pkg|cmd]"
+        echo "  --func    Show per-function coverage instead of per-file"
+        echo "  pkg       Show only pkg/ directory coverage"
+        echo "  cmd       Show only cmd/ directory coverage"
+        exit 1
+        ;;
+    esac
+done
+
+# Determine test path based on filter
+if [ -n "$FILTER_DIR" ]; then
+    TEST_PATH="./$FILTER_DIR/..."
+else
+    TEST_PATH="./..."
+fi
+
+cd /Users/adebert/h/txxt && gotestsum --format pkgname -- -coverprofile=coverage.out "$TEST_PATH" &&
+    # Parse coverage.out to get statement counts per file
+    awk '
+NR > 1 {  # Skip the "mode:" line
+    # Format: filename:start.col,end.col num_statements covered
+    split($1, parts, ":");
+    filename = parts[1];
+    statements = $2;
+    covered = $3;
+    
+    file_total_statements[filename] += statements;
+    if (covered == 1) {
+        file_covered_statements[filename] += statements;
+    }
+}
+END {
+    for (file in file_total_statements) {
+        covered = file_covered_statements[file] + 0;  # +0 ensures numeric
+        total = file_total_statements[file];
+        missing = total - covered;
+        coverage_pct = (total > 0) ? (covered * 100.0 / total) : 0;
+        print file, total, covered, missing, coverage_pct;
+    }
+}' coverage.out >/tmp/stmt_counts.txt &&
+    go tool cover -func=coverage.out | awk -v show_functions="$SHOW_FUNCTIONS" -v filter_dir="$FILTER_DIR" '
+function color_line(line, coverage_val) {
+    if (coverage_val >= 80) {
+        printf "\033[32m%s\033[0m\n", line;  # Green
+    } else if (coverage_val >= 60) {
+        printf "\033[33m%s\033[0m\n", line;  # Yellow
+    } else {
+        printf "\033[31m%s\033[0m\n", line;  # Red
+    }
+}
+
+function should_include_file(file_path) {
+    if (filter_dir == "") {
+        return 1;  # Include all if no filter
+    }
+    # Check if file path starts with the filter directory
+    return (index(file_path, "github.com/arthur-debert/txxt/" filter_dir "/") == 1);
+}
+
+BEGIN { 
+    header = "";
+    total_line = "";
+    count = 0;
+    file_count = 0;
+    max_file_length = 0;
+    
+    # Load statement counts from the temp file
+    while ((getline line < "/tmp/stmt_counts.txt") > 0) {
+        split(line, parts, " ");
+        file_path = parts[1];
+        stmt_info[file_path "_total"] = parts[2];
+        stmt_info[file_path "_covered"] = parts[3];
+        stmt_info[file_path "_missing"] = parts[4];
+    }
+    close("/tmp/stmt_counts.txt");
+}
+{
+    if (NR == 1) {
+        header = $0;
+    } else if ($1 == "total:") {
+        total_line = $0;
+    } else {
+        if (show_functions == "true") {
+            # Extract file path to check filter
+            full_line = $0;
+            split(full_line, parts, ":");
+            if (length(parts) >= 2) {
+                file_path = parts[1];
+                for (i = 2; i < length(parts); i++) {
+                    file_path = file_path ":" parts[i];
+                }
+                # Remove function name
+                if (match(file_path, /:[^:]*$/)) {
+                    file_path = substr(file_path, 1, RSTART-1);
+                }
+                
+                # Apply filter (redundant when using filtered test path, but kept for consistency)
+                if (should_include_file(file_path)) {
+                    lines[count] = $0;
+                    coverage = $NF;
+                    sub(/%/, "", coverage);
+                    coverage_vals[count] = coverage + 0;
+                    count++;
+                }
+            }
+        } else {
+            # Extract file path and aggregate by file
+            full_line = $0;
+            coverage = $NF;
+            sub(/%/, "", coverage);
+            coverage_num = coverage + 0;
+            
+            # Extract file path (everything before the last colon and function name)
+            # Line format: path/file.go:FunctionName    coverage%
+            split(full_line, parts, ":");
+            if (length(parts) >= 2) {
+                file_path = parts[1];
+                for (i = 2; i < length(parts); i++) {
+                    file_path = file_path ":" parts[i];
+                }
+                # Remove function name (everything after the last colon before tab/space)
+                if (match(file_path, /:[^:]*$/)) {
+                    file_path = substr(file_path, 1, RSTART-1);
+                }
+                
+                # Apply filter (redundant when using filtered test path, but kept for consistency)
+                if (should_include_file(file_path)) {
+                    # Track maximum file path length for alignment
+                    if (length(file_path) > max_file_length) {
+                        max_file_length = length(file_path);
+                    }
+                    
+                    if (file_path in file_coverages) {
+                        file_coverages[file_path] += coverage_num;
+                        file_counts[file_path]++;
+                    } else {
+                        file_coverages[file_path] = coverage_num;
+                        file_counts[file_path] = 1;
+                        file_order[file_count] = file_path;
+                        file_count++;
+                    }
+                }
+            }
+        }
+    }
+}
+END {
+    # Print header
+    print header;
+    
+    if (show_functions == "true") {
+        # Sort function lines by coverage (bubble sort for simplicity)
+        for (i = 0; i < count-1; i++) {
+            for (j = 0; j < count-1-i; j++) {
+                if (coverage_vals[j] < coverage_vals[j+1]) {
+                    # Swap lines
+                    temp_line = lines[j];
+                    lines[j] = lines[j+1];
+                    lines[j+1] = temp_line;
+                    # Swap coverage values
+                    temp_cov = coverage_vals[j];
+                    coverage_vals[j] = coverage_vals[j+1];
+                    coverage_vals[j+1] = temp_cov;
+                }
+            }
+        }
+        
+        # Print sorted function lines with colors
+        for (i = 0; i < count; i++) {
+            color_line(lines[i], coverage_vals[i]);
+        }
+    } else {
+        # Calculate average coverage per file and create sorted array
+        for (i = 0; i < file_count; i++) {
+            file_path = file_order[i];
+            avg_coverage = file_coverages[file_path] / file_counts[file_path];
+            
+            # Get statement info from the loaded data
+            total_statements = stmt_info[file_path "_total"] + 0;
+            missing_statements = stmt_info[file_path "_missing"] + 0;
+            
+            file_avg_coverages[i] = avg_coverage;
+            # Create aligned display line with statements and coverage
+            if (total_statements > 0) {
+                file_lines[i] = sprintf("%-*s %4d stmts (%3d missing) %6.1f%%", max_file_length, file_path, total_statements, missing_statements, avg_coverage);
+            } else {
+                file_lines[i] = sprintf("%-*s %4s stmts (%3s missing) %6.1f%%", max_file_length, file_path, "n/a", "n/a", avg_coverage);
+            }
+        }
+        
+        # Sort files by coverage (bubble sort)
+        for (i = 0; i < file_count-1; i++) {
+            for (j = 0; j < file_count-1-i; j++) {
+                if (file_avg_coverages[j] < file_avg_coverages[j+1]) {
+                    # Swap file lines
+                    temp_line = file_lines[j];
+                    file_lines[j] = file_lines[j+1];
+                    file_lines[j+1] = temp_line;
+                    # Swap coverage values
+                    temp_cov = file_avg_coverages[j];
+                    file_avg_coverages[j] = file_avg_coverages[j+1];
+                    file_avg_coverages[j+1] = temp_cov;
+                }
+            }
+        }
+        
+        # Print sorted file lines with colors
+        for (i = 0; i < file_count; i++) {
+            color_line(file_lines[i], file_avg_coverages[i]);
+        }
+    }
+    
+    # Print total line with color (now always meaningful since tests are filtered)
+    if (total_line != "") {
+        print "";  # Add blank line before total
+        split(total_line, fields);
+        total_coverage = fields[length(fields)];
+        sub(/%/, "", total_coverage);
+        total_coverage = total_coverage + 0;
+        # Replace "total:" with "TOTAL:" in the line
+        gsub(/^total:/, "TOTAL:", total_line);
+        color_line(total_line, total_coverage);
+    }
+    
+    # Clean up temp file
+    system("rm -f /tmp/stmt_counts.txt");
+}'

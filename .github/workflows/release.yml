@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          PKG_NAME: my-awesome-cli
+
+      - name: Set environment variables
+        run: |
+          echo "PKG_NAME=PKG_NAME_PLACEHOLDER" >> $GITHUB_ENV
+          echo "GH_USER=GITHUB_USER_PLACEHOLDER" >> $GITHUB_ENV
+          echo "GIT_REPO=GITHUB_USER_PLACEHOLDER/PKG_NAME_PLACEHOLDER" >> $GITHUB_ENV
+          echo "Package name: PKG_NAME_PLACEHOLDER"
+          echo "Repository: GITHUB_USER_PLACEHOLDER/PKG_NAME_PLACEHOLDER"
+
+      - name: Build binary first
+        run: scripts/build
+        env:
+          PKG_NAME: PKG_NAME_PLACEHOLDER 
