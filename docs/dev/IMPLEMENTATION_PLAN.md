@@ -71,7 +71,7 @@ CLI Args → Resolve Paths → Resolve Files → Gather Content → Build Docume
 
 **Goal**: Implement the presentation layer
 
-7. **Implement theme system and formatting with tests**
+7. **Implement theme system and formatting with tests** (DONE)
    - Create theme structure (YAML-based)
    - Load built-in themes (classic, classic-light, classic-dark)
    - Apply syntax highlighting (if using rich formatting)
@@ -79,7 +79,7 @@ CLI Args → Resolve Paths → Resolve Files → Gather Content → Build Docume
    - Write unit tests for theme loading and application
    - Test invalid theme handling
 
-8. **Implement document rendering with headers/TOC and tests**
+8. **Implement document rendering with headers/TOC and tests** (DONE)
    - Generate file headers with different styles (nice, filename, path)
    - Support sequence numbering (numerical, letter, roman)
    - Generate table of contents
