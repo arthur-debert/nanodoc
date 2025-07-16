@@ -1,0 +1,37 @@
+# Classic Light theme for nanodoc
+# A light theme with classic typography and subtle background colors
+
+# General styles
+default: "black on white"
+background: "white"
+
+# Typography
+heading: "dark_blue bold"
+heading.1: "dark_blue bold underline"
+heading.2: "dark_blue bold"
+heading.3: "blue bold"
+paragraph: "black"
+strong: "black bold"
+emphasis: "black italic"
+link: "blue underline"
+
+# Code
+code: "green"
+code-block: "black on light_green"
+code-block.background: "light_green"
+
+# Lists
+item.bullet: "dark_orange3 bold"
+item.number: "dark_orange3 bold"
+
+# UI elements
+title: "dark_magenta bold"
+subtitle: "magenta"
+error: "red bold on pink1"
+warning: "yellow bold on rgb(255,255,200)"
+info: "blue bold on rgb(200,200,255)"
+success: "green bold on rgb(200,255,200)"
+
+# Panels and borders
+panel.border: "blue"
+panel.title: "white on blue"

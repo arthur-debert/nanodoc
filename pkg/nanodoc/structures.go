@@ -60,17 +60,23 @@ type TOCEntry struct {
 
 // FormattingOptions contains all formatting-related options
 type FormattingOptions struct {
-	// Line numbering mode: "", "file", or "all"
-	LineNumberMode string
+	// Theme name to use
+	Theme string
+
+	// Line numbering mode
+	LineNumbers LineNumberMode
 
 	// Whether to show headers
-	ShowHeader bool
+	ShowHeaders bool
 
-	// Header sequence type: "numerical", "letter", "roman"
-	Sequence string
+	// Header style
+	HeaderStyle HeaderStyle
 
-	// Header style: "nice", "filename", "path"
-	Style string
+	// Header sequence type
+	SequenceStyle SequenceStyle
+
+	// Whether to show table of contents
+	ShowTOC bool
 
 	// Additional file extensions to process
 	AdditionalExtensions []string
@@ -115,8 +121,11 @@ func NewDocument() *Document {
 		ContentItems: make([]FileContent, 0),
 		TOC:          make([]TOCEntry, 0),
 		FormattingOptions: FormattingOptions{
-			ShowHeader: true,
-			Style:      StyleNice,
+			Theme:         ThemeClassic,
+			ShowHeaders:   true,
+			HeaderStyle:   HeaderStyleNice,
+			SequenceStyle: SequenceNumerical,
+			LineNumbers:   LineNumberNone,
 		},
 	}
 }
