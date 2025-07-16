@@ -99,6 +99,16 @@ func TestResolvePaths(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "file with line range syntax",
+			sources: []string{testFile1 + ":L10-20"},
+			wantErr: true,
+		},
+		{
+			name:    "file with single line syntax",
+			sources: []string{testFile1 + ":L5"},
+			wantErr: true,
+		},
+		{
 			name:    "multiple sources",
 			sources: []string{testFile1, testFile2},
 			check: func(t *testing.T, results []PathInfo) {
