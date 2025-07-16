@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -161,12 +162,69 @@ func BuildDocument(pathInfos []PathInfo, options FormattingOptions) (*Document, 
 	doc.ContentItems = gatheredContents
 	doc.FormattingOptions = options
 
+	// Process live bundles
+	if err := ProcessLiveBundles(doc); err != nil {
+		return nil, err
+	}
+
 	return doc, nil
 }
 
-// ProcessLiveBundle handles inline bundle processing (for future implementation)
-func ProcessLiveBundle(content string) (string, error) {
-	// TODO: Implement live bundle processing
-	// This will parse content for inline bundle directives and replace them
+// ProcessLiveBundles iterates through document content and processes inline bundles.
+func ProcessLiveBundles(doc *Document) error {
+	for i := range doc.ContentItems {
+		// Pass the directory of the current file for resolving relative paths
+		baseDir := filepath.Dir(doc.ContentItems[i].Filepath)
+		processedContent, err := ProcessLiveBundle(doc.ContentItems[i].Content, baseDir)
+		if err != nil {
+			return err
+		}
+		doc.ContentItems[i].Content = processedContent
+	}
+	return nil
+}
+
+// ProcessLiveBundle handles inline bundle processing for a single content string.
+func ProcessLiveBundle(content, baseDir string) (string, error) {
+	// Regex to find !bundle(path)
+	re := regexp.MustCompile(`!bundle\(([^)]+)\)`)
+
+	// Find all matches
+	matches := re.FindAllStringSubmatch(content, -1)
+
+	if len(matches) == 0 {
+		return content, nil
+	}
+
+	// Process each match
+	for _, match := range matches {
+		fullMatch := match[0]
+		bundlePath := match[1]
+
+		// Resolve path relative to the file being processed
+		if !filepath.IsAbs(bundlePath) {
+			bundlePath = filepath.Join(baseDir, bundlePath)
+		}
+
+		// Read the content of the bundled file
+		bundleContent, err := os.ReadFile(bundlePath)
+		if err != nil {
+			// If file not found, leave the directive as is
+			if os.IsNotExist(err) {
+				continue
+			}
+			return "", &FileError{Path: bundlePath, Err: err}
+		}
+
+		// Recursively process the content of the bundled file
+		processedBundleContent, err := ProcessLiveBundle(string(bundleContent), filepath.Dir(bundlePath))
+		if err != nil {
+			return "", err
+		}
+
+		// Replace the directive with the file content
+		content = strings.Replace(content, fullMatch, processedBundleContent, 1)
+	}
+
 	return content, nil
 }

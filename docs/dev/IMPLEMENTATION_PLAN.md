@@ -24,6 +24,22 @@ How you will work:
 
 **Goal**: Set up the basic project structure and data types
 
+<<<<<<< HEAD
+1. **Set up project structure and core types** (DONE)
+   - Create package structure: `pkg/nanodoc/` with subpackages
+   - Set up logging infrastructure
+   - Create error types and constants
+   - Update go.mod to use proper module name
+   - Write tests for logging and error handling
+
+2. **Implement structures (FileContent, Document, Range) with tests** (DONE)
+   - Create `structures.go` with core data types:
+     - `Range`: tuple of (start, end) line numbers
+     - `FileContent`: filepath, ranges, content, metadata
+     - `Document`: collection of FileContent with formatting options
+   - Write unit tests for all data structures
+   - Test validation and edge cases
+=======
 1. **Set up project structure and core types**
    * Create package structure: `pkg/nanodoc/` with subpackages
    * Set up logging infrastructure
@@ -38,60 +54,62 @@ How you will work:
      * `Document`: collection of FileContent with formatting options
    * Write unit tests for all data structures
    * Test validation and edge cases
+>>>>>>> origin/main
 
 ### Milestone 2: File Processing Pipeline (Steps 3-6)
 
 **Goal**: Implement the core file processing stages
 
-3. **Implement path resolution (resolver.go) with tests**
-   * Resolve relative paths to absolute
-   * Handle directories (expand to .txt/.md files)
-   * Handle glob patterns
-   * Detect bundle files (.bundle.*)
-   * Write unit tests for all path resolution scenarios
-   * Test edge cases (empty dirs, invalid paths, symlinks)
+<<<<<<< HEAD
+3. **Implement path resolution (resolver.go) with tests** (DONE)
+   - Resolve relative paths to absolute
+   - Handle directories (expand to .txt/.md files)
+   - Handle glob patterns
+   - Detect bundle files (.bundle.*)
+   - Write unit tests for all path resolution scenarios
+   - Test edge cases (empty dirs, invalid paths, symlinks)
 
-4. **Implement file resolution and content extraction with tests**
-   * Read file contents
-   * Parse path:range syntax (e.g., "file.txt:L10-20")
-   * Extract specified line ranges
-   * Handle missing files gracefully
-   * Write unit tests for file reading and range parsing
-   * Test error cases (permissions, non-existent files)
+4. **Implement file resolution and content extraction with tests** (DONE)
+   - Read file contents
+   - Parse path:range syntax (e.g., "file.txt:L10-20")
+   - Extract specified line ranges
+   - Handle missing files gracefully
+   - Write unit tests for file reading and range parsing
+   - Test error cases (permissions, non-existent files)
 
-5. **Implement content gathering with range support and tests**
-   * Apply line ranges to file content
-   * Merge overlapping ranges
-   * Preserve file metadata for rendering
-   * Write unit tests for range operations
-   * Test edge cases (empty ranges, out-of-bounds)
+5. **Implement content gathering with range support and tests** (DONE)
+   - Apply line ranges to file content
+   - Merge overlapping ranges
+   - Preserve file metadata for rendering
+   - Write unit tests for range operations
+   - Test edge cases (empty ranges, out-of-bounds)
 
-6. **Implement document building with bundle support and tests**
-   * Process bundle files (list of paths)
-   * Handle circular dependency detection
-   * Maintain document order
-   * Write unit tests for bundle processing
-   * Test circular dependency detection
+6. **Implement document building with bundle support and tests** (DONE)
+   - Process bundle files (list of paths)
+   - Handle circular dependency detection
+   - Maintain document order
+   - Write unit tests for bundle processing
+   - Test circular dependency detection
 
 ### Milestone 3: Formatting and Rendering (Steps 7-8)
 
 **Goal**: Implement the presentation layer
 
-7. **Implement theme system and formatting with tests**
-   * Create theme structure (YAML-based)
-   * Load built-in themes (classic, classic-light, classic-dark)
-   * Apply syntax highlighting (if using rich formatting)
-   * Support custom themes
-   * Write unit tests for theme loading and application
-   * Test invalid theme handling
+7. **Implement theme system and formatting with tests** (DONE)
+   - Create theme structure (YAML-based)
+   - Load built-in themes (classic, classic-light, classic-dark)
+   - Apply syntax highlighting (if using rich formatting)
+   - Support custom themes
+   - Write unit tests for theme loading and application
+   - Test invalid theme handling
 
-8. **Implement document rendering with headers/TOC and tests**
-   * Generate file headers with different styles (nice, filename, path)
-   * Support sequence numbering (numerical, letter, roman)
-   * Generate table of contents
-   * Render final output string
-   * Write unit tests for all rendering options
-   * Test TOC generation with various document structures
+8. **Implement document rendering with headers/TOC and tests** (DONE)
+   - Generate file headers with different styles (nice, filename, path)
+   - Support sequence numbering (numerical, letter, roman)
+   - Generate table of contents
+   - Render final output string
+   - Write unit tests for all rendering options
+   - Test TOC generation with various document structures
 
 ### Milestone 4: CLI and Features (Steps 9-10)
 

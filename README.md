@@ -1,224 +1,132 @@
-# Golang CLI Project Template
+# Nanodoc
 
-This is a comprehensive template for building Go CLI applications with modern tooling and best practices.
+Nanodoc is a minimalist document bundler designed for stitching hints, reminders, and short docs. It's useful for creating prompts, personalized documentation highlights for your teams, or a note to your future self.
 
-## 🚀 **Recommended: Use the Project Creator**
+No config, nothing to learn nor remember. Short, simple, sweet.
 
-The easiest way to use this template is via the main repository's project creation script:
+## Installation
 
-```bash
-# From the main template repository
-./bin/create-project /path/to/your-new-cli-project
+### From source
 
-# With custom settings
-./bin/create-project /path/to/my-tool \
-  --description "My awesome CLI tool" \
-  --author-name "Your Name"
-```
-
-This automatically:
-
-- ✅ Copies and configures the template
-- ✅ Replaces all placeholders with your values  
-- ✅ Renames directories appropriately
-- ✅ Initializes git repository
-- ✅ Installs Go dependencies
-- ✅ Creates initial commit
-
-## 📋 **Alternative: Manual Setup**
-
-If you prefer manual setup or want to understand the process:
-
-### 1. Template Setup
-
-Replace all placeholder values throughout the project:
+To build from source, you'll need Go 1.23+ installed.
 
 ```bash
-# The project creator automatically handles these replacements:
-my-awesome-cli      → your-cli-name (from directory name)
-arthur-debert   → arthur-debert (from config.yaml)
-Description of your CLI tool → "Description of your CLI tool" 
-AUTHOR_NAME_PLACEHOLDER   → "Arthur Debert" (from config.yaml)
-AUTHOR_EMAIL_PLACEHOLDER  → "arthur@debert.xyz" (from config.yaml)
+git clone https://github.com/arthur-debert/nanodoc-go.git
+cd nanodoc-go
+go build -o nanodoc ./cmd/nanodoc
 ```
 
-See `TEMPLATE_USAGE.md` for detailed manual setup instructions.
-
-## ✨ **Features**
-
-### 🏗️ Project Structure
-
-- **`cmd/`** - CLI application main entry points
-- **`pkg/`** - Reusable Go packages/libraries
-- **`scripts/`** - Development and deployment scripts
-- **`.github/workflows/`** - CI/CD workflows
-
-### 🔧 Development Tools
-
-- **Build automation** with comprehensive build scripts
-- **Testing** with coverage reporting and gotestsum
-- **Linting** with golangci-lint
-- **Pre-commit hooks** for code quality
-- **Line counting** with cloc for Go projects
-- **Release automation** with semantic versioning
-
-### 🚀 Release & Distribution
-
-- **GoReleaser** configuration for multi-platform builds
-- **GitHub Actions** for CI/CD
-- **Homebrew** formula generation (with debug mode)
-- **Debian packages** (.deb) generation
-- **Code coverage** reporting with Codecov integration
-
-## 🛠️ **Available Scripts**
-
-### Development Scripts
+## Usage
 
 ```bash
-# Build the application
-./scripts/build
-
-# Run tests with coverage
-./scripts/test
-
-# Run tests with detailed coverage report
-./scripts/test-with-coverage
-
-# Run linting
-./scripts/lint
-
-# Count lines of code
-./scripts/cloc-go [directory]
-
-# Install pre-commit hooks
-./scripts/pre-commit install
-
-# Create a new release
-./scripts/release-new [--major|--minor|--patch] [--yes]
+nanodoc [paths...] [flags]
 ```
 
-### Script Details
+### Basic Example
 
-#### `scripts/build`
-
-- Builds all Go packages
-- Creates CLI binary with version info from git
-- Performs basic functionality tests
-- Outputs to `bin/` directory
-
-#### `scripts/test`
-
-- Runs all tests with race detection
-- Supports `--ci` flag for CI environments
-- Generates coverage reports
-- Uses gotestsum for better output formatting
-
-#### `scripts/lint`
-
-- Runs golangci-lint with comprehensive checks
-- Auto-installs golangci-lint if missing
-- Configurable timeout (5 minutes)
-
-#### `scripts/pre-commit`
-
-- Installs/uninstalls Git pre-commit hooks
-- Runs linting and testing before commits
-- Usage: `./scripts/pre-commit [install|uninstall]`
-
-#### `scripts/release-new`
-
-- Interactive or CLI-driven version bumping
-- Supports semantic versioning (major/minor/patch)
-- Creates and pushes Git tags
-- Triggers GitHub Actions release workflow
-
-#### `scripts/cloc-go`
-
-- Counts lines of code in Go projects
-- Separates production code from test code
-- Provides detailed statistics
-- Usage: `./scripts/cloc-go [directory]` (defaults to `pkg/`)
-
-## 🔄 **GitHub Actions Workflows**
-
-### Test Workflow (`.github/workflows/test.yml`)
-
-- **Build Job**: Compiles packages and CLI binary
-- **Test Job**: Runs tests with coverage reporting
-- Uploads coverage to Codecov
-- Runs on every push and PR
-
-### Release Workflow (`.github/workflows/release.yml`)
-
-- Triggers on version tags (`v*.*.*`)
-- Builds multi-platform binaries
-- Creates GitHub releases
-- Updates Homebrew formula
-- Generates Debian packages
-
-## ⚙️ **GoReleaser Configuration**
-
-### Debug Mode for Homebrew
-
-The template supports a debug mode for Homebrew formula generation:
+Combine two files into a single document:
 
 ```bash
-# Production releases (default)
-DEBUG=false → Formula goes to "Formula/" directory
-
-# Debug/testing releases  
-DEBUG=true → Formula goes to "debug/" directory
+nanodoc file1.txt file2.md
 ```
 
-### Supported Platforms
+This will output the contents of `file1.txt` followed by `file2.md`, each with a "nice" header.
 
-- **Operating Systems**: Linux, macOS, Windows
-- **Architectures**: amd64, arm64
-- **Package Formats**: tar.gz, zip, .deb
-- **Distribution**: GitHub Releases, Homebrew
+### Specifying Files
 
-## 🎯 **Configuration**
+You can specify files, directories, or glob patterns.
 
-### Required Secrets (GitHub)
+- **Files**: `nanodoc file1.txt file2.md`
+- **Directories**: `nanodoc ./docs/` (will include all `.txt` and `.md` files in the directory)
+- **Globs**: `nanodoc "src/**/*.go"`
 
-Set these in your GitHub repository settings:
+### Line Numbering
+
+- **Per-file numbering**: `-n` or `--line-numbers`
+- **Global numbering**: `-N` or `--global-line-numbers`
 
 ```bash
-HOMEBREW_TAP_TOKEN    # GitHub token with access to homebrew-tools repo
-CODECOV_TOKEN         # Codecov token for coverage reporting
+# Number lines for each file starting from 1
+nanodoc -n file1.txt file2.txt
+
+# Number lines continuously across all files
+nanodoc -N file1.txt file2.txt
 ```
 
-### Optional Environment Variables
+### Table of Contents
+
+Generate a table of contents at the beginning of the document.
 
 ```bash
-PKG_NAME              # Override package name
-DEBUG                 # Enable debug mode for Homebrew formula
+nanodoc --toc file1.md file2.md
 ```
 
-## 🏆 **Best Practices**
+The TOC is generated from Markdown headings (level 1 and 2) in `.md` files.
 
-### Development Workflow
+### Headers
 
-1. Install pre-commit hooks: `./scripts/pre-commit install`
-2. Write tests for new features
-3. Run `./scripts/test` before committing
-4. Use `./scripts/release-new` for releases
+By default, `nanodoc` adds a "nice" header before the content of each file.
 
-### Release Process
+- **Disable headers**: `--no-header`
+- **Header style**: `--header-style [nice|filename|path]`
+- **Sequence style**: `--sequence [numerical|letter|roman]`
 
-1. Ensure all changes are committed
-2. Run `./scripts/release-new --patch` (or --minor/--major)
-3. GitHub Actions will handle the release automatically
-4. Monitor the release at your GitHub Actions page
+```bash
+# Get raw content with no headers
+nanodoc --no-header file1.txt
 
-## 📚 **Dependencies**
+# Use the full file path as the header
+nanodoc --header-style path file1.txt
 
-- **Go 1.23+**
-- **golangci-lint** (auto-installed)
-- **gotestsum** (auto-installed)
-- **cloc** (for line counting)
-- **GitHub CLI** (optional, for enhanced GitHub integration)
+# Use roman numerals for sequence
+nanodoc --sequence roman file1.txt file2.txt
+```
 
-## 📄 **License**
+### Themes
 
-MIT License - see LICENSE file for details
+`nanodoc` supports themes for formatting (currently affects headers and other elements, with more to come).
+
+- **Select a theme**: `--theme [classic|classic-dark|classic-light]`
+
+```bash
+nanodoc --theme classic-dark file1.txt
+```
+
+You can also provide a path to a custom theme file:
+
+```bash
+nanodoc --theme /path/to/my-theme.yaml file1.txt
+```
+
+### Bundle Files
+
+Bundle files are text files that contain a list of other files to include. The bundle file itself is not included in the output. Bundle files are identified by having `.bundle.` in their name (e.g., `my.bundle.txt`).
+
+**Example `my.bundle.txt`:**
+
+```
+# This is a comment
+file1.txt
+/path/to/another/file.md
+
+# You can include other bundles
+another.bundle.txt
+```
+
+To use a bundle file, just include it in the path list:
+
+```bash
+nanodoc my.bundle.txt
+```
+
+## Development
+
+This project is built with Go and uses Cobra for the CLI.
+
+- **Run tests**: `go test ./...`
+- **Run linter**: `./scripts/lint`
+- **Build**: `go build ./cmd/nanodoc`
+
+## License
+
+MIT
