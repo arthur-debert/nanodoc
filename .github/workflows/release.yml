@@ -21,6 +21,11 @@ jobs:
         with:
           go-version: stable
 
+      - name: Generate completions and man pages
+        run: |
+          ./scripts/gen-completion
+          ./scripts/gen-manpage
+
       - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser

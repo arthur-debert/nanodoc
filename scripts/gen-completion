@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+echo "Generating shell completions..."
+
+# Build the binary first if it doesn't exist
+if [ ! -f "./bin/nanodoc" ]; then
+    echo "Building nanodoc binary..."
+    ./scripts/build
+fi
+
+# Create completions directory
+mkdir -p completions
+
+# Generate bash completion
+./bin/nanodoc completion bash > completions/nanodoc.bash
+echo "✓ Generated bash completion"
+
+# Generate zsh completion
+./bin/nanodoc completion zsh > completions/nanodoc.zsh
+echo "✓ Generated zsh completion"
+
+# Generate fish completion
+./bin/nanodoc completion fish > completions/nanodoc.fish
+echo "✓ Generated fish completion"
+
+echo "Completions generated in ./completions/"
