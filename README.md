@@ -8,6 +8,8 @@ No config, nothing to learn nor remember. Short, simple, sweet.
 
 ### From Source
 
+To build from source, you'll need Go 1.23+ installed.
+
 ```bash
 git clone https://github.com/arthur-debert/nanodoc-go.git
 cd nanodoc-go

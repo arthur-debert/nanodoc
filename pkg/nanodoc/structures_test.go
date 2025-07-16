@@ -73,10 +73,10 @@ func TestNewRange(t *testing.T) {
 
 func TestRange_Contains(t *testing.T) {
 	tests := []struct {
-		name  string
-		r     Range
-		line  int
-		want  bool
+		name string
+		r    Range
+		line int
+		want bool
 	}{
 		{
 			name: "line in range",
@@ -186,12 +186,12 @@ func TestNewDocument(t *testing.T) {
 		t.Errorf("NewDocument() TOC length = %d, want 0", len(doc.TOC))
 	}
 
-	if !doc.FormattingOptions.ShowHeader {
-		t.Error("NewDocument() ShowHeader = false, want true")
+	if !doc.FormattingOptions.ShowHeaders {
+		t.Error("NewDocument() ShowHeaders = false, want true")
 	}
 
-	if doc.FormattingOptions.Style != StyleNice {
-		t.Errorf("NewDocument() Style = %s, want %s", doc.FormattingOptions.Style, StyleNice)
+	if doc.FormattingOptions.HeaderStyle != HeaderStyleNice {
+		t.Errorf("NewDocument() HeaderStyle = %s, want %s", doc.FormattingOptions.HeaderStyle, HeaderStyleNice)
 	}
 }
 
@@ -223,27 +223,29 @@ func TestFileContent(t *testing.T) {
 
 func TestFormattingOptions(t *testing.T) {
 	opts := FormattingOptions{
-		LineNumberMode:       LineNumberModeFile,
-		ShowHeader:           true,
-		Sequence:             SequenceNumerical,
-		Style:                StylePath,
+		Theme:                ThemeClassic,
+		LineNumbers:          LineNumberFile,
+		ShowHeaders:          true,
+		HeaderStyle:          HeaderStylePath,
+		SequenceStyle:        SequenceNumerical,
+		ShowTOC:              false,
 		AdditionalExtensions: []string{".go", ".py"},
 	}
 
-	if opts.LineNumberMode != LineNumberModeFile {
-		t.Errorf("FormattingOptions.LineNumberMode = %s, want %s", opts.LineNumberMode, LineNumberModeFile)
+	if opts.LineNumbers != LineNumberFile {
+		t.Errorf("FormattingOptions.LineNumbers = %v, want %v", opts.LineNumbers, LineNumberFile)
 	}
 
-	if !opts.ShowHeader {
-		t.Error("FormattingOptions.ShowHeader = false, want true")
+	if !opts.ShowHeaders {
+		t.Error("FormattingOptions.ShowHeaders = false, want true")
 	}
 
-	if opts.Sequence != SequenceNumerical {
-		t.Errorf("FormattingOptions.Sequence = %s, want %s", opts.Sequence, SequenceNumerical)
+	if opts.SequenceStyle != SequenceNumerical {
+		t.Errorf("FormattingOptions.SequenceStyle = %s, want %s", opts.SequenceStyle, SequenceNumerical)
 	}
 
-	if opts.Style != StylePath {
-		t.Errorf("FormattingOptions.Style = %s, want %s", opts.Style, StylePath)
+	if opts.HeaderStyle != HeaderStylePath {
+		t.Errorf("FormattingOptions.HeaderStyle = %s, want %s", opts.HeaderStyle, HeaderStylePath)
 	}
 
 	if len(opts.AdditionalExtensions) != 2 {

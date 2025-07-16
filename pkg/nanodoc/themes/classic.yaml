@@ -1,0 +1,15 @@
+# Neutral theme for nanodoc
+# A clean, minimalist theme with subtle colors
+
+heading: "blue bold"
+heading.1: "bright_blue bold"
+heading.2: "blue bold"
+code: "bright_green dim"
+code-block: "black on bright_green"
+link: "cyan underline"
+item.bullet: "yellow bold"
+item.number: "yellow bold"
+strong: "bright_white bold"
+emphasis: "bright_white italic"
+error: "red bold"
+title: "magenta bold"

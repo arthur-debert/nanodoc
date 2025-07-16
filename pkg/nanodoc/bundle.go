@@ -161,7 +161,24 @@ func BuildDocument(pathInfos []PathInfo, options FormattingOptions) (*Document, 
 	doc.ContentItems = gatheredContents
 	doc.FormattingOptions = options
 
+	// Process live bundles - integrate both approaches
+	if err := ProcessLiveBundles(doc); err != nil {
+		return nil, err
+	}
+
 	return doc, nil
+}
+
+// ProcessLiveBundles iterates through document content and processes inline bundles.
+func ProcessLiveBundles(doc *Document) error {
+	for i := range doc.ContentItems {
+		processedContent, err := ProcessLiveBundle(doc.ContentItems[i].Content)
+		if err != nil {
+			return err
+		}
+		doc.ContentItems[i].Content = processedContent
+	}
+	return nil
 }
 
 // ProcessLiveBundle handles inline bundle processing

@@ -277,8 +277,10 @@ func TestBuildDocument(t *testing.T) {
 	}
 
 	options := FormattingOptions{
-		ShowHeader: true,
-		Style:      StyleNice,
+		ShowHeaders:   true,
+		HeaderStyle:   HeaderStyleNice,
+		LineNumbers:   LineNumberNone,
+		SequenceStyle: SequenceNumerical,
 	}
 
 	doc, err := BuildDocument(pathInfos, options)
@@ -292,11 +294,11 @@ func TestBuildDocument(t *testing.T) {
 	}
 
 	// Check formatting options were applied
-	if doc.FormattingOptions.ShowHeader != options.ShowHeader {
-		t.Errorf("FormattingOptions.ShowHeader not set correctly")
+	if doc.FormattingOptions.ShowHeaders != options.ShowHeaders {
+		t.Errorf("FormattingOptions.ShowHeaders not set correctly")
 	}
-	if doc.FormattingOptions.Style != options.Style {
-		t.Errorf("FormattingOptions.Style not set correctly")
+	if doc.FormattingOptions.HeaderStyle != options.HeaderStyle {
+		t.Errorf("FormattingOptions.HeaderStyle not set correctly")
 	}
 }
 
