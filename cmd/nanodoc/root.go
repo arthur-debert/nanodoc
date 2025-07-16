@@ -7,9 +7,12 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "my-awesome-cli",
-	Short: "Description of your CLI tool",
-	Long:  `Description of your CLI tool`,
+	Use:   "nanodoc",
+	Short: "A minimalist document bundler",
+	Long: `Nanodoc is a minimalist document bundler designed for stitching hints, reminders and short docs.
+Useful for prompts, personalized docs highlights for your teams or a note to your future self.
+
+No config, nothing to learn nor remember. Short, simple, sweet.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -39,8 +42,8 @@ func init() {
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version number",
-	Long:  `Print the version number of my-awesome-cli`,
+	Long:  `Print the version number of nanodoc`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("my-awesome-cli version %s (commit: %s, built: %s)\n", version, commit, date)
+		fmt.Printf("nanodoc version %s (commit: %s, built: %s)\n", version, commit, date)
 	},
 } 

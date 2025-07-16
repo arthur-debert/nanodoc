@@ -29,17 +29,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          PKG_NAME: my-awesome-cli
+          PKG_NAME: nanodoc
 
       - name: Set environment variables
         run: |
-          echo "PKG_NAME=PKG_NAME_PLACEHOLDER" >> $GITHUB_ENV
-          echo "GH_USER=GITHUB_USER_PLACEHOLDER" >> $GITHUB_ENV
-          echo "GIT_REPO=GITHUB_USER_PLACEHOLDER/PKG_NAME_PLACEHOLDER" >> $GITHUB_ENV
-          echo "Package name: PKG_NAME_PLACEHOLDER"
-          echo "Repository: GITHUB_USER_PLACEHOLDER/PKG_NAME_PLACEHOLDER"
+          echo "PKG_NAME=nanodoc" >> $GITHUB_ENV
+          echo "GH_USER=arthur-debert" >> $GITHUB_ENV
+          echo "GIT_REPO=arthur-debert/nanodoc-go" >> $GITHUB_ENV
+          echo "Package name: nanodoc"
+          echo "Repository: arthur-debert/nanodoc-go"
 
       - name: Build binary first
         run: scripts/build
         env:
-          PKG_NAME: PKG_NAME_PLACEHOLDER 
+          PKG_NAME: nanodoc 
