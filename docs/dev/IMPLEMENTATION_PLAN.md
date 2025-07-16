@@ -18,14 +18,14 @@ CLI Args → Resolve Paths → Resolve Files → Gather Content → Build Docume
 
 **Goal**: Set up the basic project structure and data types
 
-1. **Set up project structure and core types**
+1. **Set up project structure and core types** (DONE)
    - Create package structure: `pkg/nanodoc/` with subpackages
    - Set up logging infrastructure
    - Create error types and constants
    - Update go.mod to use proper module name
    - Write tests for logging and error handling
 
-2. **Implement structures (FileContent, Document, Range) with tests**
+2. **Implement structures (FileContent, Document, Range) with tests** (DONE)
    - Create `structures.go` with core data types:
      - `Range`: tuple of (start, end) line numbers
      - `FileContent`: filepath, ranges, content, metadata
@@ -37,7 +37,7 @@ CLI Args → Resolve Paths → Resolve Files → Gather Content → Build Docume
 
 **Goal**: Implement the core file processing stages
 
-3. **Implement path resolution (resolver.go) with tests**
+3. **Implement path resolution (resolver.go) with tests** (DONE)
    - Resolve relative paths to absolute
    - Handle directories (expand to .txt/.md files)
    - Handle glob patterns
@@ -45,7 +45,7 @@ CLI Args → Resolve Paths → Resolve Files → Gather Content → Build Docume
    - Write unit tests for all path resolution scenarios
    - Test edge cases (empty dirs, invalid paths, symlinks)
 
-4. **Implement file resolution and content extraction with tests**
+4. **Implement file resolution and content extraction with tests** (DONE)
    - Read file contents
    - Parse path:range syntax (e.g., "file.txt:L10-20")
    - Extract specified line ranges
@@ -53,14 +53,14 @@ CLI Args → Resolve Paths → Resolve Files → Gather Content → Build Docume
    - Write unit tests for file reading and range parsing
    - Test error cases (permissions, non-existent files)
 
-5. **Implement content gathering with range support and tests**
+5. **Implement content gathering with range support and tests** (DONE)
    - Apply line ranges to file content
    - Merge overlapping ranges
    - Preserve file metadata for rendering
    - Write unit tests for range operations
    - Test edge cases (empty ranges, out-of-bounds)
 
-6. **Implement document building with bundle support and tests**
+6. **Implement document building with bundle support and tests** (DONE)
    - Process bundle files (list of paths)
    - Handle circular dependency detection
    - Maintain document order
