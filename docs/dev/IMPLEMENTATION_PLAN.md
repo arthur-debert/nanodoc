@@ -111,39 +111,39 @@ CLI Args → Resolve Paths → Resolve Files → Gather Content → Build Docume
     - Write unit tests for both numbering modes
     - Test edge cases (empty files, single lines)
 
-### Milestone 5: Advanced Features (Steps 11-12)
+### Milestone 5: Advanced Features (Steps 11-12) ✅ COMPLETED
 
 **Goal**: Implement bundle and advanced file selection
 
-11. **Implement bundle file support (.bundle.* files) with tests**
+11. **Implement bundle file support (.bundle.* files) with tests** ✅ DONE
     - Parse bundle files (one path per line)
     - Support comments in bundle files
     - Recursive bundle resolution
     - Write unit tests for bundle file parsing
     - Test recursive bundles and error cases
 
-12. **Implement live bundle support (inline directives) with tests**
+12. **Implement live bundle support (inline directives) with tests** ✅ DONE
     - Parse live bundle syntax
     - Replace file references with content inline
     - Support nested live bundles
     - Write unit tests for live bundle processing
     - Test nested bundle scenarios
 
-### Milestone 6: Quality and Polish (Steps 13-15)
+### Milestone 6: Quality and Polish (Steps 13-14) ✅ COMPLETED
 
 **Goal**: Ensure robustness and documentation
 
-13. **Add comprehensive error handling**
+13. **Add comprehensive error handling** ✅ DONE
     - User-friendly error messages
     - Proper exit codes
     - Validation of inputs
     - Ensure all error paths are tested
 
-14. **Update README and documentation**
+14. **Update README and documentation** ✅ DONE
     - Installation instructions
     - Usage examples
     - API documentation for library use
-    - Migration guide from Python version
+    - Comprehensive feature documentation
 
 ## Technical Decisions
 
