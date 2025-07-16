@@ -3,6 +3,7 @@ package nanodoc
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -38,23 +39,28 @@ func ResolvePaths(sources []string) ([]PathInfo, error) {
 		results = append(results, pathInfo)
 	}
 
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Absolute < results[j].Absolute
+	})
+
 	return results, nil
 }
 
 // resolveSinglePath resolves a single path to PathInfo
 func resolveSinglePath(path string) (PathInfo, error) {
-	// Check if path contains glob patterns
 	if strings.ContainsAny(path, "*?[") {
 		return resolveGlobPath(path)
 	}
+	return resolveNonGlobPath(path)
+}
 
-	// Get absolute path
+// resolveNonGlobPath handles resolving a path that is not a glob pattern.
+func resolveNonGlobPath(path string) (PathInfo, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return PathInfo{}, err
 	}
 
-	// Check if path exists
 	info, err := os.Stat(absPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -63,14 +69,12 @@ func resolveSinglePath(path string) (PathInfo, error) {
 		return PathInfo{}, err
 	}
 
-	// If it's a symlink, resolve it
 	if info.Mode()&os.ModeSymlink != 0 {
 		realPath, err := filepath.EvalSymlinks(absPath)
 		if err != nil {
 			return PathInfo{}, err
 		}
 		absPath = realPath
-		// Re-stat with the resolved path
 		info, err = os.Stat(absPath)
 		if err != nil {
 			return PathInfo{}, err
@@ -83,22 +87,29 @@ func resolveSinglePath(path string) (PathInfo, error) {
 	}
 
 	if info.IsDir() {
-		// Handle directory
-		pathInfo.Type = "directory"
-		files, err := findTextFilesInDir(absPath)
-		if err != nil {
-			return PathInfo{}, err
-		}
-		pathInfo.Files = files
-	} else {
-		// Check if it's a bundle file
-		if isBundleFile(absPath) {
-			pathInfo.Type = "bundle"
-		} else {
-			pathInfo.Type = "file"
-		}
+		return handleDirectory(pathInfo)
 	}
+	return handleFile(pathInfo)
+}
 
+// handleDirectory processes a directory path.
+func handleDirectory(pathInfo PathInfo) (PathInfo, error) {
+	pathInfo.Type = "directory"
+	files, err := findTextFilesInDir(pathInfo.Absolute)
+	if err != nil {
+		return PathInfo{}, err
+	}
+	pathInfo.Files = files
+	return pathInfo, nil
+}
+
+// handleFile processes a file path.
+func handleFile(pathInfo PathInfo) (PathInfo, error) {
+	if isBundleFile(pathInfo.Absolute) {
+		pathInfo.Type = "bundle"
+	} else {
+		pathInfo.Type = "file"
+	}
 	return pathInfo, nil
 }
 
@@ -189,15 +200,7 @@ func isTextFile(path string) bool {
 
 // sortPaths sorts paths alphabetically
 func sortPaths(paths []string) {
-	// Simple bubble sort for now (can optimize later if needed)
-	n := len(paths)
-	for i := 0; i < n-1; i++ {
-		for j := 0; j < n-i-1; j++ {
-			if paths[j] > paths[j+1] {
-				paths[j], paths[j+1] = paths[j+1], paths[j]
-			}
-		}
-	}
+	sort.Strings(paths)
 }
 
 // GetFilesFromDirectory is a helper that returns all text files from a directory

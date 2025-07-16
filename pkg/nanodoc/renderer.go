@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -20,14 +21,24 @@ type RendererOptions struct {
 func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 	var parts []string
 
-	// Generate TOC if requested
+	// Generate TOC first, as it's used for headers
+	if ctx.ShowTOC || ctx.HeaderStyle == HeaderStyleNice {
+		slog.Debug("Generating table of contents for headers/TOC")
+		generateTOC(doc)
+	}
+
+	// Render TOC if requested
 	if ctx.ShowTOC {
-		slog.Debug("Generating table of contents")
-		toc := generateTOC(doc)
-		if toc != "" {
-			parts = append(parts, toc)
-			parts = append(parts, "\n")
+		var tocParts []string
+		tocParts = append(tocParts, "Table of Contents")
+		tocParts = append(tocParts, "=================")
+		tocParts = append(tocParts, "")
+		for _, entry := range doc.TOC {
+			tocParts = append(tocParts, fmt.Sprintf("- %s (%s)", entry.Title, filepath.Base(entry.Path)))
 		}
+		tocParts = append(tocParts, "")
+		parts = append(parts, strings.Join(tocParts, "\n"))
+		parts = append(parts, "\n")
 	}
 
 	// Render each content item
@@ -48,7 +59,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 
 			// Generate header
 			sequenceNumber++
-			header := generateFileHeader(item.Filepath, ctx.HeaderStyle, ctx.SequenceStyle, sequenceNumber)
+			header := generateFileHeader(item.Filepath, ctx.HeaderStyle, ctx.SequenceStyle, sequenceNumber, doc)
 			parts = append(parts, header)
 			parts = append(parts, "\n\n")
 		}
@@ -83,7 +94,16 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 }
 
 // generateFileHeader creates a header for a file
-func generateFileHeader(filePath string, style HeaderStyle, seqStyle SequenceStyle, seqNum int) string {
+func generateFileHeader(filePath string, style HeaderStyle, seqStyle SequenceStyle, seqNum int, doc *Document) string {
+	// Find the primary title for this file from the TOC
+	var title string
+	for _, entry := range doc.TOC {
+		if entry.Path == filePath {
+			title = entry.Title
+			break
+		}
+	}
+
 	switch style {
 	case HeaderStyleFilename:
 		return filePath
@@ -92,19 +112,16 @@ func generateFileHeader(filePath string, style HeaderStyle, seqStyle SequenceSty
 	case HeaderStyleNice:
 		fallthrough
 	default:
-		// Generate nice header with sequence
-		filename := filepath.Base(filePath)
-		nameWithoutExt := strings.TrimSuffix(filename, filepath.Ext(filename))
-		
-		// Convert underscores and dashes to spaces
-		niceName := strings.ReplaceAll(nameWithoutExt, "_", " ")
-		niceName = strings.ReplaceAll(niceName, "-", " ")
-		
-		// Split camelCase
-		niceName = splitCamelCase(niceName)
-		
-		// Title case
-		niceName = toTitleCase(niceName)
+		// Use title from TOC if available, otherwise generate from filename
+		niceName := title
+		if niceName == "" {
+			filename := filepath.Base(filePath)
+			nameWithoutExt := strings.TrimSuffix(filename, filepath.Ext(filename))
+			niceName = strings.ReplaceAll(nameWithoutExt, "_", " ")
+			niceName = strings.ReplaceAll(niceName, "-", " ")
+			niceName = splitCamelCase(niceName)
+			niceName = toTitleCase(niceName)
+		}
 		
 		// Add sequence number
 		seq := generateSequence(seqNum, seqStyle)
@@ -136,11 +153,11 @@ func generateSequence(num int, style SequenceStyle) string {
 // splitCamelCase splits a camelCase string into words
 func splitCamelCase(s string) string {
 	// Add space before capital letters preceded by lowercase
-	re1 := regexp.MustCompile(`([a-z])([A-Z])`)
+	re1 := regexp.MustCompile("([a-z])([A-Z])")
 	s = re1.ReplaceAllString(s, "$1 $2")
 	
 	// Handle consecutive uppercase followed by lowercase (e.g., HTMLFile -> HTML File)
-	re2 := regexp.MustCompile(`([A-Z])([A-Z][a-z])`)
+	re2 := regexp.MustCompile("([A-Z])([A-Z][a-z])")
 	s = re2.ReplaceAllString(s, "$1 $2")
 	
 	return s
@@ -204,30 +221,40 @@ func addLineNumbers(content string, mode LineNumberMode, startNum int) (string, 
 }
 
 // generateTOC generates a table of contents for the document
-func generateTOC(doc *Document) string {
-	headings := extractHeadings(doc)
-	if len(headings) == 0 {
-		return ""
+func generateTOC(doc *Document) {
+	headingsByFile := extractHeadings(doc)
+	if len(headingsByFile) == 0 {
+		return
 	}
+
+	// Update document TOC entries
+	doc.TOC = make([]TOCEntry, 0)
 	
-	var parts []string
-	parts = append(parts, "Table of Contents")
-	parts = append(parts, "=================")
-	parts = append(parts, "")
-	
-	for filePath, fileHeadings := range headings {
-		// Add file entry
-		filename := filepath.Base(filePath)
-		parts = append(parts, fmt.Sprintf("- %s", filename))
-		
-		// Add headings for this file
-		for _, heading := range fileHeadings {
-			parts = append(parts, fmt.Sprintf("  - %s", heading.Text))
+	// Sort file paths for consistent order
+	var sortedPaths []string
+	for path := range headingsByFile {
+		sortedPaths = append(sortedPaths, path)
+	}
+	sort.Strings(sortedPaths)
+
+	sequenceNum := 1
+	for _, filePath := range sortedPaths {
+		headings := headingsByFile[filePath]
+		// Sort headings by line number
+		sort.Slice(headings, func(i, j int) bool {
+			return headings[i].LineNum < headings[j].LineNum
+		})
+
+		for _, heading := range headings {
+			doc.TOC = append(doc.TOC, TOCEntry{
+				Title:      heading.Text,
+				Path:       filePath,
+				Sequence:   generateSequence(sequenceNum, doc.FormattingOptions.SequenceStyle),
+				LineNumber: heading.LineNum,
+			})
+			sequenceNum++
 		}
-		parts = append(parts, "")
 	}
-	
-	return strings.Join(parts, "\n")
 }
 
 // HeadingInfo represents a heading found in the document
@@ -239,7 +266,7 @@ type HeadingInfo struct {
 
 // extractHeadings extracts headings from document content
 func extractHeadings(doc *Document) map[string][]HeadingInfo {
-	headingsByFile := make(map[string][]HeadingInfo)
+	headingByFile := make(map[string][]HeadingInfo)
 	
 	// Markdown heading regex
 	headingPattern := regexp.MustCompile(`^(#+)\s+(.+)$`)
@@ -253,6 +280,11 @@ func extractHeadings(doc *Document) map[string][]HeadingInfo {
 			filePath = item.Filepath
 		}
 		
+		// Only extract headings from markdown files
+		if !strings.HasSuffix(filePath, ".md") && !strings.HasSuffix(filePath, ".markdown") {
+			continue
+		}
+
 		lines := strings.Split(item.Content, "\n")
 		hasMarkdownHeadings := false
 		
@@ -265,16 +297,16 @@ func extractHeadings(doc *Document) map[string][]HeadingInfo {
 				if level <= 2 {
 					hasMarkdownHeadings = true
 					fileHeadings = append(fileHeadings, HeadingInfo{
-						Text:    text,
-						Level:   level,
+						Text:	text,
+						Level:	level,
 						LineNum: i + 1,
 					})
 				}
 			}
 		}
 		
-		// If no markdown headings, use first non-empty line
-		if !hasMarkdownHeadings && len(lines) > 0 {
+		// If no markdown headings, use first non-empty line as title for markdown files
+		if !hasMarkdownHeadings {
 			for i, line := range lines {
 				line = strings.TrimSpace(line)
 				if line != "" {
@@ -283,8 +315,8 @@ func extractHeadings(doc *Document) map[string][]HeadingInfo {
 						line = line[:50] + "..."
 					}
 					fileHeadings = append(fileHeadings, HeadingInfo{
-						Text:    line,
-						Level:   1,
+						Text:	line,
+						Level:	1,
 						LineNum: i + 1,
 					})
 					break
@@ -294,28 +326,13 @@ func extractHeadings(doc *Document) map[string][]HeadingInfo {
 		
 		// Store headings if any were found
 		if len(fileHeadings) > 0 {
-			if existing, ok := headingsByFile[filePath]; ok {
-				headingsByFile[filePath] = append(existing, fileHeadings...)
+			if existing, ok := headingByFile[filePath]; ok {
+				headingByFile[filePath] = append(existing, fileHeadings...)
 			} else {
-				headingsByFile[filePath] = fileHeadings
+				headingByFile[filePath] = fileHeadings
 			}
 		}
 	}
 	
-	// Update document TOC entries
-	doc.TOC = make([]TOCEntry, 0)
-	sequenceNum := 1
-	for filePath, headings := range headingsByFile {
-		for _, heading := range headings {
-			doc.TOC = append(doc.TOC, TOCEntry{
-				Title:      heading.Text,
-				Path:       filePath,
-				Sequence:   generateSequence(sequenceNum, doc.FormattingOptions.SequenceStyle),
-				LineNumber: heading.LineNum,
-			})
-			sequenceNum++
-		}
-	}
-	
-	return headingsByFile
+	return headingByFile
 }

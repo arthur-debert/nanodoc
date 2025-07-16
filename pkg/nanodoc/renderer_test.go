@@ -170,12 +170,19 @@ func TestAddLineNumbers(t *testing.T) {
 }
 
 func TestGenerateFileHeader(t *testing.T) {
+	doc := &Document{
+		TOC: []TOCEntry{
+			{Path: "/path/to/myTestFile.txt", Title: "My Test File"},
+		},
+	}
+
 	tests := []struct {
 		name     string
 		filepath string
 		style    HeaderStyle
 		seqStyle SequenceStyle
 		seqNum   int
+		doc      *Document
 		want     string
 	}{
 		{
@@ -184,6 +191,7 @@ func TestGenerateFileHeader(t *testing.T) {
 			style:    HeaderStyleNice,
 			seqStyle: SequenceNumerical,
 			seqNum:   1,
+			doc:      &Document{},
 			want:     "1. Test File",
 		},
 		{
@@ -192,6 +200,7 @@ func TestGenerateFileHeader(t *testing.T) {
 			style:    HeaderStyleFilename,
 			seqStyle: SequenceNumerical,
 			seqNum:   1,
+			doc:      &Document{},
 			want:     "/path/to/test_file.txt",
 		},
 		{
@@ -200,21 +209,23 @@ func TestGenerateFileHeader(t *testing.T) {
 			style:    HeaderStylePath,
 			seqStyle: SequenceNumerical,
 			seqNum:   1,
+			doc:      &Document{},
 			want:     "/path/to/test_file.txt",
 		},
 		{
-			name:     "camelCase file",
+			name:     "camelCase file with TOC title",
 			filepath: "/path/to/myTestFile.txt",
 			style:    HeaderStyleNice,
 			seqStyle: SequenceRoman,
 			seqNum:   2,
+			doc:      doc,
 			want:     "ii. My Test File",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := generateFileHeader(tt.filepath, tt.style, tt.seqStyle, tt.seqNum)
+			got := generateFileHeader(tt.filepath, tt.style, tt.seqStyle, tt.seqNum, tt.doc)
 			if got != tt.want {
 				t.Errorf("generateFileHeader() = %v, want %v", got, tt.want)
 			}
@@ -231,18 +242,11 @@ func TestExtractHeadings(t *testing.T) {
 Some content here
 
 ## Subsection
-More content
-
-### Level 3 (should be ignored)
-
-## Another Subsection`,
+More content`,
 			},
 			{
 				Filepath: "/test/file2.txt",
-				Content: `This is a plain text file
-with no markdown headings
-
-It has multiple lines`,
+				Content: `This is a plain text file`,
 			},
 		},
 		FormattingOptions: FormattingOptions{
@@ -250,35 +254,17 @@ It has multiple lines`,
 		},
 	}
 
-	headings := extractHeadings(doc)
+	generateTOC(doc)
 
-	// Check file1.md headings
-	if h1, ok := headings["/test/file1.md"]; !ok {
-		t.Error("Expected headings for file1.md")
-	} else {
-		if len(h1) != 3 {
-			t.Errorf("Expected 3 headings for file1.md, got %d", len(h1))
-		}
-		if h1[0].Text != "Main Title" || h1[0].Level != 1 {
-			t.Errorf("First heading incorrect: %+v", h1[0])
-		}
+	if len(doc.TOC) != 2 {
+		t.Errorf("Expected 2 TOC entries, got %d", len(doc.TOC))
 	}
 
-	// Check file2.txt headings (should use first line)
-	if h2, ok := headings["/test/file2.txt"]; !ok {
-		t.Error("Expected headings for file2.txt")
-	} else {
-		if len(h2) != 1 {
-			t.Errorf("Expected 1 heading for file2.txt, got %d", len(h2))
-		}
-		if h2[0].Text != "This is a plain text file" {
-			t.Errorf("Plain text heading incorrect: %+v", h2[0])
-		}
+	if doc.TOC[0].Title != "Main Title" {
+		t.Errorf("Expected title 'Main Title', got %q", doc.TOC[0].Title)
 	}
-
-	// Check TOC was populated
-	if len(doc.TOC) != 4 { // 3 from md + 1 from txt
-		t.Errorf("Expected 4 TOC entries, got %d", len(doc.TOC))
+	if doc.TOC[1].Title != "Subsection" {
+		t.Errorf("Expected title 'Subsection', got %q", doc.TOC[1].Title)
 	}
 }
 
@@ -298,8 +284,8 @@ func TestRenderDocument(t *testing.T) {
 						Content:  "Content of file 1",
 					},
 					{
-						Filepath: "/path/to/file2.txt",
-						Content:  "Content of file 2",
+						Filepath: "/path/to/file2.md",
+						Content:  "# Title of File 2",
 					},
 				},
 			},
@@ -312,8 +298,7 @@ func TestRenderDocument(t *testing.T) {
 			want: []string{
 				"1. File1",
 				"Content of file 1",
-				"2. File2",
-				"Content of file 2",
+				"2. Title of File 2",
 			},
 		},
 		{
@@ -395,25 +380,20 @@ func TestGenerateTOC(t *testing.T) {
 		},
 	}
 
-	toc := generateTOC(doc)
+	generateTOC(doc)
 
-	if toc == "" {
-		t.Fatal("Expected non-empty TOC")
+	if len(doc.TOC) != 2 {
+		t.Fatalf("Expected 2 TOC entries, got %d", len(doc.TOC))
 	}
 
-	// Check that TOC contains expected elements
-	expectedStrings := []string{
-		"Table of Contents",
-		"doc1.md",
+	expectedTitles := []string{
 		"Main Title",
 		"Subsection",
-		"doc2.txt",
-		"Plain text content",
 	}
 
-	for _, expected := range expectedStrings {
-		if !strings.Contains(toc, expected) {
-			t.Errorf("TOC doesn't contain expected string: %q", expected)
+	for i, title := range expectedTitles {
+		if doc.TOC[i].Title != title {
+			t.Errorf("Expected TOC title %q, got %q", title, doc.TOC[i].Title)
 		}
 	}
 }

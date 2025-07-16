@@ -362,3 +362,63 @@ func TestBundleWithMissingFile(t *testing.T) {
 		t.Errorf("Expected 1 path, got %d", len(paths))
 	}
 }
+
+func TestProcessLiveBundle(t *testing.T) {
+	// Create temp directory
+	tempDir, err := os.MkdirTemp("", "nanodoc-live-bundle-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Logf("Failed to remove temp dir: %v", err)
+		}
+	}()
+
+	// Create test files
+	fileToInclude := filepath.Join(tempDir, "include.txt")
+	if err := os.WriteFile(fileToInclude, []byte("included content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	nestedInclude := filepath.Join(tempDir, "nested.txt")
+	if err := os.WriteFile(nestedInclude, []byte("!bundle(include.txt)"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name    string
+		content string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "simple live bundle",
+			content: "Here is some content !bundle(include.txt) and more.",
+			want:    "Here is some content included content and more.",
+		},
+		{
+			name:    "nested live bundle",
+			content: "Nested: !bundle(nested.txt)",
+			want:    "Nested: included content",
+		},
+		{
+			name:    "non-existent bundle",
+			content: "This !bundle(nonexistent.txt) should not be replaced.",
+			want:    "This !bundle(nonexistent.txt) should not be replaced.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ProcessLiveBundle(tt.content, tempDir)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ProcessLiveBundle() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ProcessLiveBundle() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
