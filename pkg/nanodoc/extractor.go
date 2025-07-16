@@ -185,3 +185,96 @@ func ResolveAndExtractFiles(pathInfos []PathInfo, additionalExtensions []string)
 
 	return contents, nil
 }
+
+// MergeRanges merges overlapping or adjacent ranges
+func MergeRanges(ranges []Range) []Range {
+	if len(ranges) <= 1 {
+		return ranges
+	}
+
+	// Sort ranges by start position
+	sorted := make([]Range, len(ranges))
+	copy(sorted, ranges)
+	for i := 0; i < len(sorted)-1; i++ {
+		for j := 0; j < len(sorted)-i-1; j++ {
+			if sorted[j].Start > sorted[j+1].Start {
+				sorted[j], sorted[j+1] = sorted[j+1], sorted[j]
+			}
+		}
+	}
+
+	// Merge overlapping ranges
+	merged := []Range{sorted[0]}
+	for i := 1; i < len(sorted); i++ {
+		last := &merged[len(merged)-1]
+		current := sorted[i]
+
+		// Check if ranges overlap or are adjacent
+		if last.End == 0 || current.Start <= last.End+1 {
+			// Merge ranges
+			if current.End == 0 || (last.End != 0 && current.End > last.End) {
+				last.End = current.End
+			}
+		} else {
+			merged = append(merged, current)
+		}
+	}
+
+	return merged
+}
+
+// GatherContentWithRanges processes multiple file contents and applies range merging
+func GatherContentWithRanges(contents []FileContent) ([]FileContent, error) {
+	// Group content by file path
+	fileMap := make(map[string]*FileContent)
+
+	for _, content := range contents {
+		if existing, exists := fileMap[content.Filepath]; exists {
+			// Merge ranges for the same file
+			existing.Ranges = append(existing.Ranges, content.Ranges...)
+		} else {
+			// Create a copy to avoid modifying the original
+			newContent := content
+			fileMap[content.Filepath] = &newContent
+		}
+	}
+
+	// Process each file to merge ranges and re-extract content
+	var result []FileContent
+	for _, content := range fileMap {
+		// Merge overlapping ranges
+		content.Ranges = MergeRanges(content.Ranges)
+
+		// Re-read the file and apply merged ranges
+		file, err := os.Open(content.Filepath)
+		if err != nil {
+			return nil, &FileError{Path: content.Filepath, Err: err}
+		}
+
+		// Read all lines
+		var lines []string
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text())
+		}
+		_ = file.Close()
+
+		if err := scanner.Err(); err != nil {
+			return nil, &FileError{Path: content.Filepath, Err: err}
+		}
+
+		// Apply ranges and gather content
+		var contentParts []string
+		for _, r := range content.Ranges {
+			part := extractLinesInRange(lines, &r)
+			if part != "" {
+				contentParts = append(contentParts, part)
+			}
+		}
+
+		content.Content = strings.Join(contentParts, "\n")
+		result = append(result, *content)
+	}
+
+	return result, nil
+}
