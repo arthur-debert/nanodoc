@@ -27,6 +27,12 @@ archives:
     files:
       - "README.md"
       - "LICENSE"
+      - src: completions/*
+        dst: completions
+        strip_parent: true
+      - src: man/man1/*
+        dst: man/man1
+        strip_parent: true
 
 checksum:
   name_template: "checksums.txt"
@@ -51,8 +57,7 @@ brews:
       owner: arthur-debert
       name: homebrew-tools
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    # Use debug directory if DEBUG env var is set, otherwise use Formula
-    directory: '{{ if .Env.DEBUG }}debug{{ else }}Formula{{ end }}'
+    directory: "Formula"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
@@ -63,6 +68,14 @@ brews:
       system "#{bin}/nanodoc --help"
     install: |
       bin.install "nanodoc"
+      
+      # Install shell completions
+      bash_completion.install "completions/nanodoc.bash"
+      zsh_completion.install "completions/nanodoc.zsh"
+      fish_completion.install "completions/nanodoc.fish"
+      
+      # Install man page
+      man1.install "man/man1/nanodoc.1.gz"
 
 # nFPM packages (deb, rpm, etc.)
 # https://goreleaser.com/customization/nfpm/
