@@ -1,0 +1,190 @@
+package nanodoc
+
+import (
+	"strings"
+	"testing"
+)
+
+func TestRenderEmptyFiles(t *testing.T) {
+	tests := []struct {
+		name        string
+		doc         *Document
+		ctx         *FormattingContext
+		wantContain string
+	}{
+		{
+			name: "empty file without line numbers",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "empty.txt",
+						Content:  "",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					ShowHeaders:   true,
+					HeaderStyle:   HeaderStyleNice,
+					SequenceStyle: SequenceNumerical,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowHeaders:   true,
+				HeaderStyle:   HeaderStyleNice,
+				SequenceStyle: SequenceNumerical,
+				LineNumbers:   LineNumberNone,
+			},
+			wantContain: "(empty file)",
+		},
+		{
+			name: "empty file with file line numbers",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "empty.txt",
+						Content:  "",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					ShowHeaders:   true,
+					HeaderStyle:   HeaderStyleNice,
+					SequenceStyle: SequenceNumerical,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowHeaders:   true,
+				HeaderStyle:   HeaderStyleNice,
+				SequenceStyle: SequenceNumerical,
+				LineNumbers:   LineNumberFile,
+			},
+			wantContain: "1 | (empty file)",
+		},
+		{
+			name: "empty file with global line numbers",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "first.txt",
+						Content:  "Some content\nLine 2",
+					},
+					{
+						Filepath: "empty.txt",
+						Content:  "",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					ShowHeaders:   true,
+					HeaderStyle:   HeaderStyleNice,
+					SequenceStyle: SequenceNumerical,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowHeaders:   true,
+				HeaderStyle:   HeaderStyleNice,
+				SequenceStyle: SequenceNumerical,
+				LineNumbers:   LineNumberGlobal,
+			},
+			wantContain: "3 | (empty file)",
+		},
+		{
+			name: "multiple empty files",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "empty1.txt",
+						Content:  "",
+					},
+					{
+						Filepath: "empty2.txt",
+						Content:  "",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					ShowHeaders:   true,
+					HeaderStyle:   HeaderStyleNice,
+					SequenceStyle: SequenceNumerical,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowHeaders:   true,
+				HeaderStyle:   HeaderStyleNice,
+				SequenceStyle: SequenceNumerical,
+				LineNumbers:   LineNumberNone,
+			},
+			wantContain: "(empty file)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := RenderDocument(tt.doc, tt.ctx)
+			if err != nil {
+				t.Fatalf("RenderDocument() error = %v", err)
+			}
+
+			if !strings.Contains(got, tt.wantContain) {
+				t.Errorf("RenderDocument() output doesn't contain %q\nGot:\n%s", tt.wantContain, got)
+			}
+
+			// Count occurrences for multiple empty files test
+			if tt.name == "multiple empty files" {
+				count := strings.Count(got, "(empty file)")
+				if count != 2 {
+					t.Errorf("Expected 2 occurrences of '(empty file)', got %d", count)
+				}
+			}
+		})
+	}
+}
+
+func TestEmptyFileIntegration(t *testing.T) {
+	// Test that empty files are handled correctly through the full pipeline
+	doc := &Document{
+		ContentItems: []FileContent{
+			{
+				Filepath: "normal.txt",
+				Content:  "This file has content",
+			},
+			{
+				Filepath: "empty.txt",
+				Content:  "",
+			},
+			{
+				Filepath: "another.txt",
+				Content:  "More content here",
+			},
+		},
+		FormattingOptions: FormattingOptions{
+			ShowHeaders:   true,
+			HeaderStyle:   HeaderStyleNice,
+			SequenceStyle: SequenceNumerical,
+		},
+	}
+
+	ctx := &FormattingContext{
+		ShowHeaders:   true,
+		HeaderStyle:   HeaderStyleNice,
+		SequenceStyle: SequenceNumerical,
+		LineNumbers:   LineNumberNone,
+	}
+
+	got, err := RenderDocument(doc, ctx)
+	if err != nil {
+		t.Fatalf("RenderDocument() error = %v", err)
+	}
+
+	// Check structure
+	expectedParts := []string{
+		"1. Normal",
+		"This file has content",
+		"2. Empty",
+		"(empty file)",
+		"3. Another",
+		"More content here",
+	}
+
+	for _, part := range expectedParts {
+		if !strings.Contains(got, part) {
+			t.Errorf("Output missing expected part: %q\nGot:\n%s", part, got)
+		}
+	}
+}
