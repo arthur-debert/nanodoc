@@ -40,8 +40,8 @@ LDFLAGS="-s -w -X main.version=${DEV_VERSION} -X main.commit=${GIT_COMMIT} -X ma
 
 # Build CLI binary
 echo -e "${BLUE}Building CLI binary with version info...${NC}"
-if go build -ldflags "${LDFLAGS}" -o bin/my-awesome-cli ./cmd/my-awesome-cli; then
-    echo -e "${GREEN}✅ CLI binary built successfully: bin/my-awesome-cli${NC}"
+if go build -ldflags "${LDFLAGS}" -o bin/nanodoc ./cmd/nanodoc; then
+    echo -e "${GREEN}✅ CLI binary built successfully: bin/nanodoc${NC}"
 else
     echo -e "${RED}❌ CLI binary build failed.${NC}"
     exit 1
@@ -51,7 +51,7 @@ fi
 echo -e "${BLUE}Testing CLI binary...${NC}"
 echo "This is a test" >"$TMPDIR/test.txt"
 
-if ./bin/my-awesome-cli --help >/dev/null; then
+if ./bin/nanodoc --help >/dev/null; then
     echo -e "${GREEN}✅ CLI binary help test passed!${NC}"
 else
     echo -e "${RED}❌ CLI binary help test failed.${NC}"

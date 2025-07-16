@@ -1,0 +1,143 @@
+NANODOC DEVELOPMENT GUIDE
+========================
+
+This guide covers all development tasks for the nanodoc project.
+
+PREREQUISITES
+------------
+- Go 1.23 or later
+- Git
+- GitHub CLI (for releases)
+- GoReleaser (for releases)
+
+BUILDING AND RUNNING
+-------------------
+
+Build the nanodoc CLI:
+    ./scripts/build
+
+This creates the binary at bin/nanodoc with version information embedded.
+
+Run nanodoc:
+    ./bin/nanodoc [files...]
+
+Example:
+    ./bin/nanodoc README.md docs/*.txt
+
+TESTING
+-------
+
+Run all tests:
+    ./scripts/test
+
+Run tests with coverage:
+    ./scripts/test-with-cov
+
+The test script uses gotestsum for better output formatting.
+
+PRE-COMMIT CHECKS
+----------------
+
+Run pre-commit checks (linting + tests):
+    ./scripts/pre-commit
+
+This runs:
+- golangci-lint for code quality
+- All unit tests
+
+It's recommended to install this as a git pre-commit hook:
+    ln -s ../../scripts/pre-commit .git/hooks/pre-commit
+
+LINTING
+-------
+
+Run linter only:
+    ./scripts/lint
+
+The project uses golangci-lint with default configuration.
+
+CREATING A RELEASE
+-----------------
+
+1. Ensure all changes are committed and pushed
+2. Create and push a version tag:
+    git tag v0.0.1
+    git push origin v0.0.1
+
+3. The GitHub Actions release workflow will automatically:
+   - Build binaries for multiple platforms
+   - Create .deb, .rpm, and .apk packages
+   - Create a GitHub release with artifacts
+   - Update homebrew formula (if configured)
+
+Alternative: Use the release script:
+    ./scripts/release-new v0.0.1
+
+GITHUB WORKFLOWS
+---------------
+
+The project has two main workflows:
+
+1. go.yml (Build and Test)
+   - Runs on every push and PR
+   - Builds the project
+   - Runs all tests
+   - Uses Go 1.23
+
+2. release.yml (Release)
+   - Triggered by version tags (v*)
+   - Uses GoReleaser to build for multiple platforms
+   - Creates GitHub release with binaries
+   - Generates .deb packages for Debian/Ubuntu
+   - Updates homebrew tap
+
+DOWNLOADING RELEASES
+-------------------
+
+After a release is created, you can download artifacts:
+
+1. From GitHub Releases page:
+   https://github.com/arthur-debert/nanodoc-go/releases
+
+2. Install .deb package (Linux):
+   wget https://github.com/arthur-debert/nanodoc-go/releases/download/v0.0.1/nanodoc_0.0.1_linux_amd64.deb
+   sudo dpkg -i nanodoc_0.0.1_linux_amd64.deb
+
+3. Via Homebrew (if tap is configured):
+   brew tap arthur-debert/tools
+   brew install nanodoc
+
+PROJECT STRUCTURE
+----------------
+
+cmd/nanodoc/        - CLI entry point
+pkg/nanodoc/        - Core library
+  errors.go         - Error types
+  constants.go      - Constants and defaults
+  structures.go     - Core data structures
+  *_test.go         - Unit tests
+scripts/            - Development scripts
+.github/workflows/  - GitHub Actions
+.goreleaser.yml     - GoReleaser configuration
+
+DEVELOPMENT WORKFLOW
+-------------------
+
+1. Make changes to code
+2. Run tests: ./scripts/test
+3. Run linter: ./scripts/lint
+4. Build: ./scripts/build
+5. Test binary: ./bin/nanodoc --help
+6. Commit changes
+7. Push to GitHub
+8. Create PR for review
+
+VERSIONING
+----------
+
+Use semantic versioning (v0.0.1, v0.1.0, v1.0.0)
+- Patch: Bug fixes (v0.0.1 -> v0.0.2)
+- Minor: New features (v0.0.1 -> v0.1.0)
+- Major: Breaking changes (v0.1.0 -> v1.0.0)
+
+IMPORTANT: Never reuse or delete tags/releases. Always increment.
