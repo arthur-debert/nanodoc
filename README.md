@@ -230,6 +230,10 @@ golangci-lint run ./...
 └── docs/dev/            # Development documentation
 ```
 
+## 🔧 Troubleshooting
+
+Having issues? Check the [Troubleshooting Guide](TROUBLESHOOTING.md) for solutions to common problems.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please:
