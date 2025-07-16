@@ -109,7 +109,7 @@ Here are the utilities:
 Live bundles support:
 - Nested includes (files can include other files)
 - Line ranges with `[[file:path:L10-20]]`
-- Circular reference detection
+- Circular reference detection (see [docs](docs/circular_dependencies.md))
 - Graceful handling of missing files
 
 ## 🛠️ Command Line Options

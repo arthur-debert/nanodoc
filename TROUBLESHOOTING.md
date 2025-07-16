@@ -67,8 +67,11 @@ nanodoc --txt-ext=go --txt-ext=py --txt-ext=js project/
 
 To fix:
 1. Review your bundle files to identify the cycle
-2. Reorganize to remove the circular reference
-3. Consider using a single master bundle file that includes all others
+2. Check the error message which shows the exact dependency chain
+3. Reorganize to remove the circular reference
+4. Consider using a single master bundle file that includes all others
+
+For detailed information, see the [Circular Dependencies Guide](docs/circular_dependencies.md).
 
 ### Live bundle syntax not working
 
