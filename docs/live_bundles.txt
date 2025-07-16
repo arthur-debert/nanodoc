@@ -1,0 +1,128 @@
+Live Bundles in Nanodoc
+=====================
+
+Live bundles are a powerful feature in nanodoc that allow you to create documents
+that seamlessly integrate content from multiple files with your own text.
+
+What are Live Bundles?
+---------------------
+
+A live bundle is a text file that contains a mix of:
+- Regular text content
+- File paths that point to existing files
+
+When nanodoc processes a live bundle, it replaces each file path with the
+content of that file, creating a single cohesive document.
+
+Key Differences from Traditional Bundles
+---------------------------------------
+
+Traditional bundles:
+- Contain only file paths, one per line
+- Each file is processed separately with its own title and optional line numbering
+- Clear visual separation between files
+
+Live bundles:
+- Can mix text and file paths
+- File paths are replaced with their content inline
+- No file titles or line number resets at file boundaries
+- Seamless integration of content
+
+Creating a Live Bundle
+--------------------
+
+To create a live bundle, simply create a text file with your content and file paths:
+
+```
+Introduction to my document
+
+/path/to/chapter1.txt
+
+This text will appear between chapters
+
+/path/to/chapter2.txt
+
+Conclusion
+```
+
+Each line that contains only a valid file path will be replaced with the content
+of that file. All other lines will be preserved as-is.
+
+Inline File Inclusion
+-------------------
+
+Live bundles also support inline file inclusion using the @[file path] syntax:
+
+```
+This paragraph includes @[/path/to/quote.txt] right in the middle of the text.
+```
+
+With this syntax, the file content is inserted inline with all line breaks removed.
+This is useful for including short snippets of text within a paragraph without
+disrupting the flow of the document.
+
+For example, if quote.txt contains:
+```
+To be or not to be
+That is the question
+```
+
+The result will be:
+```
+This paragraph includes To be or not to be That is the question right in the middle of the text.
+```
+
+You can include multiple inline file references in a single line:
+```
+As @[author.txt] once said: "@[quote.txt]"
+```
+
+Using Line References
+-------------------
+
+You can also use line references to include specific parts of files:
+
+```
+Introduction
+
+/path/to/file.txt:L10-20
+
+Middle section
+
+/path/to/file.txt:L50-60
+
+Conclusion
+```
+
+Line references can also be used with inline file inclusion:
+```
+The most important part is @[document.txt:L42-45]
+```
+
+Example Use Cases
+---------------
+
+1. Creating composite documents with your own commentary between sections
+2. Building tutorials that include code samples from actual files
+3. Assembling documentation with custom introductions and transitions
+4. Creating prompt templates with dynamic content from different sources
+5. Including quotes or references inline without disrupting paragraph flow
+
+Tips for Using Live Bundles
+-------------------------
+
+- Keep file paths on their own lines for clarity
+- Use relative paths when possible for portability
+- Consider using line references to include only relevant parts of files
+- Test your live bundles to ensure file paths are correctly resolved
+- Use inline inclusion (@[file]) for short snippets that should flow within text
+- Use full-line inclusion for larger blocks of content
+
+Command Line Usage
+----------------
+
+```
+$ nanodoc my_live_bundle.txt
+```
+
+The output will be a single document with all file paths replaced by their content.

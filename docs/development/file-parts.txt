@@ -1,0 +1,22 @@
+How to address part(s) of files:
+
+Single lines
+
+    <filename>:L<linue num> -> a specific line number from file name
+    ex: readme.txt:L20 -> the 20th line of the file
+
+Ranges:
+    <filename>:L<start>-<end>-> a range from lines start to end
+    ex: readme.txt:L20-24 -> lines 20 through 24 in readme.txt file
+
+Multiples:
+    Both lines and ranges can be commbined, by separating them with commas.
+    In this case the L prefix is used in all of them.
+    ex:
+        readme.txt:L14,L23-38,L40
+        this gets lines 14, lines 23 trough 38 and lines 40
+
+Invalid Lines:
+    If any line reference is not found we raised an error, even if other in the multiple are found
+Repeated Lines:
+    We will not check for multiple repeated lines, nor any ordering issues
