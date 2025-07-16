@@ -73,10 +73,10 @@ func TestNewRange(t *testing.T) {
 
 func TestRange_Contains(t *testing.T) {
 	tests := []struct {
-		name  string
-		r     Range
-		line  int
-		want  bool
+		name string
+		r    Range
+		line int
+		want bool
 	}{
 		{
 			name: "line in range",
