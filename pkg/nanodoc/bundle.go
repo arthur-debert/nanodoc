@@ -164,9 +164,94 @@ func BuildDocument(pathInfos []PathInfo, options FormattingOptions) (*Document, 
 	return doc, nil
 }
 
-// ProcessLiveBundle handles inline bundle processing (for future implementation)
+// ProcessLiveBundle handles inline bundle processing
+// It looks for directives like [[file:path/to/file.txt]] or [[file:path/to/file.txt:L10-20]]
+// and replaces them with the actual file content
 func ProcessLiveBundle(content string) (string, error) {
-	// TODO: Implement live bundle processing
-	// This will parse content for inline bundle directives and replace them
-	return content, nil
+	return processLiveBundleRecursive(content, 0, make(map[string]bool))
+}
+
+func processLiveBundleRecursive(content string, depth int, visited map[string]bool) (string, error) {
+	// Prevent infinite recursion
+	const maxDepth = 10
+	if depth > maxDepth {
+		return "", &CircularDependencyError{
+			Path:  "live bundle",
+			Chain: []string{"Maximum nesting depth exceeded"},
+		}
+	}
+
+	// Process all directives in the content
+	result := content
+	startPos := 0
+	
+	for {
+		// Find the next directive
+		loc := strings.Index(result[startPos:], "[[file:")
+		if loc == -1 {
+			break
+		}
+		
+		// Adjust location to absolute position
+		loc += startPos
+		
+		// Find the closing ]]
+		endLoc := strings.Index(result[loc:], "]]")
+		if endLoc == -1 {
+			// Malformed directive, skip it
+			startPos = loc + 7 // len("[[file:")
+			continue
+		}
+		endLoc += loc + 2 // Include the ]]
+		
+		// Parse the file path (and optional range)
+		pathStart := loc + 7 // len("[[file:")
+		pathEnd := endLoc - 2 // Before ]]
+		pathWithRange := result[pathStart:pathEnd]
+		
+		// Check for circular references
+		if visited[pathWithRange] {
+			return "", &CircularDependencyError{
+				Path:  pathWithRange,
+				Chain: mapKeysToSlice(visited),
+			}
+		}
+		
+		// Mark as visited
+		visited[pathWithRange] = true
+		
+		// Extract the file content
+		fileContent, err := ExtractFileContent(pathWithRange)
+		if err != nil {
+			// On error, leave the directive as-is and continue
+			startPos = endLoc
+			continue
+		}
+		
+		// Process nested directives in the included content
+		processedContent, err := processLiveBundleRecursive(fileContent.Content, depth+1, visited)
+		if err != nil {
+			return "", err
+		}
+		
+		// Replace the directive with the content
+		result = result[:loc] + processedContent + result[endLoc:]
+		
+		// Update start position
+		startPos = loc + len(processedContent)
+		
+		// Remove from visited after processing
+		delete(visited, pathWithRange)
+	}
+	
+	return result, nil
+}
+
+// Helper function to convert map keys to slice
+func mapKeysToSlice(m map[string]bool) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }
