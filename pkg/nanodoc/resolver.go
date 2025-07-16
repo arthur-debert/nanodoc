@@ -43,6 +43,11 @@ func ResolvePaths(sources []string) ([]PathInfo, error) {
 
 // resolveSinglePath resolves a single path to PathInfo
 func resolveSinglePath(path string) (PathInfo, error) {
+	// Check if path contains glob patterns
+	if strings.ContainsAny(path, "*?[") {
+		return resolveGlobPath(path)
+	}
+
 	// Get absolute path
 	absPath, err := filepath.Abs(path)
 	if err != nil {
@@ -56,6 +61,20 @@ func resolveSinglePath(path string) (PathInfo, error) {
 			return PathInfo{}, ErrFileNotFound
 		}
 		return PathInfo{}, err
+	}
+
+	// If it's a symlink, resolve it
+	if info.Mode()&os.ModeSymlink != 0 {
+		realPath, err := filepath.EvalSymlinks(absPath)
+		if err != nil {
+			return PathInfo{}, err
+		}
+		absPath = realPath
+		// Re-stat with the resolved path
+		info, err = os.Stat(absPath)
+		if err != nil {
+			return PathInfo{}, err
+		}
 	}
 
 	pathInfo := PathInfo{
@@ -81,6 +100,48 @@ func resolveSinglePath(path string) (PathInfo, error) {
 	}
 
 	return pathInfo, nil
+}
+
+// resolveGlobPath resolves a glob pattern to matching files
+func resolveGlobPath(pattern string) (PathInfo, error) {
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return PathInfo{}, err
+	}
+
+	if len(matches) == 0 {
+		return PathInfo{}, ErrFileNotFound
+	}
+
+	// Filter to only include files (not directories)
+	var files []string
+	for _, match := range matches {
+		absPath, err := filepath.Abs(match)
+		if err != nil {
+			continue
+		}
+
+		info, err := os.Stat(absPath)
+		if err != nil {
+			continue
+		}
+
+		if !info.IsDir() && isTextFile(absPath) {
+			files = append(files, absPath)
+		}
+	}
+
+	if len(files) == 0 {
+		return PathInfo{}, ErrFileNotFound
+	}
+
+	sortPaths(files)
+
+	return PathInfo{
+		Original: pattern,
+		Type:     "glob",
+		Files:    files,
+	}, nil
 }
 
 // isBundleFile checks if a file is a bundle file based on naming convention
@@ -158,7 +219,7 @@ func GetFilesFromDirectory(dir string, extensions []string) ([]string, error) {
 
 		fullPath := filepath.Join(dir, entry.Name())
 		ext := strings.ToLower(filepath.Ext(fullPath))
-		
+
 		for _, validExt := range extensions {
 			if ext == validExt {
 				files = append(files, fullPath)
