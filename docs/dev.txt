@@ -103,9 +103,23 @@ After a release is created, you can download artifacts:
    wget https://github.com/arthur-debert/nanodoc-go/releases/download/v0.0.1/nanodoc_0.0.1_linux_amd64.deb
    sudo dpkg -i nanodoc_0.0.1_linux_amd64.deb
 
-3. Via Homebrew (if tap is configured):
+3. Download with GitHub CLI:
+   gh release download v0.0.1 -R arthur-debert/nanodoc-go -p "nanodoc_*_darwin_arm64.tar.gz"
+   tar -xzf nanodoc_*.tar.gz
+   ./nanodoc version
+
+4. Via Homebrew (if tap is configured):
    brew tap arthur-debert/tools
    brew install nanodoc
+
+VERIFIED RELEASE ARTIFACTS (v0.0.1)
+----------------------------------
+- nanodoc_0.0.1_darwin_amd64.tar.gz
+- nanodoc_0.0.1_darwin_arm64.tar.gz
+- nanodoc_0.0.1_linux_amd64.deb
+- nanodoc_0.0.1_linux_amd64.rpm
+- nanodoc_0.0.1_linux_arm64.deb
+- nanodoc_0.0.1_windows_amd64.zip
 
 PROJECT STRUCTURE
 ----------------
