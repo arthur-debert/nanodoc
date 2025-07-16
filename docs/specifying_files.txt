@@ -41,9 +41,9 @@ Three ways to tell nanodoc which files to include:
    This is chapter 2 content
    Conclusion
 
-   Live bundles also support inline file inclusion using the @[file path] syntax:
+   Live bundles also support inline file inclusion using the [[file:path]] syntax:
 
-   This paragraph includes @[quote.txt] right in the middle of the text.
+   This paragraph includes [[file:quote.txt]] right in the middle of the text.
 
    With this syntax, the file content is inserted inline with all line breaks
    removed. This is useful for including short snippets of text within a paragraph.
