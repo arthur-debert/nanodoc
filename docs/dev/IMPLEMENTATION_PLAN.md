@@ -139,13 +139,7 @@ CLI Args → Resolve Paths → Resolve Files → Gather Content → Build Docume
     - Validation of inputs
     - Ensure all error paths are tested
 
-14. **Write integration and E2E tests**
-    - Test full pipeline scenarios
-    - Test CLI argument combinations
-    - Regression test suite
-    - Performance benchmarks
-
-15. **Update README and documentation**
+14. **Update README and documentation**
     - Installation instructions
     - Usage examples
     - API documentation for library use
