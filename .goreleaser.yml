@@ -57,8 +57,7 @@ brews:
       owner: arthur-debert
       name: homebrew-tools
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    # Use debug directory if DEBUG env var is set, otherwise use Formula
-    directory: '{{ if .Env.DEBUG }}debug{{ else }}Formula{{ end }}'
+    directory: "Formula"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
