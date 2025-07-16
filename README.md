@@ -1,12 +1,12 @@
 # Nanodoc
 
-Nanodoc is a minimalist document bundler designed for stitching hints, reminders, and short docs. It's useful for creating prompts, personalized documentation highlights for your teams, or a note to your future self.
+A minimalist document bundler designed for stitching hints, reminders and short docs. Useful for prompts, personalized docs highlights for your teams or a note to your future self.
 
 No config, nothing to learn nor remember. Short, simple, sweet.
 
-## Installation
+## 🚀 Installation
 
-### From source
+### From Source
 
 To build from source, you'll need Go 1.23+ installed.
 
@@ -16,117 +16,244 @@ cd nanodoc-go
 go build -o nanodoc ./cmd/nanodoc
 ```
 
-## Usage
+### Using Go Install
 
 ```bash
-nanodoc [paths...] [flags]
+go install github.com/arthur-debert/nanodoc-go/cmd/nanodoc@latest
 ```
 
-### Basic Example
+## ✨ Features
 
-Combine two files into a single document:
+- **Simple file bundling**: Combine multiple text files into one document
+- **Bundle files**: Create reusable file lists with `.bundle.*` files
+- **Live bundles**: Include files inline using `[[file:path]]` syntax
+- **Line ranges**: Extract specific lines with `file.txt:L10-20` syntax
+- **Line numbering**: Add line numbers per-file (`-n`) or globally (`-nn`)
+- **Table of contents**: Generate TOC with `--toc`
+- **Multiple themes**: Built-in themes (classic, classic-light, classic-dark)
+- **Smart path resolution**: Handles files, directories, and glob patterns
+- **Error handling**: User-friendly error messages and proper exit codes
+
+## 📖 Usage
+
+### Basic Usage
 
 ```bash
+# Bundle all .txt and .md files in current directory
+nanodoc
+
+# Bundle specific files
 nanodoc file1.txt file2.md
+
+# Use a bundle file
+nanodoc project.bundle.txt
+
+# Bundle files from a directory
+nanodoc docs/
 ```
 
-This will output the contents of `file1.txt` followed by `file2.md`, each with a "nice" header.
-
-### Specifying Files
-
-You can specify files, directories, or glob patterns.
-
-- **Files**: `nanodoc file1.txt file2.md`
-- **Directories**: `nanodoc ./docs/` (will include all `.txt` and `.md` files in the directory)
-- **Globs**: `nanodoc "src/**/*.go"`
-
-### Line Numbering
-
-- **Per-file numbering**: `-n` or `--line-numbers`
-- **Global numbering**: `-N` or `--global-line-numbers`
+### Advanced Usage
 
 ```bash
-# Number lines for each file starting from 1
+# With line numbers per file
 nanodoc -n file1.txt file2.txt
 
-# Number lines continuously across all files
-nanodoc -N file1.txt file2.txt
-```
+# With global line numbers
+nanodoc -nn *.txt
 
-### Table of Contents
+# With table of contents
+nanodoc --toc chapter*.md
 
-Generate a table of contents at the beginning of the document.
+# With dark theme and no headers
+nanodoc --theme=classic-dark --no-header *.md
 
-```bash
-nanodoc --toc file1.md file2.md
-```
-
-The TOC is generated from Markdown headings (level 1 and 2) in `.md` files.
-
-### Headers
-
-By default, `nanodoc` adds a "nice" header before the content of each file.
-
-- **Disable headers**: `--no-header`
-- **Header style**: `--header-style [nice|filename|path]`
-- **Sequence style**: `--sequence [numerical|letter|roman]`
-
-```bash
-# Get raw content with no headers
-nanodoc --no-header file1.txt
-
-# Use the full file path as the header
-nanodoc --header-style path file1.txt
-
-# Use roman numerals for sequence
-nanodoc --sequence roman file1.txt file2.txt
-```
-
-### Themes
-
-`nanodoc` supports themes for formatting (currently affects headers and other elements, with more to come).
-
-- **Select a theme**: `--theme [classic|classic-dark|classic-light]`
-
-```bash
-nanodoc --theme classic-dark file1.txt
-```
-
-You can also provide a path to a custom theme file:
-
-```bash
-nanodoc --theme /path/to/my-theme.yaml file1.txt
+# Include specific line ranges
+nanodoc README.md:L1-10 src/main.go:L20-50
 ```
 
 ### Bundle Files
 
-Bundle files are text files that contain a list of other files to include. The bundle file itself is not included in the output. Bundle files are identified by having `.bundle.` in their name (e.g., `my.bundle.txt`).
+Create a `.bundle.txt` file to define reusable file lists:
 
-**Example `my.bundle.txt`:**
-
-```
-# This is a comment
-file1.txt
-/path/to/another/file.md
-
-# You can include other bundles
-another.bundle.txt
+```txt
+# My project bundle
+README.md
+src/main.go
+src/utils.go
+docs/api.md
 ```
 
-To use a bundle file, just include it in the path list:
+Bundle files support:
+- Comments (lines starting with `#`)
+- Relative and absolute paths
+- Recursive bundle inclusion
+- Circular dependency detection
+
+### Live Bundles
+
+Include files inline using the `[[file:path]]` syntax:
+
+```txt
+# Project Overview
+
+This is our main application:
+[[file:src/main.go]]
+
+Here are the utilities:
+[[file:src/utils.go:L1-20]]
+
+## Documentation
+[[file:docs/README.md]]
+```
+
+Live bundles support:
+- Nested includes (files can include other files)
+- Line ranges with `[[file:path:L10-20]]`
+- Circular reference detection
+- Graceful handling of missing files
+
+## 🛠️ Command Line Options
+
+```
+Usage:
+  nanodoc [flags] [files/directories/patterns...]
+
+Flags:
+  -n, --line-numbers string   Line numbering mode: 'file' (-n) or 'global' (-nn)
+      --nn                    Global line numbering (shorthand for -n global)
+      --toc                   Generate table of contents
+      --theme string          Theme name (classic, classic-light, classic-dark) (default "classic")
+      --no-header             Disable file headers
+      --sequence string       Header sequence type (numerical, letter, roman) (default "numerical")
+      --style string          Header style (nice, filename, path) (default "nice")
+      --txt-ext strings       Additional file extensions to process
+  -v, --verbose               Enable verbose output
+  -h, --help                  Help for nanodoc
+      --version               Print version number
+```
+
+## 📝 Examples
+
+### 1. Create a Project Overview
 
 ```bash
-nanodoc my.bundle.txt
+# Create a bundle file
+cat > project.bundle.txt << EOF
+# Project Overview Bundle
+README.md
+LICENSE
+src/main.go:L1-50
+docs/architecture.md
+EOF
+
+# Generate the overview
+nanodoc --toc project.bundle.txt > project-overview.txt
 ```
 
-## Development
+### 2. Code Documentation
 
-This project is built with Go and uses Cobra for the CLI.
+```bash
+# Document all Go files with line numbers
+nanodoc -n --style=filename src/*.go > code-docs.txt
+```
 
-- **Run tests**: `go test ./...`
-- **Run linter**: `./scripts/lint`
-- **Build**: `go build ./cmd/nanodoc`
+### 3. Release Notes with Live Bundles
 
-## License
+```txt
+# Release v1.2.0
 
-MIT
+## New Features
+[[file:docs/features/auth.md]]
+[[file:docs/features/caching.md]]
+
+## Bug Fixes
+[[file:CHANGELOG.md:L15-30]]
+
+## Migration Guide
+[[file:docs/migration-v1.2.md]]
+```
+
+```bash
+nanodoc --theme=classic-light release-notes.txt
+```
+
+## 🎨 Themes
+
+Nanodoc supports multiple built-in themes:
+
+- **classic**: Default theme with standard formatting
+- **classic-light**: Light theme optimized for bright backgrounds
+- **classic-dark**: Dark theme optimized for dark backgrounds
+
+Custom themes can be specified by name (implementation pending).
+
+## 🔧 Development
+
+### Building
+
+```bash
+# Build all packages
+go build -v ./...
+
+# Build the CLI
+go build -o nanodoc ./cmd/nanodoc
+```
+
+### Testing
+
+```bash
+# Run all tests
+go test -v ./...
+
+# Run tests with coverage
+go test -v -cover ./...
+
+# Run linting
+golangci-lint run ./...
+```
+
+### Project Structure
+
+```
+.
+├── cmd/nanodoc/          # CLI application
+│   ├── main.go          # Main entry point
+│   ├── cli.go           # CLI implementation and error handling
+│   └── cli_test.go      # CLI tests
+├── pkg/nanodoc/         # Core library
+│   ├── bundle.go        # Bundle file processing and live bundles
+│   ├── constants.go     # Constants and enums
+│   ├── errors.go        # Error types and handling
+│   ├── extractor.go     # File content extraction and ranges
+│   ├── resolver.go      # Path resolution (files, dirs, globs)
+│   └── structures.go    # Core data structures
+└── docs/dev/            # Development documentation
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass (`go test ./...`)
+6. Run linting (`golangci-lint run ./...`)
+7. Commit your changes (`git commit -m 'Add amazing feature'`)
+8. Push to the branch (`git push origin feature/amazing-feature`)
+9. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Inspired by the need for simple document bundling workflows
+- Built with [Cobra](https://github.com/spf13/cobra) for CLI functionality
+- Uses [zerolog](https://github.com/rs/zerolog) for structured logging
+
+---
+
+*Nanodoc: Because sometimes you just need to stitch files together, simply.*

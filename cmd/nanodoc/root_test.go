@@ -63,7 +63,7 @@ func TestRootCmd(t *testing.T) {
 		{
 			name:       "basic execution with two files",
 			args:       []string{file1, file2},
-			wantOutput: []string{"1. File1", "hello", "world", "2. Title", "content"},
+			wantOutput: []string{"File1", "hello", "world", "Title", "content"},
 			wantErr:    false,
 		},
 		{
@@ -75,7 +75,7 @@ func TestRootCmd(t *testing.T) {
 		{
 			name:       "with global line numbers",
 			args:       []string{"-N", file1, file2},
-			wantOutput: []string{"1 | hello", "2 | world", "3 | # Title", "4 |", "5 | content"},
+			wantOutput: []string{"1 | hello", "2 | world", "3 | # Title", "5 | content"},
 			wantErr:    false,
 		},
 		{

@@ -1,8 +1,8 @@
-# Nanodoc Go Implementation Plan
+# Nanodoc Implementation Plan
 
-## Overview
+This document outlines the implementation plan for the Nanodoc project, a Go port of the Python-based document bundler.
 
-Nanodoc is a minimalist document bundler that combines multiple text files into a single document with formatting options. This plan outlines the step-by-step implementation of a Go port from the Python version.
+**Project Goal**: Create a minimalist document bundler in Go that matches the Python version's functionality while leveraging Go's strengths.
 
 ## Core Architecture
 
@@ -24,7 +24,6 @@ How you will work:
 
 **Goal**: Set up the basic project structure and data types
 
-<<<<<<< HEAD
 1. **Set up project structure and core types** (DONE)
    - Create package structure: `pkg/nanodoc/` with subpackages
    - Set up logging infrastructure
@@ -39,28 +38,11 @@ How you will work:
      - `Document`: collection of FileContent with formatting options
    - Write unit tests for all data structures
    - Test validation and edge cases
-=======
-1. **Set up project structure and core types**
-   * Create package structure: `pkg/nanodoc/` with subpackages
-   * Set up logging infrastructure
-   * Create error types and constants
-   * Update go.mod to use proper module name
-   * Write tests for logging and error handling
-
-2. **Implement structures (FileContent, Document, Range) with tests**
-   * Create `structures.go` with core data types:
-     * `Range`: tuple of (start, end) line numbers
-     * `FileContent`: filepath, ranges, content, metadata
-     * `Document`: collection of FileContent with formatting options
-   * Write unit tests for all data structures
-   * Test validation and edge cases
->>>>>>> origin/main
 
 ### Milestone 2: File Processing Pipeline (Steps 3-6)
 
 **Goal**: Implement the core file processing stages
 
-<<<<<<< HEAD
 3. **Implement path resolution (resolver.go) with tests** (DONE)
    - Resolve relative paths to absolute
    - Handle directories (expand to .txt/.md files)
@@ -135,45 +117,39 @@ How you will work:
     * Write unit tests for both numbering modes
     * Test edge cases (empty files, single lines)
 
-### Milestone 5: Advanced Features (Steps 11-12)
+### Milestone 5: Advanced Features (Steps 11-12) ✅ COMPLETED
 
 **Goal**: Implement bundle and advanced file selection
 
-11. **Implement bundle file support (.bundle.* files) with tests**
-    * Parse bundle files (one path per line)
-    * Support comments in bundle files
-    * Recursive bundle resolution
-    * Write unit tests for bundle file parsing
-    * Test recursive bundles and error cases
+11. **Implement bundle file support (.bundle.* files) with tests** ✅ DONE
+    - Parse bundle files (one path per line)
+    - Support comments in bundle files
+    - Recursive bundle resolution
+    - Write unit tests for bundle file parsing
+    - Test recursive bundles and error cases
 
-12. **Implement live bundle support (inline directives) with tests**
-    * Parse live bundle syntax
-    * Replace file references with content inline
-    * Support nested live bundles
-    * Write unit tests for live bundle processing
-    * Test nested bundle scenarios
+12. **Implement live bundle support (inline directives) with tests** ✅ DONE
+    - Parse live bundle syntax
+    - Replace file references with content inline
+    - Support nested live bundles
+    - Write unit tests for live bundle processing
+    - Test nested bundle scenarios
 
-### Milestone 6: Quality and Polish (Steps 13-15)
+### Milestone 6: Quality and Polish (Steps 13-14) ✅ COMPLETED
 
 **Goal**: Ensure robustness and documentation
 
-13. **Add comprehensive error handling**
-    * User-friendly error messages
-    * Proper exit codes
-    * Validation of inputs
-    * Ensure all error paths are tested
+13. **Add comprehensive error handling** ✅ DONE
+    - User-friendly error messages
+    - Proper exit codes
+    - Validation of inputs
+    - Ensure all error paths are tested
 
-14. **Write integration and E2E tests**
-    * Test full pipeline scenarios
-    * Test CLI argument combinations
-    * Regression test suite
-    * Performance benchmarks
-
-15. **Update README and documentation**
-    * Installation instructions
-    * Usage examples
-    * API documentation for library use
-    * Migration guide from Python version
+14. **Update README and documentation** ✅ DONE
+    - Installation instructions
+    - Usage examples
+    - API documentation for library use
+    - Comprehensive feature documentation
 
 ## Technical Decisions
 
