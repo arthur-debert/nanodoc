@@ -269,3 +269,65 @@ func TestDryRunHelperFunctions(t *testing.T) {
 		t.Error("Not all expected strings were found in result")
 	}
 }
+
+func TestIsTextFileWithExtensions(t *testing.T) {
+	tests := []struct {
+		name                 string
+		path                 string
+		additionalExtensions []string
+		want                 bool
+	}{
+		{
+			name: "default text extension",
+			path: "/tmp/file.txt",
+			additionalExtensions: []string{},
+			want: true,
+		},
+		{
+			name: "default markdown extension",
+			path: "/tmp/file.md",
+			additionalExtensions: []string{},
+			want: true,
+		},
+		{
+			name: "non-text file without additional extensions",
+			path: "/tmp/file.go",
+			additionalExtensions: []string{},
+			want: false,
+		},
+		{
+			name: "non-text file with matching additional extension",
+			path: "/tmp/file.go",
+			additionalExtensions: []string{"go", "py"},
+			want: true,
+		},
+		{
+			name: "non-text file with non-matching additional extension",
+			path: "/tmp/file.rs",
+			additionalExtensions: []string{"go", "py"},
+			want: false,
+		},
+		{
+			name: "case insensitive extension matching",
+			path: "/tmp/file.GO",
+			additionalExtensions: []string{"go"},
+			want: true,
+		},
+		{
+			name: "extension with dot in additional extensions",
+			path: "/tmp/file.py",
+			additionalExtensions: []string{".py"},
+			want: false, // Should not match because we trim the dot
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isTextFileWithExtensions(tt.path, tt.additionalExtensions)
+			if got != tt.want {
+				t.Errorf("isTextFileWithExtensions(%q, %v) = %v, want %v", 
+					tt.path, tt.additionalExtensions, got, tt.want)
+			}
+		})
+	}
+}

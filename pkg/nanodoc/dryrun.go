@@ -46,7 +46,7 @@ func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*D
 			}
 			
 			// Check if file needs additional extension
-			if !isTextFile(pathInfo.Absolute) && !contains(additionalExtensions, strings.TrimPrefix(ext, ".")) {
+			if !isTextFileWithExtensions(pathInfo.Absolute, additionalExtensions) {
 				info.RequiresExtension[pathInfo.Absolute] = ext
 			}
 			
@@ -175,4 +175,22 @@ func uniqueStrings(slice []string) []string {
 	}
 	
 	return result
+}
+
+// isTextFileWithExtensions checks if a file is a text file considering additional extensions
+func isTextFileWithExtensions(path string, additionalExtensions []string) bool {
+	// First check default extensions
+	if isTextFile(path) {
+		return true
+	}
+	
+	// Then check additional extensions
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
+	for _, addExt := range additionalExtensions {
+		if ext == strings.ToLower(addExt) {
+			return true
+		}
+	}
+	
+	return false
 }
