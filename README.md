@@ -32,6 +32,7 @@ go install github.com/arthur-debert/nanodoc-go/cmd/nanodoc@latest
 - **Table of contents**: Generate TOC with `--toc`
 - **Multiple themes**: Built-in themes (classic, classic-light, classic-dark)
 - **Smart path resolution**: Handles files, directories, and glob patterns
+- **Dry run mode**: Preview files before processing with `--dry-run`
 - **Error handling**: User-friendly error messages and proper exit codes
 
 ## 📖 Usage
@@ -50,6 +51,9 @@ nanodoc project.bundle.txt
 
 # Bundle files from a directory
 nanodoc docs/
+
+# Preview what files will be processed
+nanodoc --dry-run docs/ *.md
 ```
 
 ### Advanced Usage
@@ -127,6 +131,7 @@ Flags:
       --sequence string       Header sequence type (numerical, letter, roman) (default "numerical")
       --style string          Header style (nice, filename, path) (default "nice")
       --txt-ext strings       Additional file extensions to process
+      --dry-run               Preview what files would be processed without processing them
   -v, --verbose               Enable verbose output
   -h, --help                  Help for nanodoc
       --version               Print version number
@@ -134,7 +139,17 @@ Flags:
 
 ## 📝 Examples
 
-### 1. Create a Project Overview
+### 1. Preview Before Processing
+
+```bash
+# See what files would be included
+nanodoc --dry-run docs/ src/*.go
+
+# Check bundle file contents
+nanodoc --dry-run project.bundle.txt
+```
+
+### 2. Create a Project Overview
 
 ```bash
 # Create a bundle file
@@ -150,14 +165,14 @@ EOF
 nanodoc --toc project.bundle.txt > project-overview.txt
 ```
 
-### 2. Code Documentation
+### 3. Code Documentation
 
 ```bash
 # Document all Go files with line numbers
 nanodoc -n --style=filename src/*.go > code-docs.txt
 ```
 
-### 3. Release Notes with Live Bundles
+### 4. Release Notes with Live Bundles
 
 ```txt
 # Release v1.2.0
