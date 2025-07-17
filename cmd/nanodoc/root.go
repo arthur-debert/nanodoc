@@ -17,6 +17,7 @@ var (
 	sequence           string
 	headerStyle        string
 	additionalExt      []string
+	dryRun             bool
 )
 
 var rootCmd = &cobra.Command{
@@ -32,6 +33,18 @@ No config, nothing to learn nor remember. Short, simple, sweet.`,
 		pathInfos, err := nanodoc.ResolvePaths(args)
 		if err != nil {
 			return fmt.Errorf("error resolving paths: %w", err)
+		}
+
+		// If dry run, show what would be processed and exit
+		if dryRun {
+			dryRunInfo, err := nanodoc.GenerateDryRunInfo(pathInfos, additionalExt)
+			if err != nil {
+				return fmt.Errorf("error generating dry run info: %w", err)
+			}
+			
+			output := nanodoc.FormatDryRunOutput(dryRunInfo)
+			_, _ = fmt.Fprint(cmd.OutOrStdout(), output)
+			return nil
 		}
 
 		// 2. Set up Formatting Options
@@ -102,6 +115,7 @@ func init() {
 
 	// Other flags
 	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions to treat as text (e.g., .log,.conf)")
+	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what files would be processed without actually processing them")
 
 	// Add version command
 	rootCmd.AddCommand(versionCmd)
