@@ -2,6 +2,7 @@ package nanodoc
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -24,6 +25,8 @@ type FileInfo struct {
 	Path      string
 	Source    string // Where it came from (directory, bundle, etc.)
 	Extension string
+	Size      int64  // File size in bytes
+	ModTime   string // Modification time
 }
 
 // GenerateDryRunInfo analyzes what files would be processed without actually processing them
@@ -45,6 +48,12 @@ func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*D
 				Extension: ext,
 			}
 			
+			// Get file metadata
+			if stat, err := os.Stat(pathInfo.Absolute); err == nil {
+				fileInfo.Size = stat.Size()
+				fileInfo.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+			}
+			
 			// Check if file needs additional extension
 			if !isTextFileWithExtensions(pathInfo.Absolute, additionalExtensions) {
 				info.RequiresExtension[pathInfo.Absolute] = ext
@@ -54,31 +63,55 @@ func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*D
 			
 		case "directory":
 			for _, file := range pathInfo.Files {
-				info.Files = append(info.Files, FileInfo{
+				fileInfo := FileInfo{
 					Path:      file,
 					Source:    fmt.Sprintf("directory: %s", pathInfo.Original),
 					Extension: filepath.Ext(file),
-				})
+				}
+				
+				// Get file metadata
+				if stat, err := os.Stat(file); err == nil {
+					fileInfo.Size = stat.Size()
+					fileInfo.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+				}
+				
+				info.Files = append(info.Files, fileInfo)
 			}
 			
 		case "glob":
 			for _, file := range pathInfo.Files {
-				info.Files = append(info.Files, FileInfo{
+				fileInfo := FileInfo{
 					Path:      file,
 					Source:    fmt.Sprintf("glob: %s", pathInfo.Original),
 					Extension: filepath.Ext(file),
-				})
+				}
+				
+				// Get file metadata
+				if stat, err := os.Stat(file); err == nil {
+					fileInfo.Size = stat.Size()
+					fileInfo.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+				}
+				
+				info.Files = append(info.Files, fileInfo)
 			}
 			
 		case "bundle":
 			info.Bundles = append(info.Bundles, pathInfo.Absolute)
 			// For dry run, we don't read bundle contents to avoid file I/O
 			// Just add the bundle itself as a file entry
-			info.Files = append(info.Files, FileInfo{
+			fileInfo := FileInfo{
 				Path:      pathInfo.Absolute,
 				Source:    "bundle file",
 				Extension: filepath.Ext(pathInfo.Absolute),
-			})
+			}
+			
+			// Get file metadata
+			if stat, err := os.Stat(pathInfo.Absolute); err == nil {
+				fileInfo.Size = stat.Size()
+				fileInfo.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+			}
+			
+			info.Files = append(info.Files, fileInfo)
 		}
 	}
 	
@@ -124,7 +157,9 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 		
 		for _, file := range files {
 			relPath := filepath.Base(file.Path)
-			output.WriteString(fmt.Sprintf("%d. %s\n", fileNum, relPath))
+			// Format size in human-readable format
+			sizeStr := formatFileSize(file.Size)
+			output.WriteString(fmt.Sprintf("%d. %s (%s, %s)\n", fileNum, relPath, sizeStr, file.ModTime))
 			fileNum++
 		}
 	}
@@ -193,4 +228,18 @@ func isTextFileWithExtensions(path string, additionalExtensions []string) bool {
 	}
 	
 	return false
+}
+
+// formatFileSize formats a file size in bytes to a human-readable string
+func formatFileSize(size int64) string {
+	const unit = 1024
+	if size < unit {
+		return fmt.Sprintf("%d B", size)
+	}
+	div, exp := int64(unit), 0
+	for n := size / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
 }

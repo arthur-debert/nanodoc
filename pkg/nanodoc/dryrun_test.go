@@ -1,6 +1,7 @@
 package nanodoc
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -158,9 +159,9 @@ func TestGenerateDryRunInfo(t *testing.T) {
 func TestFormatDryRunOutput(t *testing.T) {
 	info := &DryRunInfo{
 		Files: []FileInfo{
-			{Path: "/tmp/file1.txt", Source: "direct argument", Extension: ".txt"},
-			{Path: "/tmp/file2.md", Source: "directory: /tmp", Extension: ".md"},
-			{Path: "/tmp/script.py", Source: "glob: *.py", Extension: ".py"},
+			{Path: "/tmp/file1.txt", Source: "direct argument", Extension: ".txt", Size: 1024, ModTime: "2024-01-01 12:00:00"},
+			{Path: "/tmp/file2.md", Source: "directory: /tmp", Extension: ".md", Size: 2048, ModTime: "2024-01-01 12:00:00"},
+			{Path: "/tmp/script.py", Source: "glob: *.py", Extension: ".py", Size: 512, ModTime: "2024-01-01 12:00:00"},
 		},
 		Bundles:           []string{"/tmp/test.bundle.txt"},
 		TotalFiles:        3,
@@ -267,6 +268,31 @@ func TestDryRunHelperFunctions(t *testing.T) {
 	}
 	if len(expected) > 0 {
 		t.Error("Not all expected strings were found in result")
+	}
+}
+
+func TestFormatFileSize(t *testing.T) {
+	tests := []struct {
+		size int64
+		want string
+	}{
+		{0, "0 B"},
+		{1, "1 B"},
+		{1023, "1023 B"},
+		{1024, "1.0 KB"},
+		{1536, "1.5 KB"},
+		{1048576, "1.0 MB"},
+		{1073741824, "1.0 GB"},
+		{1099511627776, "1.0 TB"},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("size_%d", tt.size), func(t *testing.T) {
+			got := formatFileSize(tt.size)
+			if got != tt.want {
+				t.Errorf("formatFileSize(%d) = %q, want %q", tt.size, got, tt.want)
+			}
+		})
 	}
 }
 
