@@ -1,0 +1,37 @@
+TABLE OF CONTENTS GENERATION
+============================
+
+Nanodoc can generate a Table of Contents (TOC) based on the content of the files being processed. The generation follows a specific set of rules to identify titles.
+
+TITLE EXTRACTION RULES
+----------------------
+
+The primary method for identifying a title is by scanning for Markdown headings.
+
+1.  **Markdown Headings (Primary Source):**
+    Nanodoc looks for H1 and H2 level Markdown headings within your documents. These are lines that start with `#` or `##`. Each H1 or H2 heading found will become a separate entry in the TOC.
+
+    Example:
+        # My Document Title
+        ## A Section Title
+
+    Both of these lines would be extracted as TOC entries.
+
+2.  **First Line Fallback (For Markdown Files):**
+    If a file with a `.md` or `.markdown` extension contains NO H1 or H2 headings, nanodoc will use the first non-empty line of that file as its single TOC entry.
+
+3.  **Other File Types:**
+    Files without a `.md` or `.markdown` extension do not contribute to the TOC unless a title is explicitly defined for them through other means (which is not a feature of the current version).
+
+OUTPUT FORMAT
+-------------
+
+The generated TOC lists each extracted title, followed by the base filename from which it was extracted.
+
+Example Output:
+    Table of Contents
+    =================
+
+    - My Document Title (my_document.md)
+    - A Section Title (my_document.md)
+    - Another File Title (another_file.txt)
