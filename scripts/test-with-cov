@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run tests with coverage for the entire treex codebase
+# Run tests with coverage for the entire nanodoc codebase
 # This script runs tests with coverage and displays results in terminal only
 
 set -e
@@ -39,7 +39,7 @@ done
 # Ensure we're in the project root
 cd "$(dirname "$0")/.."
 
-echo "🧪 Running tests with coverage for treex..."
+echo "🧪 Running tests with coverage for nanodoc..."
 echo "==========================================="
 
 # Determine what to test

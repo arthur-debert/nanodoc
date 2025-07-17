@@ -5,6 +5,7 @@ This document explains how nanodoc handles circular dependencies in bundle files
 ## What are Circular Dependencies?
 
 A circular dependency occurs when files reference each other in a loop, creating an infinite cycle. For example:
+
 - File A includes File B
 - File B includes File A
 
@@ -21,7 +22,8 @@ Nanodoc uses sophisticated tracking to detect circular references:
 ## Examples of Circular Dependencies
 
 ### Simple Circular Reference
-```
+
+```text
 # file1.bundle.txt
 file2.bundle.txt
 
@@ -30,7 +32,8 @@ file1.bundle.txt
 ```
 
 ### Three-Way Circle
-```
+
+```text
 # a.bundle.txt
 b.bundle.txt
 
@@ -42,14 +45,16 @@ a.bundle.txt
 ```
 
 ### Self-Reference
-```
+
+```text
 # recursive.bundle.txt
 recursive.bundle.txt
 other-file.txt
 ```
 
 ### Live Bundle Circular Reference
-```
+
+```text
 # doc1.txt
 Content here
 [[file:doc2.txt]]
@@ -62,10 +67,12 @@ More content
 ## Error Messages
 
 When nanodoc detects a circular dependency, it provides a clear error message showing:
+
 - The file that triggered the detection
 - The chain of files that form the cycle
 
 Example error:
+
 ```
 Error: circular dependency detected: bundle1.txt -> [bundle2.txt, bundle3.txt, bundle1.txt]
 ```
@@ -73,7 +80,9 @@ Error: circular dependency detected: bundle1.txt -> [bundle2.txt, bundle3.txt, b
 ## Valid Patterns That Are NOT Circular
 
 ### Diamond Pattern
+
 Multiple files can include the same file without creating a circular dependency:
+
 ```
 # top.bundle.txt
 left.bundle.txt
@@ -92,7 +101,9 @@ Common content
 This is valid because there's no cycle - just multiple paths to the same file.
 
 ### Deep Nesting
+
 Files can be nested deeply as long as they don't reference back:
+
 ```
 # level1.txt
 [[file:level2.txt]]
