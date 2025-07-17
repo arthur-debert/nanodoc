@@ -101,7 +101,7 @@ func TestGenerateDryRunInfo(t *testing.T) {
 					Type:     "bundle",
 				},
 			},
-			wantTotalFiles: 2, // Files from the bundle
+			wantTotalFiles: 1, // Just the bundle file itself, not expanded
 			wantBundles:    1,
 		},
 		{
@@ -221,20 +221,20 @@ func TestDryRunWithCircularBundle(t *testing.T) {
 		},
 	}
 
-	// Dry run should not fail on circular dependencies
+	// Dry run should not fail on circular dependencies (since we don't read bundles now)
 	info, err := GenerateDryRunInfo(pathInfos, nil)
 	if err != nil {
-		t.Fatalf("GenerateDryRunInfo() should not fail on circular dependencies, got error: %v", err)
+		t.Fatalf("GenerateDryRunInfo() should not fail, got error: %v", err)
 	}
 
-	// Should have at least the bundle file noted
-	if len(info.Files) == 0 && len(info.Bundles) == 0 {
-		t.Error("Expected at least one file or bundle entry")
+	// Should have the bundle file in files list
+	if len(info.Files) != 1 {
+		t.Errorf("Expected 1 file entry, got %d", len(info.Files))
 	}
 
-	// For circular dependencies, we should at least have the bundle recorded
-	if len(info.Bundles) == 0 {
-		t.Error("Expected bundle to be recorded")
+	// Should have the bundle recorded
+	if len(info.Bundles) != 1 {
+		t.Errorf("Expected 1 bundle entry, got %d", len(info.Bundles))
 	}
 }
 

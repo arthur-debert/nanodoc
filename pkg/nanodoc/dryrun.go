@@ -72,32 +72,13 @@ func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*D
 			
 		case "bundle":
 			info.Bundles = append(info.Bundles, pathInfo.Absolute)
-			// For dry run, we need to process the bundle to see what files it contains
-			bp := NewBundleProcessor()
-			expandedPaths, err := bp.ProcessBundleFile(pathInfo.Absolute)
-			if err != nil {
-				// Don't fail dry run on bundle errors, just note it
-				info.Files = append(info.Files, FileInfo{
-					Path:      pathInfo.Absolute,
-					Source:    fmt.Sprintf("bundle (error: %v)", err),
-					Extension: filepath.Ext(pathInfo.Absolute),
-				})
-				continue
-			}
-			
-			for _, expandedPath := range expandedPaths {
-				// Skip if it's another bundle (will be processed separately)
-				if isBundleFile(expandedPath) {
-					info.Bundles = append(info.Bundles, expandedPath)
-					continue
-				}
-				
-				info.Files = append(info.Files, FileInfo{
-					Path:      expandedPath,
-					Source:    fmt.Sprintf("bundle: %s", filepath.Base(pathInfo.Absolute)),
-					Extension: filepath.Ext(expandedPath),
-				})
-			}
+			// For dry run, we don't read bundle contents to avoid file I/O
+			// Just add the bundle itself as a file entry
+			info.Files = append(info.Files, FileInfo{
+				Path:      pathInfo.Absolute,
+				Source:    "bundle file",
+				Extension: filepath.Ext(pathInfo.Absolute),
+			})
 		}
 	}
 	
