@@ -66,6 +66,12 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 
 		// Add content with optional line numbers
 		content := item.Content
+		
+		// Handle empty files
+		if content == "" {
+			content = "(empty file)"
+		}
+		
 		if ctx.LineNumbers != LineNumberNone {
 			numberedContent, newGlobalLineNum := addLineNumbers(content, ctx.LineNumbers, globalLineNumber)
 			content = numberedContent

@@ -27,7 +27,7 @@ go install github.com/arthur-debert/nanodoc-go/cmd/nanodoc@latest
 - **Simple file bundling**: Combine multiple text files into one document
 - **Bundle files**: Create reusable file lists with `.bundle.*` files
 - **Live bundles**: Include files inline using `[[file:path]]` syntax
-- **Line ranges**: Extract specific lines with `file.txt:L10-20` syntax
+- **Line ranges**: Extract specific lines with `file.txt:L10-20` syntax in bundle files
 - **Line numbering**: Add line numbers per-file (`-n`) or globally (`-nn`)
 - **Table of contents**: Generate TOC with `--toc`
 - **Multiple themes**: Built-in themes (classic, classic-light, classic-dark)
@@ -67,8 +67,8 @@ nanodoc --toc chapter*.md
 # With dark theme and no headers
 nanodoc --theme=classic-dark --no-header *.md
 
-# Include specific line ranges
-nanodoc README.md:L1-10 src/main.go:L20-50
+# Use glob patterns
+nanodoc src/*.go docs/*.md
 ```
 
 ### Bundle Files
@@ -109,7 +109,7 @@ Here are the utilities:
 Live bundles support:
 - Nested includes (files can include other files)
 - Line ranges with `[[file:path:L10-20]]`
-- Circular reference detection
+- Circular reference detection (see [docs](docs/circular_dependencies.md))
 - Graceful handling of missing files
 
 ## 🛠️ Command Line Options
@@ -229,6 +229,10 @@ golangci-lint run ./...
 │   └── structures.go    # Core data structures
 └── docs/dev/            # Development documentation
 ```
+
+## 🔧 Troubleshooting
+
+Having issues? Check the [Troubleshooting Guide](TROUBLESHOOTING.md) for solutions to common problems.
 
 ## 🤝 Contributing
 

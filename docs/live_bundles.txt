@@ -51,10 +51,10 @@ of that file. All other lines will be preserved as-is.
 Inline File Inclusion
 -------------------
 
-Live bundles also support inline file inclusion using the @[file path] syntax:
+Live bundles also support inline file inclusion using the [[file:path]] syntax:
 
 ```
-This paragraph includes @[/path/to/quote.txt] right in the middle of the text.
+This paragraph includes [[file:/path/to/quote.txt]] right in the middle of the text.
 ```
 
 With this syntax, the file content is inserted inline with all line breaks removed.
@@ -74,7 +74,7 @@ This paragraph includes To be or not to be That is the question right in the mid
 
 You can include multiple inline file references in a single line:
 ```
-As @[author.txt] once said: "@[quote.txt]"
+As [[file:author.txt]] once said: "[[file:quote.txt]]"
 ```
 
 Using Line References
@@ -96,7 +96,7 @@ Conclusion
 
 Line references can also be used with inline file inclusion:
 ```
-The most important part is @[document.txt:L42-45]
+The most important part is [[file:document.txt:L42-45]]
 ```
 
 Example Use Cases
@@ -115,7 +115,7 @@ Tips for Using Live Bundles
 - Use relative paths when possible for portability
 - Consider using line references to include only relevant parts of files
 - Test your live bundles to ensure file paths are correctly resolved
-- Use inline inclusion (@[file]) for short snippets that should flow within text
+- Use inline inclusion ([[file:path]]) for short snippets that should flow within text
 - Use full-line inclusion for larger blocks of content
 
 Command Line Usage
