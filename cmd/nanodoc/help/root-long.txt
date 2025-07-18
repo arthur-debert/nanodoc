@@ -1,0 +1,16 @@
+A minimalist document bundler for stitching hints, reminders and short docs.
+Useful for prompts, personalized docs highlights for your teams or a note to your future self.
+
+SPECIFYING FILES AND RANGES:
+  nanodoc accepts a list of sources, which can be files, directories, glob
+  patterns, or special .bundle files.
+
+  - Files: Provide a path directly (e.g., 'README.md').
+  - Directories: Include all text files in a directory (e.g., 'docs/').
+  - Globs: Use wildcards to match multiple files (e.g., 'pkg/**/*.go').
+  - Bundles: Use a .bundle file to list multiple sources.
+
+  You can also specify line ranges to extract specific parts of a file using
+  the format: 'path/to/file.txt:L<start>-<end>,L<line>'.
+
+  For more details, run "nanodoc topics specifying-files".

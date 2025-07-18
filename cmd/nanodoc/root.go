@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 
 	"github.com/arthur-debert/nanodoc/pkg/nanodoc"
@@ -28,14 +29,14 @@ var (
 	date    = "unknown"  // Set by goreleaser: -X main.date={{.Date}}
 )
 
+//go:embed help/root-long.txt
+var rootLongHelp string
+
 var rootCmd = &cobra.Command{
 	Use:   "nanodoc [paths...]",
 	Short: "A minimalist document bundler",
-	Long: `Nanodoc is a minimalist document bundler designed for stitching hints, reminders and short docs.
-Useful for prompts, personalized docs highlights for your teams or a note to your future self.
-
-No config, nothing to learn nor remember. Short, simple, sweet.`,
-	Args: cobra.ArbitraryArgs,
+	Long:  rootLongHelp,
+	Args:  cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check version flag first
 		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
