@@ -3,180 +3,84 @@ SPECIFYING CONTENT IN NANODOC
 
 Nanodoc provides flexible ways to specify which files to include in your document, as well as which parts of those files to extract.
 
+Paths can be passed both as arguments or in bundle files (see bellow). Both ways work the same way: 
 
-FILE SELECTION METHODS
-
-1. Individual Files
-
-Pass file paths directly as arguments:
---
-nanodoc file1.txt file2.txt file3.md
---
-Files are processed in the order provided.
-
-2. Directories
-
-Process all text files in a directory:
---
-nanodoc docs/
---
-Finds and processes all .txt and .md files recursively. Files are processed in alphabetical order.
-
-3. Glob Patterns
-
-Use wildcards to match multiple files:
---
-nanodoc "src/**/*.go" "docs/*.md"
---
-
-4. Bundle Files
-
-Create a reusable list of files in a .bundle.* file:
---
-# my-docs.bundle.txt
-README.md
-docs/
-pkg/nanodoc/*.go
---
-
-Run with:
---
-nanodoc my-docs.bundle.txt
---
-
-5. Mixed Sources
-
-Combine different methods:
---
-nanodoc README.md docs/ "src/**/*.go" my-bundle.txt
---
+	1. files: including line range(s)
+    2. glob patterns: such as **/*.txxt or *.md
+    3. directories
 
 
-LINE RANGE SELECTION
-
-You can extract specific parts of files using line range syntax. This works in:
-- Command-line arguments: nanodoc file.txt:L10-20
-- Bundle files: listing files with ranges
-- Live bundles: [[file:path/to/file.txt:L5-10]]
-
-Single Lines
-
---
-# Specific line number
-nanodoc readme.txt:L20        # Line 20
-
-# Line from end (negative indexing)
-nanodoc readme.txt:L$1        # Last line
-nanodoc readme.txt:L$5        # 5th-to-last line
---
-
-Line Ranges
-
---
-# Basic range
-nanodoc readme.txt:L20-24     # Lines 20 through 24
-
-# Using negative indices
-nanodoc readme.txt:L1-$1      # Full file (first to last)
-nanodoc readme.txt:L$10-$5    # 10th-to-last through 5th-to-last
-nanodoc readme.txt:L10-$2     # Line 10 through 2nd-to-last
-
-# Open-ended range
-nanodoc readme.txt:L50-       # Line 50 to end of file
---
-
-Multiple Selections
-
-Combine multiple line selections with commas:
---
-nanodoc readme.txt:L14,L23-38,L40
---
-This extracts line 14, lines 23-38, and line 40.
+Glob patterns are handled internally by nanodoc using gitignore-style matching. Simple patterns like *.md may be expanded by the shell, but recursive patterns like **/*.txxt are processed by nanodoc itself.
 
 
-PATTERN FILTERING
+1. How Directory Expansion Works:
 
-Use --include and --exclude flags to filter files:
-
---
-# Include only Go source files
-nanodoc --include "**/*.go" src/
-
-# Exclude test files
-nanodoc --exclude "**/*_test.go" src/
-
-# Combine patterns
-nanodoc --include "**/*.go" --exclude "**/vendor/**" .
---
-
-Patterns can also be specified in bundle files:
---
-# api-docs.bundle.txt
---include "**/*.go"
---exclude "**/*_test.go"
---exclude "**/internal/**"
-
-pkg/
-cmd/
---
+  1. When expanding a directory, nanodoc will filter by file extensions. By default those are `.txt` and `.md`
+  2. Additional extensions like js or py can be added with the --txt-ext option.
 
 
-ADDITIONAL FILE EXTENSIONS
+2. The include and exclude options:
 
-By default, nanodoc processes .txt and .md files. Add more extensions:
+     Both options use glob patterns. For directory expansion, they filter files
+     AFTER extension checking. This means --include alone cannot override the
+     extension filter - you must use --txt-ext to add extensions first.
 
---
-# Process Python files
-nanodoc --txt-ext py src/
+     However, when using glob patterns as arguments (e.g., **/*.js), the extension filter is bypassed entirely. 
 
-# Multiple extensions
-nanodoc --txt-ext py --txt-ext js --txt-ext yaml project/
---
+		-- include and exclude examples: 
+		
+			# Include only Go source files
+			nanodoc --include "**/*.go" src/
+			# Exclude test files
+			nanodoc --exclude "**/*_test.go" src/
+			# Combine patterns
+			nanodoc --include "**/*.go" --exclude "**/vendor/**" .
+		
+		-- bash
 
+		-- Patterns can also be specified in bundle files:
+		 
+			# api-docs.bundle.txt
+			--include "**/*.go"
+			--exclude "**/*_test.go"
+			--exclude "**/internal/**"
 
-EXAMPLES
-
-Extract API Documentation
---
-nanodoc --include "**/api/**/*.go" --exclude "**/*_test.go" src/:L1-50
---
-
-Create a Focused Bundle
---
-# core-api.bundle.txt
---toc
---theme classic-dark
---include "**/*.go"
---exclude "**/internal/**"
-
-pkg/api/handlers.go:L20-150
-pkg/api/middleware.go:L1-80
-pkg/api/routes.go
---
-
-Extract Code Examples
---
-nanodoc --no-header examples/tutorial.go:L15-45,L60-90
---
-
-Process Specific Documentation Sections
---
-nanodoc README.md:L1-20 CONTRIBUTING.md:L30-$1 docs/
---
+			pkg/
+			cmd/
+		-- 
 
 
-BEST PRACTICES
+3. Line Range Selection
 
-1. Use Bundles for Repeatability: Create bundle files for document sets you generate frequently
-2. Leverage Line Ranges: Extract only relevant sections to keep documents focused
-3. Combine Patterns: Use include/exclude patterns to precisely control file selection
-4. Order Matters: Files are processed in the order specified (except directories, which use alphabetical order)
-5. Test with --dry-run: Preview what files will be processed before generating output
+	You can extract specific parts of files using line range syntax.
+
+		-- line ranges examples: 
+		
+			# single line
+			nanodoc readme.txt:L20        # Line 20
+			# Line from end (negative indexing)
+			nanodoc readme.txt:L$1        # Last line
+			nanodoc readme.txt:L$5        # 5th-to-last line
+			# Basic range
+			nanodoc readme.txt:L20-24     # Lines 20 through 24
+			# Using negative indices
+			nanodoc readme.txt:L1-$1      # Full file (first to last)
+			# Open-ended range
+			nanodoc readme.txt:L50-       # Line 50 to end of file
+			# Multiple Selections
+			nanodoc readme.txt:L14,L23-38,L40
+
+		-- bash
 
 
-ERROR HANDLING
+4. Additional File Extensions
 
-- Invalid Line References: If any line reference is invalid, nanodoc reports an error
-- Missing Files: Non-existent files cause an error
-- Empty Results: If patterns match no files, nanodoc reports this clearly
-- Circular Dependencies: Bundle files including each other circularly are detected and reported
+	By default, nanodoc processes .txt and .md files. Add more extensions:
+
+		--
+		# Process Python files
+		nanodoc --txt-ext py src/
+
+		# Multiple extensions
+		nanodoc --txt-ext py --txt-ext js --txt-ext yaml project/
+		--
