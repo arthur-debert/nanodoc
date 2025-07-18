@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 
 	"github.com/arthur-debert/nanodoc/pkg/nanodoc"
@@ -28,14 +29,18 @@ var (
 	date    = "unknown"  // Set by goreleaser: -X main.date={{.Date}}
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "nanodoc [paths...]",
-	Short: "A minimalist document bundler",
-	Long: `Nanodoc is a minimalist document bundler designed for stitching hints, reminders and short docs.
-Useful for prompts, personalized docs highlights for your teams or a note to your future self.
+//go:embed help/root-long.txt
+var rootLongHelp string
 
-No config, nothing to learn nor remember. Short, simple, sweet.`,
-	Args: cobra.ArbitraryArgs,
+//go:embed help/root-examples.txt
+var rootExamples string
+
+var rootCmd = &cobra.Command{
+	Use:     "nanodoc [paths...]",
+	Short:   "A minimalist document bundler",
+	Long:    rootLongHelp,
+	Example: rootExamples,
+	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check version flag first
 		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
@@ -160,27 +165,43 @@ func Execute() error {
 
 func init() {
 	// Line numbering flags
-	rootCmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, "Enable per-file line numbering")
-	rootCmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, "Enable global line numbering")
+	rootCmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, "Enable per-file line numbering (see: nanodoc topics line-numbering)")
+	rootCmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, "Enable global line numbering (see: nanodoc topics line-numbering)")
 	rootCmd.MarkFlagsMutuallyExclusive("line-numbers", "global-line-numbers")
+	_ = rootCmd.Flags().SetAnnotation("line-numbers", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("global-line-numbers", "group", []string{"Formatting"})
 
 	// TOC flag
-	rootCmd.Flags().BoolVar(&toc, "toc", false, "Generate a table of contents")
+	rootCmd.Flags().BoolVar(&toc, "toc", false, "Generate a table of contents (see: nanodoc topics toc)")
+	_ = rootCmd.Flags().SetAnnotation("toc", "group", []string{"Features"})
 
 	// Theme flag
-	rootCmd.Flags().StringVar(&theme, "theme", "classic", "Set the theme for formatting (e.g., classic, classic-dark)")
+	rootCmd.Flags().StringVar(&theme, "theme", "classic", "Set the theme for formatting (see: nanodoc topics themes)")
+	_ = rootCmd.Flags().SetAnnotation("theme", "group", []string{"Formatting"})
 
 	// Header flags
 	rootCmd.Flags().BoolVar(&noHeader, "no-header", false, "Suppress file headers")
-	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style (nice, filename, path)")
-	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style for headers (numerical, letter, roman)")
+	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style (see: nanodoc topics headers)")
+	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style (see: nanodoc topics headers)")
+	_ = rootCmd.Flags().SetAnnotation("no-header", "group", []string{"Features"})
+	_ = rootCmd.Flags().SetAnnotation("header-style", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("sequence", "group", []string{"Features"})
 
 	// File filtering flags
-	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions to treat as text (e.g., .log,.conf)")
-	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching these patterns (e.g., **/api/*.md)")
-	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching these patterns (e.g., **/test/*.md)")
+	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions to treat as text")
+	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching patterns (see: nanodoc topics content)")
+	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching patterns (see: nanodoc topics content)")
+	_ = rootCmd.Flags().SetAnnotation("txt-ext", "group", []string{"File Selection"})
+	_ = rootCmd.Flags().SetAnnotation("include", "group", []string{"File Selection"})
+	_ = rootCmd.Flags().SetAnnotation("exclude", "group", []string{"File Selection"})
 	
 	// Other flags
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what files would be processed without actually processing them")
 	rootCmd.Flags().BoolP("version", "v", false, "Print the version number")
+	_ = rootCmd.Flags().SetAnnotation("dry-run", "group", []string{"Misc"})
+	_ = rootCmd.Flags().SetAnnotation("version", "group", []string{"Misc"})
+	_ = rootCmd.Flags().SetAnnotation("help", "group", []string{"Misc"})
+	
+	// Initialize custom help system
+	initHelpSystem()
 } 

@@ -302,7 +302,7 @@ func parseOption(optionLine string, options *BundleOptions) error {
 	case "--theme":
 		if len(parts) < 2 {
 			availableThemes, _ := GetAvailableThemes()
-			return fmt.Errorf("--theme requires a value. Available themes: %s", strings.Join(availableThemes, ", "))
+			return fmt.Errorf("--theme requires a value. Available themes: %s (see: nanodoc topics themes)", strings.Join(availableThemes, ", "))
 		}
 		// Validate theme exists
 		themeName := parts[1]
@@ -316,14 +316,14 @@ func parseOption(optionLine string, options *BundleOptions) error {
 				}
 			}
 			if !themeFound {
-				return fmt.Errorf("invalid theme: %s. Available themes: %s", themeName, strings.Join(availableThemes, ", "))
+				return fmt.Errorf("invalid theme: %s. Available themes: %s (see: nanodoc topics themes)", themeName, strings.Join(availableThemes, ", "))
 			}
 		}
 		options.Theme = &themeName
 		
 	case "--header-style":
 		if len(parts) < 2 {
-			return fmt.Errorf("--header-style requires a value. Available styles: nice, filename, path")
+			return fmt.Errorf("--header-style requires a value. Available styles: nice, filename, path (see: nanodoc topics headers)")
 		}
 		style := HeaderStyle(parts[1])
 		// Validate header style

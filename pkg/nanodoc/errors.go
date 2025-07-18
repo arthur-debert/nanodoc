@@ -11,16 +11,16 @@ var (
 	ErrFileNotFound = errors.New("file not found")
 
 	// ErrCircularDependency is returned when a circular dependency is detected in bundles
-	ErrCircularDependency = errors.New("circular dependency detected")
+	ErrCircularDependency = errors.New("circular dependency detected (see: nanodoc topics circular-dependencies)")
 
 	// ErrInvalidRange is returned when a line range is invalid
-	ErrInvalidRange = errors.New("invalid line range")
+	ErrInvalidRange = errors.New("invalid line range (see: nanodoc topics content)")
 
 	// ErrEmptySource is returned when no source files are provided
 	ErrEmptySource = errors.New("no source files provided")
 
 	// ErrInvalidTheme is returned when a theme cannot be loaded
-	ErrInvalidTheme = errors.New("invalid or missing theme")
+	ErrInvalidTheme = errors.New("invalid or missing theme (see: nanodoc topics themes)")
 )
 
 // FileError represents an error related to a specific file
@@ -44,7 +44,7 @@ type CircularDependencyError struct {
 }
 
 func (e *CircularDependencyError) Error() string {
-	return fmt.Sprintf("circular dependency detected: %s -> %s", e.Path, e.Chain)
+	return fmt.Sprintf("circular dependency detected: %s -> %s (see: nanodoc topics circular-dependencies)", e.Path, e.Chain)
 }
 
 // RangeError represents an error in line range specification
@@ -54,7 +54,7 @@ type RangeError struct {
 }
 
 func (e *RangeError) Error() string {
-	return fmt.Sprintf("invalid range '%s': %v", e.Input, e.Err)
+	return fmt.Sprintf("invalid range '%s': %v (see: nanodoc topics content)", e.Input, e.Err)
 }
 
 func (e *RangeError) Unwrap() error {

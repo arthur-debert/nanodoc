@@ -1,0 +1,6 @@
+The documentation files have been moved to cmd/nanodoc/docs/
+
+This is where they are embedded into the binary at compile time
+using Go's embed directive.
+
+See: cmd/nanodoc/docs/

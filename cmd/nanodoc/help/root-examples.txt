@@ -1,0 +1,14 @@
+  # Bundle two files
+  nanodoc README.md main.go
+
+  # Include all text files in a directory
+  nanodoc ./docs
+
+  # Use a glob pattern to find all Go files in a package
+  nanodoc pkg/nanodoc/*.go
+
+  # Extract just lines 10-20 and line 35 from a file
+  nanodoc "main.go:L10-20,L35"
+
+  # Generate a bundle with a table of contents and global line numbers
+  nanodoc --toc -N pkg/
