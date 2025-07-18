@@ -1,0 +1,19 @@
+# Example Bundle with Options
+# This demonstrates the new bundle options feature from issue #17
+
+# --- Options ---
+# These options will be applied when processing this bundle
+
+--toc
+--theme classic-dark
+--header-style filename
+--sequence roman
+--global-line-numbers
+--txt-ext log
+
+# --- Content ---
+# Files to include in the bundle
+
+README.md
+pkg/nanodoc/constants.go
+pkg/nanodoc/structures.go

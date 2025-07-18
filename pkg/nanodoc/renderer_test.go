@@ -201,7 +201,7 @@ func TestGenerateFileHeader(t *testing.T) {
 			seqStyle: SequenceNumerical,
 			seqNum:   1,
 			doc:      &Document{},
-			want:     "/path/to/test_file.txt",
+			want:     "1. test_file.txt",
 		},
 		{
 			name:     "path style",
@@ -210,7 +210,7 @@ func TestGenerateFileHeader(t *testing.T) {
 			seqStyle: SequenceNumerical,
 			seqNum:   1,
 			doc:      &Document{},
-			want:     "/path/to/test_file.txt",
+			want:     "1. /path/to/test_file.txt",
 		},
 		{
 			name:     "camelCase file with TOC title",

@@ -112,8 +112,17 @@ func generateFileHeader(filePath string, style HeaderStyle, seqStyle SequenceSty
 
 	switch style {
 	case HeaderStyleFilename:
-		return filePath
+		filename := filepath.Base(filePath)
+		seq := generateSequence(seqNum, seqStyle)
+		if seq != "" {
+			return fmt.Sprintf("%s. %s", seq, filename)
+		}
+		return filename
 	case HeaderStylePath:
+		seq := generateSequence(seqNum, seqStyle)
+		if seq != "" {
+			return fmt.Sprintf("%s. %s", seq, filePath)
+		}
 		return filePath
 	case HeaderStyleNice:
 		fallthrough
