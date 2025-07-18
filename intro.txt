@@ -1,3 +1,0 @@
-Welcome to the nanodoc project!
-
-This is the introduction section.
