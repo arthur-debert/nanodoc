@@ -1,6 +1,8 @@
 A minimalist document bundler for stitching hints, reminders and short docs.
 Useful for prompts, personalized docs highlights for your teams or a note to your future self.
 
+For detailed help on any topic, run "nanodoc topics".
+
 SPECIFYING FILES AND RANGES:
   nanodoc accepts a list of sources, which can be files, directories, glob
   patterns, or special .bundle files.
