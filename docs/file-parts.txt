@@ -1,13 +1,27 @@
 How to address part(s) of files:
 
+The line range syntax can be used in:
+- Command-line arguments: `nanodoc file.txt:L10-20`
+- Bundle files: listing files with ranges
+- Live bundles: [[file:path/to/file.txt:L5-10]]
+
 Single lines
 
-    <filename>:L<linue num> -> a specific line number from file name
+    <filename>:L<line num> -> a specific line number from file name
     ex: readme.txt:L20 -> the 20th line of the file
+    
+    <filename>:L$<num> -> line counted from end ($1 is last line)
+    ex: readme.txt:L$1 -> the last line of the file
+    ex: readme.txt:L$5 -> from 5th-to-last line to end
 
 Ranges:
-    <filename>:L<start>-<end>-> a range from lines start to end
+    <filename>:L<start>-<end> -> a range from lines start to end
     ex: readme.txt:L20-24 -> lines 20 through 24 in readme.txt file
+    
+    Negative indices with $ notation:
+    ex: readme.txt:L1-$1 -> full file (line 1 to last line)
+    ex: readme.txt:L$10-$5 -> from 10th-to-last to 5th-to-last line
+    ex: readme.txt:L10-$2 -> from line 10 to 2nd-to-last line
 
 Multiples:
     Both lines and ranges can be commbined, by separating them with commas.

@@ -9,7 +9,8 @@ import (
 )
 
 // ExtractFileContent reads a file and extracts content based on optional range specification
-// The path can include a range suffix like "file.txt:L10-20" or "file.txt:L5"
+// The path can include a range suffix like "file.txt:L10-20", "file.txt:L5", or "file.txt:L$3-$1"
+// If no range is specified, the full file is extracted (equivalent to L1-$1)
 func ExtractFileContent(pathWithRange string) (*FileContent, error) {
 	// Parse the path and range
 	path, rangeSpec := parsePathWithRange(pathWithRange)
@@ -45,8 +46,14 @@ func ExtractFileContent(pathWithRange string) (*FileContent, error) {
 		}
 		r = parsedRange
 	} else {
-		// Default to full file
-		r = &Range{Start: 1, End: 0}
+		// Default to full file using L1-$1 notation
+		parsedRange, err := parseRange("L1-$1", len(lines))
+		if err != nil {
+			// Fallback to old behavior if parsing fails (shouldn't happen)
+			r = &Range{Start: 1, End: 0}
+		} else {
+			r = parsedRange
+		}
 	}
 
 	// Extract content based on range
@@ -74,13 +81,48 @@ func parsePathWithRange(pathWithRange string) (path, rangeSpec string) {
 	return pathWithRange[:idx], pathWithRange[idx+1:]
 }
 
-// parseRange parses a range specification like "L10-20" or "L5"
+// parseRange parses a range specification like "L10-20", "L5", or "L$5-$1" (negative indices)
+// Negative indices use $ notation: $1 is last line, $2 is second-to-last, etc.
+// A single negative index like "$3" means from 3rd-to-last to end (equivalent to "L$3-$1")
 func parseRange(spec string, totalLines int) (*Range, error) {
 	if !strings.HasPrefix(spec, "L") {
 		return nil, &RangeError{Input: spec, Err: fmt.Errorf("range must start with 'L'")}
 	}
 
 	spec = spec[1:] // Remove the 'L' prefix
+
+	// Helper function to parse a line number (positive or negative with $)
+	parseLine := func(s string) (int, bool, error) { // returns (line, isNegative, error)
+		s = strings.TrimSpace(s)
+		if s == "" {
+			return 0, false, nil // Empty means EOF
+		}
+		
+		if strings.HasPrefix(s, "$") {
+			// Negative index
+			if s == "$" {
+				return 0, true, fmt.Errorf("$ must be followed by a number")
+			}
+			negIdx, err := strconv.Atoi(s[1:])
+			if err != nil {
+				return 0, true, fmt.Errorf("invalid negative index: %w", err)
+			}
+			if negIdx == 0 {
+				return 0, true, fmt.Errorf("$0 is not valid")
+			}
+			if negIdx < 0 {
+				return 0, true, fmt.Errorf("negative index cannot be negative")
+			}
+			return negIdx, true, nil
+		} else {
+			// Positive index
+			line, err := strconv.Atoi(s)
+			if err != nil {
+				return 0, false, fmt.Errorf("invalid line number: %w", err)
+			}
+			return line, false, nil
+		}
+	}
 
 	// Check if it's a single line or a range
 	if strings.Contains(spec, "-") {
@@ -89,19 +131,30 @@ func parseRange(spec string, totalLines int) (*Range, error) {
 			return nil, &RangeError{Input: spec, Err: fmt.Errorf("invalid range format")}
 		}
 
-		start, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+		startNum, startIsNeg, err := parseLine(parts[0])
 		if err != nil {
 			return nil, &RangeError{Input: spec, Err: fmt.Errorf("invalid start line: %w", err)}
 		}
 
-		// Handle open-ended range (e.g., "L10-")
-		var end int
-		if parts[1] == "" {
-			end = 0 // EOF
-		} else {
-			end, err = strconv.Atoi(strings.TrimSpace(parts[1]))
-			if err != nil {
-				return nil, &RangeError{Input: spec, Err: fmt.Errorf("invalid end line: %w", err)}
+		endNum, endIsNeg, err := parseLine(parts[1])
+		if err != nil {
+			return nil, &RangeError{Input: spec, Err: fmt.Errorf("invalid end line: %w", err)}
+		}
+
+		// Convert negative indices to positive
+		start := startNum
+		if startIsNeg {
+			start = totalLines - startNum + 1
+			if start < 1 {
+				start = 1
+			}
+		}
+
+		end := endNum
+		if endIsNeg {
+			end = totalLines - endNum + 1
+			if end < 1 {
+				end = 1
 			}
 		}
 
@@ -111,17 +164,33 @@ func parseRange(spec string, totalLines int) (*Range, error) {
 		}
 		return &r, nil
 	} else {
-		// Single line
-		line, err := strconv.Atoi(strings.TrimSpace(spec))
-		if err != nil {
-			return nil, &RangeError{Input: spec, Err: fmt.Errorf("invalid line number: %w", err)}
-		}
-
-		r, err := NewRange(line, line)
+		// Single line - could be positive or negative
+		lineNum, isNeg, err := parseLine(spec)
 		if err != nil {
 			return nil, &RangeError{Input: spec, Err: err}
 		}
-		return &r, nil
+
+		if isNeg {
+			// Single negative index like "$3" means from that line to end
+			start := totalLines - lineNum + 1
+			if start < 1 {
+				start = 1
+			}
+			end := totalLines
+			
+			r, err := NewRange(start, end)
+			if err != nil {
+				return nil, &RangeError{Input: spec, Err: err}
+			}
+			return &r, nil
+		} else {
+			// Regular single line
+			r, err := NewRange(lineNum, lineNum)
+			if err != nil {
+				return nil, &RangeError{Input: spec, Err: err}
+			}
+			return &r, nil
+		}
 	}
 }
 

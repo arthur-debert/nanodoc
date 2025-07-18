@@ -137,6 +137,80 @@ func TestParseRange(t *testing.T) {
 			totalLines: 100,
 			wantErr:    true,
 		},
+		// New tests for $ notation
+		{
+			name:       "last line with $1",
+			spec:       "L$1",
+			totalLines: 100,
+			wantStart:  100,
+			wantEnd:    100,
+		},
+		{
+			name:       "single negative index $3 (means from 3rd-to-last to end)",
+			spec:       "L$3",
+			totalLines: 100,
+			wantStart:  98,
+			wantEnd:    100,
+		},
+		{
+			name:       "range with negative end",
+			spec:       "L10-$5",
+			totalLines: 100,
+			wantStart:  10,
+			wantEnd:    96,
+		},
+		{
+			name:       "range with negative start and end",
+			spec:       "L$10-$5",
+			totalLines: 100,
+			wantStart:  91,
+			wantEnd:    96,
+		},
+		{
+			name:       "full file with $1",
+			spec:       "L1-$1",
+			totalLines: 100,
+			wantStart:  1,
+			wantEnd:    100,
+		},
+		{
+			name:       "invalid $0",
+			spec:       "L$0",
+			totalLines: 100,
+			wantErr:    true,
+		},
+		{
+			name:       "invalid $ alone",
+			spec:       "L$",
+			totalLines: 100,
+			wantErr:    true,
+		},
+		{
+			name:       "invalid $ alone in range",
+			spec:       "L1-$",
+			totalLines: 100,
+			wantErr:    true,
+		},
+		{
+			name:       "negative index on small file",
+			spec:       "L$5",
+			totalLines: 3,
+			wantStart:  1,
+			wantEnd:    3,
+		},
+		{
+			name:       "negative range on small file",
+			spec:       "L$10-$1",
+			totalLines: 5,
+			wantStart:  1,
+			wantEnd:    5,
+		},
+		{
+			name:       "invalid negative in negative index",
+			spec:       "L$-5",
+			totalLines: 100,
+			wantErr:    true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -273,7 +347,7 @@ func TestExtractFileContent(t *testing.T) {
 			name:          "full file",
 			pathWithRange: testFile,
 			wantContent:   strings.Join(testContent, "\n"),
-			wantRange:     Range{Start: 1, End: 0},
+			wantRange:     Range{Start: 1, End: 10}, // Now uses actual line count instead of 0
 		},
 		{
 			name:          "single line",
@@ -302,6 +376,37 @@ func TestExtractFileContent(t *testing.T) {
 			name:          "invalid range",
 			pathWithRange: testFile + ":L20-10",
 			wantErr:       true,
+		},
+		// New tests for $ notation
+		{
+			name:          "last line with $1",
+			pathWithRange: testFile + ":L$1",
+			wantContent:   "Line 10",
+			wantRange:     Range{Start: 10, End: 10},
+		},
+		{
+			name:          "last 3 lines with $3",
+			pathWithRange: testFile + ":L$3",
+			wantContent:   "Line 8\nLine 9\nLine 10",
+			wantRange:     Range{Start: 8, End: 10},
+		},
+		{
+			name:          "range with negative end",
+			pathWithRange: testFile + ":L2-$2",
+			wantContent:   "Line 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9",
+			wantRange:     Range{Start: 2, End: 9},
+		},
+		{
+			name:          "range with negative start and end",
+			pathWithRange: testFile + ":L$5-$2",
+			wantContent:   "Line 6\nLine 7\nLine 8\nLine 9",
+			wantRange:     Range{Start: 6, End: 9},
+		},
+		{
+			name:          "full file with $1 notation",
+			pathWithRange: testFile + ":L1-$1",
+			wantContent:   strings.Join(testContent, "\n"),
+			wantRange:     Range{Start: 1, End: 10},
 		},
 	}
 
