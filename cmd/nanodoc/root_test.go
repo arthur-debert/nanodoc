@@ -75,7 +75,7 @@ func TestRootCmd(t *testing.T) {
 		{
 			name:       "with global line numbers",
 			args:       []string{"-N", file1, file2},
-			wantOutput: []string{"1. File1", "1 | hello", "2 | world", "2. Title", "3 | # Title", "5 | content"},
+			wantOutput: []string{"1. Title", "1 | # Title", "3 | content", "2. File1", "4 | hello", "5 | world"},
 			wantErr:    false,
 		},
 		{
@@ -250,6 +250,30 @@ func newRootCmd() (*cobra.Command, *nanodoc.FormattingOptions) {
 		Use:   "nanodoc [paths...]",
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Track explicitly set flags
+			explicitFlags := make(map[string]bool)
+			if cmd.Flags().Changed("toc") {
+				explicitFlags["toc"] = true
+			}
+			if cmd.Flags().Changed("theme") {
+				explicitFlags["theme"] = true
+			}
+			if cmd.Flags().Changed("line-numbers") || cmd.Flags().Changed("global-line-numbers") {
+				explicitFlags["line-numbers"] = true
+			}
+			if cmd.Flags().Changed("no-header") {
+				explicitFlags["no-header"] = true
+			}
+			if cmd.Flags().Changed("header-style") {
+				explicitFlags["header-style"] = true
+			}
+			if cmd.Flags().Changed("sequence") {
+				explicitFlags["sequence"] = true
+			}
+			if cmd.Flags().Changed("txt-ext") {
+				explicitFlags["txt-ext"] = true
+			}
+
 			pathInfos, err := nanodoc.ResolvePaths(args)
 			if err != nil {
 				return fmt.Errorf("Error resolving paths: %w", err)
@@ -272,12 +296,12 @@ func newRootCmd() (*cobra.Command, *nanodoc.FormattingOptions) {
 				AdditionalExtensions: additionalExt,
 			}
 
-			doc, err := nanodoc.BuildDocument(pathInfos, opts)
+			doc, err := nanodoc.BuildDocumentWithExplicitFlags(pathInfos, opts, explicitFlags)
 			if err != nil {
 				return fmt.Errorf("Error building document: %w", err)
 			}
 
-			ctx, err := nanodoc.NewFormattingContext(opts)
+			ctx, err := nanodoc.NewFormattingContext(doc.FormattingOptions)
 			if err != nil {
 				return fmt.Errorf("Error creating formatting context: %w", err)
 			}
