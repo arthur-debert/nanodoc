@@ -50,7 +50,8 @@ var rootCmd = &cobra.Command{
 		
 		// Check args only if not printing version
 		if len(args) < 1 {
-			return fmt.Errorf(ErrMinArgs, len(args))
+			_ = cmd.Help()
+			return nil
 		}
 		// Track explicitly set flags
 		trackExplicitFlags(cmd)
