@@ -155,7 +155,7 @@ func helpTopics() string {
 		buf.WriteString(fmt.Sprintf("  %-*s %s\n", maxLen, topic, desc))
 	}
 	
-	buf.WriteString("\nRun \"nanodoc topics <topic-name>\" for more information.")
+	buf.WriteString("\nRun \"nanodoc help <topic>\" or \"nanodoc topics <topic>\" for more information.")
 	
 	return buf.String()
 }

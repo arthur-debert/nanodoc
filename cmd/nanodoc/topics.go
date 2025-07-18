@@ -79,7 +79,7 @@ func listTopics(cmd *cobra.Command) error {
 		_, _ = fmt.Fprintln(cmd.OutOrStdout())
 	}
 	
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), RunTopicHelp)
+	_, _ = fmt.Fprintln(cmd.OutOrStdout(), `Run "nanodoc help <topic>" or "nanodoc topics <topic>" for more information.`)
 	return nil
 }
 
