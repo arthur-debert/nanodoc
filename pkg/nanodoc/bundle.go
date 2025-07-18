@@ -40,85 +40,77 @@ type BundleResult struct {
 	Options BundleOptions
 }
 
-// MergeFormattingOptions merges bundle options with command-line options
-// Command-line options override bundle options
-func MergeFormattingOptions(bundleOpts BundleOptions, cmdOpts FormattingOptions) FormattingOptions {
-	result := cmdOpts // Start with command-line options
-
-	// Only use bundle options if command-line options are at default values
-	if bundleOpts.Theme != nil && cmdOpts.Theme == "classic" {
-		result.Theme = *bundleOpts.Theme
-	}
-	if bundleOpts.LineNumbers != nil && cmdOpts.LineNumbers == LineNumberNone {
-		result.LineNumbers = *bundleOpts.LineNumbers
-	}
-	if bundleOpts.ShowHeaders != nil && cmdOpts.ShowHeaders == true {
-		result.ShowHeaders = *bundleOpts.ShowHeaders
-	}
-	if bundleOpts.HeaderStyle != nil && cmdOpts.HeaderStyle == HeaderStyleNice {
-		result.HeaderStyle = *bundleOpts.HeaderStyle
-	}
-	if bundleOpts.SequenceStyle != nil && cmdOpts.SequenceStyle == SequenceNumerical {
-		result.SequenceStyle = *bundleOpts.SequenceStyle
-	}
-	if bundleOpts.ShowTOC != nil && cmdOpts.ShowTOC == false {
-		result.ShowTOC = *bundleOpts.ShowTOC
+// mergeAdditionalExtensions merges additional file extensions from bundle options
+func mergeAdditionalExtensions(cmdExtensions, bundleExtensions []string) []string {
+	if len(bundleExtensions) == 0 {
+		return cmdExtensions
 	}
 	
-	// For additional extensions, append bundle extensions if not already present
-	if len(bundleOpts.AdditionalExtensions) > 0 {
-		extensionMap := make(map[string]bool)
-		for _, ext := range cmdOpts.AdditionalExtensions {
-			extensionMap[ext] = true
-		}
-		for _, ext := range bundleOpts.AdditionalExtensions {
-			if !extensionMap[ext] {
-				result.AdditionalExtensions = append(result.AdditionalExtensions, ext)
-			}
+	extensionMap := make(map[string]bool)
+	result := make([]string, len(cmdExtensions))
+	copy(result, cmdExtensions)
+	
+	for _, ext := range cmdExtensions {
+		extensionMap[ext] = true
+	}
+	
+	for _, ext := range bundleExtensions {
+		if !extensionMap[ext] {
+			result = append(result, ext)
 		}
 	}
+	
+	return result
+}
 
+// applyBundleOption is a helper that applies a bundle option to the result if conditions are met
+func applyBundleOption[T any](bundleValue *T, resultValue *T, shouldApply bool) {
+	if bundleValue != nil && shouldApply {
+		*resultValue = *bundleValue
+	}
+}
+
+// MergeFormattingOptions merges bundle options with command-line options
+// Command-line options override bundle options when they're not at default values
+func MergeFormattingOptions(bundleOpts BundleOptions, cmdOpts FormattingOptions) FormattingOptions {
+	result := cmdOpts // Start with command-line options
+	
+	// Only use bundle options if command-line options are at default values
+	applyBundleOption(bundleOpts.Theme, &result.Theme, cmdOpts.Theme == "classic")
+	applyBundleOption(bundleOpts.LineNumbers, &result.LineNumbers, cmdOpts.LineNumbers == LineNumberNone)
+	applyBundleOption(bundleOpts.ShowHeaders, &result.ShowHeaders, cmdOpts.ShowHeaders)
+	applyBundleOption(bundleOpts.HeaderStyle, &result.HeaderStyle, cmdOpts.HeaderStyle == HeaderStyleNice)
+	applyBundleOption(bundleOpts.SequenceStyle, &result.SequenceStyle, cmdOpts.SequenceStyle == SequenceNumerical)
+	applyBundleOption(bundleOpts.ShowTOC, &result.ShowTOC, !cmdOpts.ShowTOC)
+	
+	// Merge additional extensions
+	result.AdditionalExtensions = mergeAdditionalExtensions(
+		cmdOpts.AdditionalExtensions,
+		bundleOpts.AdditionalExtensions,
+	)
+	
 	return result
 }
 
 // MergeFormattingOptionsWithDefaults merges bundle options with command-line options
-// This function needs to know which command-line options were explicitly set
+// This function uses explicit flags to determine which options were set by the user
 func MergeFormattingOptionsWithDefaults(bundleOpts BundleOptions, cmdOpts FormattingOptions, explicitFlags map[string]bool) FormattingOptions {
 	result := cmdOpts // Start with command-line options
-
-	// Only use bundle options if command-line options were not explicitly set
-	if bundleOpts.Theme != nil && !explicitFlags["theme"] {
-		result.Theme = *bundleOpts.Theme
-	}
-	if bundleOpts.LineNumbers != nil && !explicitFlags["line-numbers"] {
-		result.LineNumbers = *bundleOpts.LineNumbers
-	}
-	if bundleOpts.ShowHeaders != nil && !explicitFlags["no-header"] {
-		result.ShowHeaders = *bundleOpts.ShowHeaders
-	}
-	if bundleOpts.HeaderStyle != nil && !explicitFlags["header-style"] {
-		result.HeaderStyle = *bundleOpts.HeaderStyle
-	}
-	if bundleOpts.SequenceStyle != nil && !explicitFlags["sequence"] {
-		result.SequenceStyle = *bundleOpts.SequenceStyle
-	}
-	if bundleOpts.ShowTOC != nil && !explicitFlags["toc"] {
-		result.ShowTOC = *bundleOpts.ShowTOC
-	}
 	
-	// For additional extensions, append bundle extensions if not already present
-	if len(bundleOpts.AdditionalExtensions) > 0 {
-		extensionMap := make(map[string]bool)
-		for _, ext := range cmdOpts.AdditionalExtensions {
-			extensionMap[ext] = true
-		}
-		for _, ext := range bundleOpts.AdditionalExtensions {
-			if !extensionMap[ext] {
-				result.AdditionalExtensions = append(result.AdditionalExtensions, ext)
-			}
-		}
-	}
-
+	// Only use bundle options if command-line options were not explicitly set
+	applyBundleOption(bundleOpts.Theme, &result.Theme, !explicitFlags["theme"])
+	applyBundleOption(bundleOpts.LineNumbers, &result.LineNumbers, !explicitFlags["line-numbers"])
+	applyBundleOption(bundleOpts.ShowHeaders, &result.ShowHeaders, !explicitFlags["no-header"])
+	applyBundleOption(bundleOpts.HeaderStyle, &result.HeaderStyle, !explicitFlags["header-style"])
+	applyBundleOption(bundleOpts.SequenceStyle, &result.SequenceStyle, !explicitFlags["sequence"])
+	applyBundleOption(bundleOpts.ShowTOC, &result.ShowTOC, !explicitFlags["toc"])
+	
+	// Merge additional extensions
+	result.AdditionalExtensions = mergeAdditionalExtensions(
+		cmdOpts.AdditionalExtensions,
+		bundleOpts.AdditionalExtensions,
+	)
+	
 	return result
 }
 
@@ -235,28 +227,50 @@ func parseOption(optionLine string, options *BundleOptions) error {
 
 	flag := parts[0]
 	
+	// Helper variables for cleaner pointer allocation
+	trueVal := true
+	falseVal := false
+	lineNumberFile := LineNumberFile
+	lineNumberGlobal := LineNumberGlobal
+	
 	switch flag {
 	case "--toc":
-		options.ShowTOC = &[]bool{true}[0]
+		options.ShowTOC = &trueVal
 		
 	case "--no-header":
-		options.ShowHeaders = &[]bool{false}[0]
+		options.ShowHeaders = &falseVal
 		
 	case "--line-numbers", "-n":
-		options.LineNumbers = &[]LineNumberMode{LineNumberFile}[0]
+		options.LineNumbers = &lineNumberFile
 		
 	case "--global-line-numbers", "-N":
-		options.LineNumbers = &[]LineNumberMode{LineNumberGlobal}[0]
+		options.LineNumbers = &lineNumberGlobal
 		
 	case "--theme":
 		if len(parts) < 2 {
-			return fmt.Errorf("--theme requires a value")
+			availableThemes, _ := GetAvailableThemes()
+			return fmt.Errorf("--theme requires a value. Available themes: %s", strings.Join(availableThemes, ", "))
 		}
-		options.Theme = &parts[1]
+		// Validate theme exists
+		themeName := parts[1]
+		availableThemes, err := GetAvailableThemes()
+		if err == nil {
+			themeFound := false
+			for _, available := range availableThemes {
+				if available == themeName {
+					themeFound = true
+					break
+				}
+			}
+			if !themeFound {
+				return fmt.Errorf("invalid theme: %s. Available themes: %s", themeName, strings.Join(availableThemes, ", "))
+			}
+		}
+		options.Theme = &themeName
 		
 	case "--header-style":
 		if len(parts) < 2 {
-			return fmt.Errorf("--header-style requires a value")
+			return fmt.Errorf("--header-style requires a value. Available styles: nice, filename, path")
 		}
 		style := HeaderStyle(parts[1])
 		// Validate header style
@@ -264,12 +278,12 @@ func parseOption(optionLine string, options *BundleOptions) error {
 		case HeaderStyleNice, HeaderStyleFilename, HeaderStylePath:
 			options.HeaderStyle = &style
 		default:
-			return fmt.Errorf("invalid header style: %s (must be one of: nice, filename, path)", parts[1])
+			return fmt.Errorf("invalid header style: %s. Available styles: nice, filename, path", parts[1])
 		}
 		
 	case "--sequence":
 		if len(parts) < 2 {
-			return fmt.Errorf("--sequence requires a value")
+			return fmt.Errorf("--sequence requires a value. Available styles: numerical, letter, roman")
 		}
 		sequence := SequenceStyle(parts[1])
 		// Validate sequence style
@@ -277,7 +291,7 @@ func parseOption(optionLine string, options *BundleOptions) error {
 		case SequenceNumerical, SequenceLetter, SequenceRoman:
 			options.SequenceStyle = &sequence
 		default:
-			return fmt.Errorf("invalid sequence style: %s (must be one of: numerical, letter, roman)", parts[1])
+			return fmt.Errorf("invalid sequence style: %s. Available styles: numerical, letter, roman", parts[1])
 		}
 		
 	case "--txt-ext":
