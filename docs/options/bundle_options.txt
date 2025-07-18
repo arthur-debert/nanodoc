@@ -1,20 +1,17 @@
 Bundle Options in Nanodoc
 ========================
 
-Bundle files in nanodoc can store processing options alongside file paths, allowing you to 
-define consistent, reproducible output settings that travel with your content.
+As of issue #17, bundle files can now store nanodoc processing options directly within the bundle file itself. This allows you to create predictable and consistent output by defining both the content and formatting options in a single file.
 
-Overview
---------
+## Overview
 
-Bundle options allow you to specify command-line flags directly within bundle files.
-This means you can run `nanodoc bundle.txt` and get predictable output without 
-needing to remember complex command-line combinations.
+Bundle options allow you to specify command-line flags directly within bundle files. This means you can run `nanodoc bundle.txt` and get a predictable output every time, without having to remember all the formatting options.
 
-Syntax
-------
+## Syntax
 
-Bundle options use the same syntax as command-line flags:
+Bundle options use the exact same syntax as command-line flags. Any line in a bundle file that starts with `-` or `--` is treated as a command-line option.
+
+### Example Bundle File
 
 ```
 # My Project Documentation Bundle
@@ -39,164 +36,107 @@ docs/
 pkg/nanodoc/*.go
 ```
 
-Supported Options
-----------------
+## Supported Options
 
-All major command-line options are supported in bundle files:
+All command-line options are supported in bundle files:
 
-**Table of Contents:**
-- `--toc` - Generate table of contents
+### Table of Contents
+- `--toc` - Generate a table of contents
 
-**Line Numbering:**
-- `--line-numbers` or `-n` - Per-file line numbering
-- `--global-line-numbers` or `-N` - Global line numbering
+### Line Numbering
+- `--line-numbers` or `-n` - Enable per-file line numbering
+- `--global-line-numbers` or `-N` - Enable global line numbering
 
-**Headers:**
+### Headers
 - `--no-header` - Suppress file headers
-- `--header-style <style>` - Header style (nice, filename, path)
-- `--sequence <style>` - Sequence numbering (numerical, letter, roman)
+- `--header-style <style>` - Set header style (nice, filename, path)
+- `--sequence <style>` - Set sequence style (numerical, letter, roman)
 
-**Theming:**
-- `--theme <name>` - Theme name (classic, classic-light, classic-dark)
+### Theming
+- `--theme <name>` - Set theme (classic, classic-dark, classic-light)
 
-**File Handling:**
+### File Handling
 - `--txt-ext <ext>` - Additional file extensions to process
 
-Precedence Rules
----------------
+## Precedence Rules
 
-Command-line options always override bundle options. This allows you to:
+To ensure predictable behavior, command-line arguments always override options set in bundle files:
 
-1. Define standard settings in the bundle file
-2. Override them from the command line when needed
+1. **Explicitly set command-line options** take highest precedence
+2. **Bundle file options** are used when command-line options are not explicitly set
+3. **Default values** are used when neither bundle nor command-line options are set
 
-Example:
+### Example
+
+If a bundle file contains `--theme classic-dark` but you run:
 ```bash
-# Uses bundle settings
-nanodoc project.bundle.txt
-
-# Overrides bundle theme with classic-light
-nanodoc --theme classic-light project.bundle.txt
-
-# Overrides bundle line numbering with per-file
-nanodoc --line-numbers project.bundle.txt
+nanodoc --theme classic-light my_bundle.txt
 ```
 
-Parsing Rules
-------------
+The `classic-light` theme will be used because the command-line option overrides the bundle option.
 
-1. Lines starting with `#` are treated as comments
-2. Empty lines are ignored
-3. Lines starting with `-` or `--` are treated as options
-4. All other lines are treated as file paths
-5. Options are processed before file paths
-6. Multiple values for the same option (like `--txt-ext`) are accumulated
+## Benefits
 
-Examples
---------
+1. **Consistency** - Same output every time you run the bundle
+2. **Simplicity** - No need to remember complex command-line options
+3. **Shareability** - Bundle files can be shared with team members
+4. **Flexibility** - Can still override options when needed
 
-### Basic Bundle with Options
+## Common Use Cases
 
+### Project Documentation
 ```
-# Simple documentation bundle
+# project-docs.bundle.txt
 --toc
 --theme classic-dark
+--header-style nice
+--sequence roman
 
 README.md
-docs/getting-started.md
+docs/architecture.md
 docs/api.md
 ```
 
-### Advanced Bundle with Multiple Options
-
+### Code Review Bundle
 ```
-# Comprehensive project documentation
---toc
---global-line-numbers
---header-style nice
---sequence roman
---theme classic-dark
---txt-ext go
---txt-ext py
---txt-ext js
-
-# Core documentation
-README.md
-CHANGELOG.md
-
-# API documentation
-docs/api/
-
-# Source code examples
-examples/*.go
-src/*.py
-```
-
-### Bundle with Complex File Patterns
-
-```
-# Full project bundle
---toc
+# review.bundle.txt
+--line-numbers
 --header-style path
---sequence letter
+--no-header
 
-# Documentation
-README.md
-docs/
-
-# Source code
-src/main.go
-src/utils/
-pkg/*/
-
-# Configuration
-config/*.yaml
+src/main.go:L50-100
+src/utils.go:L20-40
 ```
 
-Error Handling
---------------
+### Team Onboarding
+```
+# onboarding.bundle.txt
+--toc
+--theme classic-light
+--header-style nice
 
-Bundle option parsing will fail if:
+docs/welcome.md
+docs/setup.md
+docs/coding-standards.md
+```
 
-1. An unknown option is specified
-2. A required option value is missing (e.g., `--theme` without a theme name)
-3. An option is malformed
+## Implementation Details
 
-When an error occurs, nanodoc will report the specific line number and error details.
+Bundle options are parsed using the same logic as command-line parsing, ensuring consistency between the two interfaces. The feature supports:
 
-Integration with Other Features
-------------------------------
+- Comments and empty lines (ignored)
+- All existing command-line flags
+- Proper precedence handling
+- Error reporting for invalid options
 
-Bundle options work seamlessly with:
+## Error Handling
 
-- **Nested bundles**: Child bundles inherit and can override parent options
-- **Live bundles**: Options apply to the entire document including inlined content
-- **Dry run mode**: `--dry-run` shows which options would be applied
-- **Circular dependency detection**: Works with option parsing
+If a bundle file contains invalid options, nanodoc will report a clear error message indicating:
+- The bundle file path
+- The line number with the error
+- The specific issue with the option
 
-Best Practices
---------------
-
-1. **Group options at the top** of the bundle file for clarity
-2. **Use comments** to document why specific options are chosen
-3. **Test bundles** with `--dry-run` to verify settings
-4. **Keep options simple** - avoid overly complex configurations
-5. **Use consistent naming** for related bundle files
-6. **Document precedence** when using nested bundles
-
-Troubleshooting
---------------
-
-**Bundle options not taking effect:**
-- Verify the bundle file uses the `.bundle.` naming pattern
-- Check that options are specified correctly (start with `-` or `--`)
-- Ensure no typos in option names
-
-**CLI options not overriding bundle options:**
-- This is expected behavior - CLI options always take precedence
-- Use `--dry-run` to see the final merged options
-
-**Option parsing errors:**
-- Check the line number mentioned in the error
-- Verify option syntax matches command-line format
-- Ensure required values are provided for options that need them
+Example error:
+```
+Error: error parsing option on line 10: --theme requires a value
+```
