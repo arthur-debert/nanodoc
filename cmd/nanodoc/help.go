@@ -26,6 +26,7 @@ func initHelpSystem() {
 	// Add custom template functions
 	cobra.AddTemplateFunc("trimTrailingWhitespaces", trimTrailingWhitespaces)
 	cobra.AddTemplateFunc("groupedFlagUsages", groupedFlagUsages)
+	cobra.AddTemplateFunc("helpTopics", helpTopics)
 	
 	// Set custom templates
 	rootCmd.SetHelpTemplate(HelpTemplate)
@@ -120,6 +121,41 @@ func flagUsage(f *pflag.Flag) string {
 	if f.DefValue != "" && f.DefValue != "false" && f.DefValue != "[]" {
 		buf.WriteString(fmt.Sprintf(" (default %q)", f.DefValue))
 	}
+	
+	return buf.String()
+}
+
+// helpTopics returns formatted help topics
+func helpTopics() string {
+	// Get available topics
+	topics, err := getAvailableTopics()
+	if err != nil {
+		return ""
+	}
+	
+	var buf bytes.Buffer
+	buf.WriteString(fmt.Sprintf("\033[1m%s\033[0m\n", "HELP TOPICS"))
+	
+	// Find the longest topic name for padding
+	maxLen := 0
+	for _, topic := range topics {
+		if len(topic) > maxLen {
+			maxLen = len(topic)
+		}
+	}
+	
+	// Add padding
+	maxLen += 4
+	
+	for _, topic := range topics {
+		desc, exists := TopicDescriptions[topic]
+		if !exists {
+			desc = "Documentation for " + topic
+		}
+		buf.WriteString(fmt.Sprintf("  %-*s %s\n", maxLen, topic, desc))
+	}
+	
+	buf.WriteString("\nRun \"nanodoc topics <topic-name>\" for more information.")
 	
 	return buf.String()
 }

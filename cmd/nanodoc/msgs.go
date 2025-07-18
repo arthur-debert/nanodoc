@@ -68,3 +68,19 @@ const HelpTemplate = `{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}
 
 // Misc group name for flags
 const MiscGroupName = "Misc"
+
+// Topic descriptions
+var TopicDescriptions = map[string]string{
+	"bundles":                "Create and manage bundle files for complex document combinations",
+	"circular-dependencies":  "Understanding and resolving circular dependency issues",
+	"content":                "File selection, patterns, and line ranges",
+	"design":                 "Architecture and design principles of nanodoc",
+	"headers":                "Customize file headers and separators",
+	"line-numbering":         "Add line numbers to your bundled documents",
+	"options-bundle":         "Advanced options for bundle files",
+	"options-headers":        "Header formatting and style options",
+	"options-line-numbering": "Line numbering configuration options",
+	"options-toc":            "Table of contents generation options",
+	"themes":                 "Available themes and styling options",
+	"toc":                    "Generate table of contents for your documents",
+}

@@ -5,9 +5,8 @@ Aliases:
 {{.LocalFlags | groupedFlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
 
 Global Flags:
-{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}
 
-Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
-  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+{{helpTopics}}{{if .HasAvailableSubCommands}}
 
 {{end}}
