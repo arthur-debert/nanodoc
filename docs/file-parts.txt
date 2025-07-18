@@ -1,5 +1,10 @@
 How to address part(s) of files:
 
+The line range syntax can be used in:
+- Command-line arguments: `nanodoc file.txt:L10-20`
+- Bundle files: listing files with ranges
+- Live bundles: [[file:path/to/file.txt:L5-10]]
+
 Single lines
 
     <filename>:L<line num> -> a specific line number from file name

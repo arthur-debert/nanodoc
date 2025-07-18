@@ -1,7 +1,6 @@
 package nanodoc
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -57,13 +56,14 @@ func resolveSinglePath(path string) (PathInfo, error) {
 
 // resolveNonGlobPath handles resolving a path that is not a glob pattern.
 func resolveNonGlobPath(path string) (PathInfo, error) {
-	// Check if path contains line range syntax
-	if strings.Contains(path, ":L") && strings.LastIndex(path, ":L") > 0 {
-		// Line range syntax is not supported in direct path resolution
-		return PathInfo{}, fmt.Errorf("line range syntax (e.g., file.txt:L10-20) is only supported within bundle files or live bundles, not as direct command-line arguments")
+	// Parse out any range specification for file system operations
+	// but keep the original path with range for later processing
+	basePath := path
+	if idx := strings.LastIndex(path, ":L"); idx > 0 {
+		basePath = path[:idx]
 	}
 
-	absPath, err := filepath.Abs(path)
+	absPath, err := filepath.Abs(basePath)
 	if err != nil {
 		return PathInfo{}, err
 	}

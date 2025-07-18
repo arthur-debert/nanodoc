@@ -101,12 +101,28 @@ func TestResolvePaths(t *testing.T) {
 		{
 			name:    "file with line range syntax",
 			sources: []string{testFile1 + ":L10-20"},
-			wantErr: true,
+			wantErr: false,
+			check: func(t *testing.T, results []PathInfo) {
+				if len(results) != 1 {
+					t.Errorf("expected 1 result, got %d", len(results))
+				}
+				if results[0].Original != testFile1+":L10-20" {
+					t.Errorf("expected original path with range, got %s", results[0].Original)
+				}
+			},
 		},
 		{
 			name:    "file with single line syntax",
 			sources: []string{testFile1 + ":L5"},
-			wantErr: true,
+			wantErr: false,
+			check: func(t *testing.T, results []PathInfo) {
+				if len(results) != 1 {
+					t.Errorf("expected 1 result, got %d", len(results))
+				}
+				if results[0].Original != testFile1+":L5" {
+					t.Errorf("expected original path with range, got %s", results[0].Original)
+				}
+			},
 		},
 		{
 			name:    "multiple sources",
