@@ -136,6 +136,99 @@ func TestRootCmd(t *testing.T) {
 	}
 }
 
+func TestRootCmdBundleOptions(t *testing.T) {
+	tempDir, cleanup := setupTest(t)
+	defer cleanup()
+
+	// Create test file
+	testFile := filepath.Join(tempDir, "test.txt")
+	if err := os.WriteFile(testFile, []byte("line1\nline2\nline3"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create bundle file with options
+	bundleFile := filepath.Join(tempDir, "test.bundle.txt")
+	bundleContent := []string{
+		"# Bundle with options",
+		"--toc",
+		"--theme classic-dark",
+		"--header-style path",
+		"--line-numbers",
+		"",
+		"test.txt",
+	}
+	if err := os.WriteFile(bundleFile, []byte(strings.Join(bundleContent, "\n")), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name          string
+		args          []string
+		wantOutput    []string
+		dontWantOutput []string
+	}{
+		{
+			name: "bundle_options_applied",
+			args: []string{bundleFile},
+			wantOutput: []string{
+				"Table of Contents",  // --toc from bundle
+				"1 | line1",          // --line-numbers from bundle
+				"2 | line2",          // line numbers continue
+				"3 | line3",
+				tempDir,              // --header-style path shows full path
+			},
+		},
+		{
+			name: "cli_overrides_bundle",
+			args: []string{"--header-style", "filename", bundleFile},
+			wantOutput: []string{
+				"Table of Contents",  // --toc from bundle (not overridden)
+				"1 | line1",          // --line-numbers from bundle (not overridden)
+				"test.txt",           // --header-style filename overrides bundle's path
+			},
+			dontWantOutput: []string{
+				tempDir,              // Should not show full path
+			},
+		},
+		{
+			name: "cli_no_header_overrides_bundle",
+			args: []string{"--no-header", bundleFile},
+			wantOutput: []string{
+				"Table of Contents",  // --toc from bundle (not overridden)
+				"1 | line1",          // --line-numbers from bundle (not overridden)
+			},
+			dontWantOutput: []string{
+				"test.txt",           // No header should be shown
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset flags before each run
+			resetFlags()
+
+			output, err := executeCommand(tt.args...)
+			if err != nil {
+				t.Errorf("executeCommand() error = %v\nOutput:\n%s", err, output)
+				return
+			}
+
+			for _, want := range tt.wantOutput {
+				if !strings.Contains(output, want) {
+					t.Errorf("Output does not contain %q.\nGot:\n%s", want, output)
+				}
+			}
+			
+			for _, dontWant := range tt.dontWantOutput {
+				if strings.Contains(output, dontWant) {
+					t.Errorf("Output contains %q, but should not.\nGot:\n%s", dontWant, output)
+				}
+			}
+		})
+	}
+}
+
 // resetFlags resets all persistent flags to their default values.
 func resetFlags() {
 	lineNumbers = false
