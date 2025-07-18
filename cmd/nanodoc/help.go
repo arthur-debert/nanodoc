@@ -78,7 +78,7 @@ func groupedFlagUsages(fs *pflag.FlagSet) string {
 		}
 		
 		// Write group header
-		buf.WriteString(fmt.Sprintf("%s:\n", groupName))
+		buf.WriteString(fmt.Sprintf("\033[1m%s\033[0m\n", strings.ToUpper(groupName)))
 		
 		// Write flags in this group
 		for _, flag := range groups[groupName] {
