@@ -1,71 +1,171 @@
-# Bundle Options Feature Implementation
+# Pull Request: Bundle Options Feature Implementation
 
-## Summary
-Implements GitHub issue #17 - "Bundles should be able to store nanodoc processing options"
+## Overview
 
-This PR adds the ability to embed command-line options directly in bundle files, enabling predictable and consistent output without requiring users to remember complex command-line arguments.
+This PR implements the bundle options feature requested in **Issue #17**, allowing bundle files to store nanodoc processing options alongside file paths. This provides a way to achieve predictable and consistent output when using bundle files.
+
+## Problem Statement
+
+Previously, bundle files could only contain file paths. Users had to remember to specify the same command-line options each time they processed a bundle, leading to inconsistent output and a poor user experience.
+
+## Solution
+
+Bundle files can now contain command-line options that serve as defaults, with command-line arguments taking precedence when explicitly set. This allows users to create self-contained bundle files that produce consistent output.
 
 ## Key Features
 
-### Bundle Options Support
-- **Syntax**: Lines starting with `--` are treated as command-line options
-- **All options supported**: `--toc`, `--theme`, `--line-numbers`, `--global-line-numbers`, `--no-header`, `--header-style`, `--sequence`, `--txt-ext`
-- **Precedence**: Command-line flags override bundle options
-- **Validation**: Full validation of option values with helpful error messages
+✅ **Command-line Options in Bundle Files**: Bundle files can now contain options like `--toc`, `--line-numbers`, `--theme`, etc.
 
-### Example Usage
-```txt
+✅ **Same Syntax as CLI**: Options are specified using the same syntax as command-line flags
+
+✅ **Proper Precedence**: Command-line options override bundle options when explicitly set
+
+✅ **Comprehensive Coverage**: Supports all major formatting options (TOC, line numbers, themes, headers, sequences)
+
+✅ **Backward Compatibility**: Existing bundle files continue to work unchanged
+
+## Usage Example
+
+### Before (Bundle files could only contain paths):
+```
 # project.bundle.txt
---toc
---global-line-numbers
---header-style nice
---sequence roman
---theme classic-dark
-
 README.md
-docs/
+src/main.go
+docs/api.md
 ```
 
+### After (Bundle files can contain options + paths):
+```
+# project.bundle.txt
+# Options - these serve as defaults
+--toc
+--line-numbers
+--theme classic-dark
+--header-style filename
+--sequence roman
+
+# Files
+README.md
+src/main.go
+docs/api.md
+```
+
+### Command-line Override:
 ```bash
-# All options applied automatically
+# Uses bundle options as defaults
 nanodoc project.bundle.txt
 
-# CLI can override bundle options
+# Command-line options override bundle options
 nanodoc --theme classic-light project.bundle.txt
 ```
 
-## Implementation Details
+## Technical Implementation
 
 ### Core Changes
-- **Bundle parsing**: Enhanced `parseOption()` function with comprehensive validation
-- **CLI integration**: Added explicit flag tracking with `explicitFlags` map
-- **Option merging**: Proper precedence handling in `MergeFormattingOptionsWithDefaults()`
-- **Data structures**: New `BundleOptions` and `BundleResult` structs
 
-### Testing
-- **Unit tests**: Comprehensive test suite for all bundle options
-- **Integration tests**: End-to-end CLI testing with bundle options
-- **Edge cases**: Invalid options, precedence rules, validation
-- **All existing tests pass**: Full backward compatibility maintained
+1. **Extended Bundle Processing**: 
+   - Added `BundleOptions` struct to hold parsed options
+   - Extended `ProcessBundleFileWithOptions` to parse both paths and options
+   - Added `parseOption` function to handle individual option parsing
 
-### Documentation
-- **Updated docs**: Complete documentation in `docs/specifying_files.txt`
-- **Examples**: Real-world usage examples in README
-- **Implementation summary**: Detailed technical documentation
+2. **Option Merging Logic**:
+   - Implemented `MergeFormattingOptions` and `MergeFormattingOptionsWithDefaults`
+   - Added explicit flag tracking in CLI to distinguish between default and user-set values
+   - Proper precedence: CLI options > Bundle options > System defaults
 
-## Benefits
-- **Predictable output**: Consistent formatting across runs
-- **Team collaboration**: Shareable bundle files with standard formatting
-- **Flexibility**: CLI options can still override bundle settings
-- **Backward compatible**: Existing bundle files continue to work unchanged
-- **Simple syntax**: Uses familiar command-line flag syntax
+3. **CLI Integration**:
+   - Added `trackExplicitFlags` function to track which flags were explicitly set
+   - Updated CLI to use `BuildDocumentWithExplicitFlags` for proper option merging
+   - Maintained backward compatibility with existing CLI usage
 
-## Verification
-✅ All tests pass  
-✅ Feature works as designed  
-✅ Documentation updated  
-✅ Backward compatibility maintained  
-✅ Zero breaking changes  
+### Bug Fixes
+
+During implementation, discovered and fixed bugs in the renderer:
+
+1. **Header Style Bug**: `HeaderStyleFilename` was returning full paths instead of just filenames
+2. **Sequence Number Bug**: Sequence numbers weren't being applied to `HeaderStyleFilename` and `HeaderStylePath`
+
+### Supported Options
+
+All major nanodoc options are supported in bundle files:
+
+- `--toc` - Generate table of contents
+- `--line-numbers` / `-n` - Enable per-file line numbering  
+- `--global-line-numbers` / `-N` - Enable global line numbering
+- `--theme THEME` - Set theme (classic, classic-dark, classic-light)
+- `--header-style STYLE` - Set header style (nice, filename, path)
+- `--sequence STYLE` - Set sequence style (numerical, letter, roman)
+- `--no-header` - Suppress file headers
+- `--txt-ext EXT` - Additional file extensions to process
+
+## Testing
+
+### Comprehensive Test Coverage
+
+- **Unit Tests**: All new functions have comprehensive unit tests
+- **Integration Tests**: End-to-end tests covering the complete workflow
+- **Edge Case Tests**: Invalid options, circular dependencies, complex merging scenarios
+- **Regression Tests**: Ensuring existing functionality remains intact
+
+### Manual Testing
+
+Created comprehensive test scenarios to verify:
+- Bundle options are correctly parsed and applied
+- Command-line options properly override bundle options
+- All formatting options work correctly (TOC, line numbers, themes, headers, sequences)
+- Backward compatibility with existing bundle files
+
+## Documentation Updates
+
+- Updated `docs/specifying_files.txt` with comprehensive bundle options documentation
+- README.md already contained bundle options documentation
+- Added inline code comments explaining the new functionality
+- Comprehensive test cases serve as usage examples
+
+## Backward Compatibility
+
+✅ **Fully Backward Compatible**: Existing bundle files continue to work unchanged
+✅ **No Breaking Changes**: All existing CLI usage patterns remain supported
+✅ **Graceful Degradation**: Invalid options in bundle files produce clear error messages
+
+## Example Output
+
+### Bundle File:
+```
+# example.bundle.txt
+--toc
+--line-numbers
+--theme classic-dark
+--header-style filename
+--sequence roman
+
+file1.txt
+file2.txt
+```
+
+### Output:
+```
+Table of Contents
+=================
+
+- File1 (file1.txt)
+- File2 (file2.txt)
+
+i. file1.txt
+
+1 | Content of file 1
+2 | More content
+
+ii. file2.txt
+
+1 | Content of file 2
+2 | More content
+```
 
 ## Closes
-Closes #17
+
+Fixes #17
+
+---
+
+**Ready for Review**: This PR is complete and ready for review. The feature is fully implemented, tested, and documented.
