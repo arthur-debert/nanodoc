@@ -1,0 +1,85 @@
+Intro
+
+Nanodoc is a minimalist document bundler designed for stitching hints, reminders and short docs. Useful for prompts, personalized docs highlights for your teams or a note to your future self.
+
+No config, nothing to learn nor remember. Short, simple, sweet.
+
+  $ nanodoc <file1>...<file_n>
+
+The Design
+
+The program is started by passing source arguments, which can be files, directories, glob patterns, or special `.bundle` files. The core process follows a clear pipeline:
+
+Core Principles 
+---------------
+
+    - Staged Processing: The resolve-extract-render pipeline is clearly implemented.
+    - Progressive Data Enrichment: Data is progressively enriched from paths to a complete
+      Document object.
+    - Shell Isolation: The core logic is decoupled from the CLI.
+    
+Paths & Globs → Resolve Paths → Build Document → Create Formatting Context → Render Document → Display
+
+In the broadest way, there are six stages:
+  0. Argument parsing
+  1. Resolve Paths
+  2. Build Document
+  3. Create Formatting Context
+  4. Render Document
+  5. Display
+
+Each of these has a clear input and output.
+
+  0. CLI parsing: sys.argvs -> Program run info (args and settings)
+
+    We parse the command-line arguments and flags using the `cobra` library. This transforms shell input into structured Go objects. From this point, the application operates on this structured data, decoupling the core logic from the shell and improving testability. A `--dry-run` flag allows inspecting the file resolution without processing content.
+
+  1. Resolve Paths: source list -> PathInfo list
+
+    The initial list of sources (files, directories, globs) is resolved into a structured list of `PathInfo` objects. This stage identifies the type of each source and, for directories and globs, expands them into a list of constituent files.
+
+  2. Build Document: PathInfo list -> Document
+
+    This is the central orchestration stage. It takes the resolved paths and constructs a complete `Document` object. This involves several sub-steps:
+      - **Bundle Expansion:** Recursively processes `.bundle` files, which contain lists of other files, while detecting and preventing circular dependencies.
+      - **Content Extraction:** Reads the content of each file. It supports extracting specific line ranges (e.g., `file.txt:L10-20`).
+      - **Live Bundle Processing:** Recursively processes "Live Bundles"—inline directives like `[[file:path/to/file.txt]]`—replacing them with the content of the specified file.
+    The final output is a single `Document` object containing all content items and the formatting options provided by the user.
+
+  3. Create Formatting Context: FormattingOptions -> FormattingContext
+
+    This stage prepares for rendering. It loads the specified theme from embedded YAML files and consolidates all formatting rules (e.g., line numbering mode, header styles, TOC visibility) into a `FormattingContext` object. This context is then passed to the renderer.
+
+  4. Render Document: Document + FormattingContext -> output string
+
+    With the complete `Document` and `FormattingContext`, this stage generates the final output string. It assembles the content in the correct order, generating and inserting:
+      - A Table of Contents (TOC) if requested.
+      - File headers, with configurable styles (e.g., `nice`, `filename`) and sequence markers (e.g., `numerical`, `letter`, `roman`).
+      - Line numbers, which can be per-file or global.
+
+  5. Display: output string -> sys.stdout
+
+    This final step takes the rendered string and prints it to standard output. In the future, it could be adapted to write to a file or other destinations.
+
+Benefits
+
+  1. Shell isolation:
+
+    Testing and handling shell programs is possible, but more cumbersome and error-prone than testing pure functions. This design means that after the initial CLI parsing, the core logic is entirely decoupled from the shell.
+
+  2. Rich and decoupled processing:
+
+    It isolates distinct tasks like path resolution, content extraction, and rendering into self-contained modules. Data is progressively enriched, from simple paths to a `Document` object that retains the origin of each piece of content, enabling context-aware features like file headers.
+
+Practical Implications
+
+  1. Testing boundaries:
+
+    - Test that CLI arguments are correctly parsed into the initial options struct.
+    - Test that the final rendered string is correctly displayed.
+    - A handful of end-to-end tests for sanity checks.
+
+  2. Centralized Flow:
+
+    - The main `RunE` function orchestrates the stages, passing the output of one to the input of the next.
+    - Stages are designed not to cross-call. The rendering code doesn't read files, and the path resolution code doesn't format text. This maintains a clean data flow and allows stages to be tested as black boxes.

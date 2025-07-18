@@ -1,0 +1,18 @@
+Generate a TOC to help navigate larger bundled documents.
+
+USAGE:
+nanodoc --toc file1.txt file2.txt
+
+EXAMPLE OUTPUT:
+
+TOC (with default "nice" style)
+
+File1 (file1.txt) ................ 1
+File2 (file2.txt) ................ 5
+File3 (file3.txt) ................ 12
+
+The numbers show starting line for each file in the bundled document.
+TOC entries use the same style as headers (nice, filename, or path).
+
+TIP: Combine with line numbering for easier navigation:
+nanodoc --toc -nn file1.txt file2.txt
