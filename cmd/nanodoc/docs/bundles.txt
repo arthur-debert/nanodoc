@@ -208,3 +208,30 @@ Nanodoc detects and prevents circular dependencies in bundles:
 - Review the error message showing the dependency chain
 - Remove the circular reference
 - Consider restructuring your bundles
+
+OPTIONS
+-------
+
+Bundle files can include formatting options that apply to the entire bundle. Options use the same syntax as command-line flags:
+
+### Supported Options in Bundles
+
+--toc                      Generate a table of contents
+--line-numbers, -n         Enable per-file line numbering
+--global-line-numbers, -N  Enable global line numbering
+--theme <name>             Set theme (classic, classic-dark, classic-light)
+--header-style <style>     Set header style (nice, filename, path)
+--sequence <style>         Set sequence style (numerical, letter, roman)
+--no-header                Suppress file headers
+--txt-ext <ext>            Additional file extensions to treat as text
+--include <pattern>        Include only files matching patterns
+--exclude <pattern>        Exclude files matching patterns
+
+### Precedence
+
+1. Command-line flags (highest priority)
+2. Bundle file options
+3. System defaults (lowest priority)
+
+Example: If bundle contains `--theme dark` but you run `nanodoc --theme light bundle.txt`, 
+the light theme wins because command-line flags override bundle options.

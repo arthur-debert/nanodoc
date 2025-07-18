@@ -48,3 +48,9 @@ Given two files:
 
     3 | foo
     4 | bar
+
+OPTIONS
+-------
+
+-n, --line-numbers         Per-file numbering: Each file starts from 1
+-N, --global-line-numbers  Global numbering: Continues across all files

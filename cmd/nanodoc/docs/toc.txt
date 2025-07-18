@@ -35,3 +35,15 @@ Example Output:
     - My Document Title (my_document.md)
     - A Section Title (my_document.md)
     - Another File Title (another_file.txt)
+
+OPTIONS
+-------
+
+--toc    Generate a table of contents based on file titles and markdown headings
+
+The TOC will be placed at the beginning of the output and shows:
+- File titles (using the same style as headers: nice, filename, or path)
+- Starting line numbers when combined with line numbering
+
+TIP: Combine with global line numbering for easier navigation:
+nanodoc --toc -N file1.txt file2.txt
