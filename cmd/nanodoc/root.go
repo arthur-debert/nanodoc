@@ -32,11 +32,15 @@ var (
 //go:embed help/root-long.txt
 var rootLongHelp string
 
+//go:embed help/root-examples.txt
+var rootExamples string
+
 var rootCmd = &cobra.Command{
-	Use:   "nanodoc [paths...]",
-	Short: "A minimalist document bundler",
-	Long:  rootLongHelp,
-	Args:  cobra.ArbitraryArgs,
+	Use:     "nanodoc [paths...]",
+	Short:   "A minimalist document bundler",
+	Long:    rootLongHelp,
+	Example: rootExamples,
+	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check version flag first
 		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
