@@ -403,15 +403,9 @@ func BuildDocumentWithOptions(pathInfos []PathInfo, options FormattingOptions) (
 		return nil, err
 	}
 
-	// Gather content with range support
-	gatheredContents, err := GatherContentWithRanges(contents)
-	if err != nil {
-		return nil, err
-	}
-
 	// Create the document
 	doc := NewDocument()
-	doc.ContentItems = gatheredContents
+	doc.ContentItems = contents
 	doc.FormattingOptions = options
 
 	// Process live bundles - integrate both approaches

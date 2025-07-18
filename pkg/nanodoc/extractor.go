@@ -8,14 +8,11 @@ import (
 	"strings"
 )
 
-// ExtractFileContent reads a file and extracts content based on optional range specification
-// The path can include a range suffix like "file.txt:L10-20", "file.txt:L5", or "file.txt:L$3-$1"
-// If no range is specified, the full file is extracted (equivalent to L1-$1)
+// ExtractFileContent reads a file and extracts content based on optional range specifications.
+// The path can include a range suffix like "file.txt:L10-20,L30,L40-".
 func ExtractFileContent(pathWithRange string) (*FileContent, error) {
-	// Parse the path and range
 	path, rangeSpec := parsePathWithRange(pathWithRange)
 
-	// Open the file
 	file, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -27,7 +24,6 @@ func ExtractFileContent(pathWithRange string) (*FileContent, error) {
 		_ = file.Close()
 	}()
 
-	// Read all lines first to determine total line count
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -37,32 +33,29 @@ func ExtractFileContent(pathWithRange string) (*FileContent, error) {
 		return nil, &FileError{Path: path, Err: err}
 	}
 
-	// Parse range if specified
-	var r *Range
+	var ranges []Range
 	if rangeSpec != "" {
-		parsedRange, err := parseRange(rangeSpec, len(lines))
+		parsedRanges, err := parseRanges(rangeSpec, len(lines))
 		if err != nil {
 			return nil, err
 		}
-		r = parsedRange
+		ranges = parsedRanges
 	} else {
-		// Default to full file using L1-$1 notation
-		parsedRange, err := parseRange("L1-$1", len(lines))
-		if err != nil {
-			// Fallback to old behavior if parsing fails (shouldn't happen)
-			r = &Range{Start: 1, End: 0}
-		} else {
-			r = parsedRange
-		}
+		// Default to the full file range.
+		ranges = []Range{{Start: 1, End: len(lines)}}
 	}
 
-	// Extract content based on range
-	content := extractLinesInRange(lines, r)
+	var contentParts []string
+	for _, r := range ranges {
+		contentPart := extractLinesInRange(lines, &r)
+		contentParts = append(contentParts, contentPart)
+	}
+	content := strings.Join(contentParts, "\n")
 
 	return &FileContent{
 		Filepath: path,
 		Content:  content,
-		Ranges:   []Range{*r},
+		Ranges:   ranges,
 	}, nil
 }
 
@@ -81,25 +74,39 @@ func parsePathWithRange(pathWithRange string) (path, rangeSpec string) {
 	return pathWithRange[:idx], pathWithRange[idx+1:]
 }
 
-// parseRange parses a range specification like "L10-20", "L5", or "L$5-$1" (negative indices)
-// Negative indices use $ notation: $1 is last line, $2 is second-to-last, etc.
-// A single negative index like "$3" means from 3rd-to-last to end (equivalent to "L$3-$1")
-func parseRange(spec string, totalLines int) (*Range, error) {
+// parseRanges parses a comma-separated list of range specifications.
+func parseRanges(spec string, totalLines int) ([]Range, error) {
+	rangeStrings := strings.Split(spec, ",")
+	var ranges []Range
+
+	for _, rangeStr := range rangeStrings {
+		if !strings.HasPrefix(rangeStr, "L") {
+			return nil, &RangeError{Input: spec, Err: fmt.Errorf("range specifier must start with 'L'")}
+		}
+		parsedRange, err := parseSingleRange(rangeStr, totalLines)
+		if err != nil {
+			return nil, err // Propagate error with original spec
+		}
+		ranges = append(ranges, *parsedRange)
+	}
+
+	return ranges, nil
+}
+
+// parseSingleRange parses a single range specification like "L10-20" or "L$5-$1".
+func parseSingleRange(spec string, totalLines int) (*Range, error) {
 	if !strings.HasPrefix(spec, "L") {
 		return nil, &RangeError{Input: spec, Err: fmt.Errorf("range must start with 'L'")}
 	}
 
-	spec = spec[1:] // Remove the 'L' prefix
+	spec = spec[1:] // Remove 'L'
 
-	// Helper function to parse a line number (positive or negative with $)
-	parseLine := func(s string) (int, bool, error) { // returns (line, isNegative, error)
+	parseLine := func(s string) (int, bool, error) {
 		s = strings.TrimSpace(s)
 		if s == "" {
 			return 0, false, nil // Empty means EOF
 		}
-		
 		if strings.HasPrefix(s, "$") {
-			// Negative index
 			if s == "$" {
 				return 0, true, fmt.Errorf("$ must be followed by a number")
 			}
@@ -115,7 +122,6 @@ func parseRange(spec string, totalLines int) (*Range, error) {
 			}
 			return negIdx, true, nil
 		} else {
-			// Positive index
 			line, err := strconv.Atoi(s)
 			if err != nil {
 				return 0, false, fmt.Errorf("invalid line number: %w", err)
@@ -124,7 +130,6 @@ func parseRange(spec string, totalLines int) (*Range, error) {
 		}
 	}
 
-	// Check if it's a single line or a range
 	if strings.Contains(spec, "-") {
 		parts := strings.Split(spec, "-")
 		if len(parts) != 2 {
@@ -141,7 +146,6 @@ func parseRange(spec string, totalLines int) (*Range, error) {
 			return nil, &RangeError{Input: spec, Err: fmt.Errorf("invalid end line: %w", err)}
 		}
 
-		// Convert negative indices to positive
 		start := startNum
 		if startIsNeg {
 			start = totalLines - startNum + 1
@@ -153,9 +157,12 @@ func parseRange(spec string, totalLines int) (*Range, error) {
 		end := endNum
 		if endIsNeg {
 			end = totalLines - endNum + 1
-			if end < 1 {
-				end = 1
-			}
+		} else if endNum == 0 && parts[1] == "" { // Handle open-ended range like L10-
+			end = totalLines
+		}
+
+		if end < 1 {
+			end = 1
 		}
 
 		r, err := NewRange(start, end)
@@ -164,27 +171,23 @@ func parseRange(spec string, totalLines int) (*Range, error) {
 		}
 		return &r, nil
 	} else {
-		// Single line - could be positive or negative
 		lineNum, isNeg, err := parseLine(spec)
 		if err != nil {
 			return nil, &RangeError{Input: spec, Err: err}
 		}
 
 		if isNeg {
-			// Single negative index like "$3" means from that line to end
 			start := totalLines - lineNum + 1
 			if start < 1 {
 				start = 1
 			}
 			end := totalLines
-			
 			r, err := NewRange(start, end)
 			if err != nil {
 				return nil, &RangeError{Input: spec, Err: err}
 			}
 			return &r, nil
 		} else {
-			// Regular single line
 			r, err := NewRange(lineNum, lineNum)
 			if err != nil {
 				return nil, &RangeError{Input: spec, Err: err}
@@ -255,95 +258,4 @@ func ResolveAndExtractFiles(pathInfos []PathInfo, additionalExtensions []string)
 	return contents, nil
 }
 
-// MergeRanges merges overlapping or adjacent ranges
-func MergeRanges(ranges []Range) []Range {
-	if len(ranges) <= 1 {
-		return ranges
-	}
 
-	// Sort ranges by start position
-	sorted := make([]Range, len(ranges))
-	copy(sorted, ranges)
-	for i := 0; i < len(sorted)-1; i++ {
-		for j := 0; j < len(sorted)-i-1; j++ {
-			if sorted[j].Start > sorted[j+1].Start {
-				sorted[j], sorted[j+1] = sorted[j+1], sorted[j]
-			}
-		}
-	}
-
-	// Merge overlapping ranges
-	merged := []Range{sorted[0]}
-	for i := 1; i < len(sorted); i++ {
-		last := &merged[len(merged)-1]
-		current := sorted[i]
-
-		// Check if ranges overlap or are adjacent
-		if last.End == 0 || current.Start <= last.End+1 {
-			// Merge ranges
-			if current.End == 0 || (last.End != 0 && current.End > last.End) {
-				last.End = current.End
-			}
-		} else {
-			merged = append(merged, current)
-		}
-	}
-
-	return merged
-}
-
-// GatherContentWithRanges processes multiple file contents and applies range merging
-func GatherContentWithRanges(contents []FileContent) ([]FileContent, error) {
-	// Group content by file path
-	fileMap := make(map[string]*FileContent)
-
-	for _, content := range contents {
-		if existing, exists := fileMap[content.Filepath]; exists {
-			// Merge ranges for the same file
-			existing.Ranges = append(existing.Ranges, content.Ranges...)
-		} else {
-			// Create a copy to avoid modifying the original
-			newContent := content
-			fileMap[content.Filepath] = &newContent
-		}
-	}
-
-	// Process each file to merge ranges and re-extract content
-	var result []FileContent
-	for _, content := range fileMap {
-		// Merge overlapping ranges
-		content.Ranges = MergeRanges(content.Ranges)
-
-		// Re-read the file and apply merged ranges
-		file, err := os.Open(content.Filepath)
-		if err != nil {
-			return nil, &FileError{Path: content.Filepath, Err: err}
-		}
-
-		// Read all lines
-		var lines []string
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			lines = append(lines, scanner.Text())
-		}
-		_ = file.Close()
-
-		if err := scanner.Err(); err != nil {
-			return nil, &FileError{Path: content.Filepath, Err: err}
-		}
-
-		// Apply ranges and gather content
-		var contentParts []string
-		for _, r := range content.Ranges {
-			part := extractLinesInRange(lines, &r)
-			if part != "" {
-				contentParts = append(contentParts, part)
-			}
-		}
-
-		content.Content = strings.Join(contentParts, "\n")
-		result = append(result, *content)
-	}
-
-	return result, nil
-}
