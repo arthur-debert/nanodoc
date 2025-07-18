@@ -98,7 +98,7 @@ For detailed information, see the [Circular Dependencies Guide](docs/circular_de
 If you encounter issues not covered here:
 
 1. Check the [README](README.md) for updated usage information
-2. Report bugs at https://github.com/arthur-debert/nanodoc-go/issues
+2. Report bugs at https://github.com/arthur-debert/nanodoc/issues
 3. Include the following in bug reports:
    - Nanodoc version (`nanodoc version`)
    - Operating system

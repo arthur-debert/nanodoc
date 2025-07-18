@@ -97,14 +97,14 @@ DOWNLOADING RELEASES
 After a release is created, you can download artifacts:
 
 1. From GitHub Releases page:
-   https://github.com/arthur-debert/nanodoc-go/releases
+   https://github.com/arthur-debert/nanodoc/releases
 
 2. Install .deb package (Linux):
-   wget https://github.com/arthur-debert/nanodoc-go/releases/download/v0.0.1/nanodoc_0.0.1_linux_amd64.deb
+   wget https://github.com/arthur-debert/nanodoc/releases/download/v0.0.1/nanodoc_0.0.1_linux_amd64.deb
    sudo dpkg -i nanodoc_0.0.1_linux_amd64.deb
 
 3. Download with GitHub CLI:
-   gh release download v0.0.1 -R arthur-debert/nanodoc-go -p "nanodoc_*_darwin_arm64.tar.gz"
+   gh release download v0.0.1 -R arthur-debert/nanodoc -p "nanodoc_*_darwin_arm64.tar.gz"
    tar -xzf nanodoc_*.tar.gz
    ./nanodoc version
 

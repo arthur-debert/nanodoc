@@ -61,7 +61,7 @@ brews:
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
-    homepage: "https://github.com/arthur-debert/nanodoc-go"
+    homepage: "https://github.com/arthur-debert/nanodoc"
     description: "A minimalist document bundler"
     license: "MIT"
     test: |
@@ -85,7 +85,7 @@ nfpms:
     formats: [deb, rpm, apk]
     package_name: nanodoc
     file_name_template: "nanodoc_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    homepage: "https://github.com/arthur-debert/nanodoc-go"
+    homepage: "https://github.com/arthur-debert/nanodoc"
     maintainer: "Arthur Debert <arthur@debert.xyz>"
     description: "A minimalist document bundler"
     license: "MIT"

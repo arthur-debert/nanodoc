@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/arthur-debert/nanodoc-go/pkg/nanodoc"
+	"github.com/arthur-debert/nanodoc/pkg/nanodoc"
 	"github.com/spf13/cobra"
 )
 

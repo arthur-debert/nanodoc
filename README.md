@@ -11,15 +11,15 @@ No config, nothing to learn nor remember. Short, simple, sweet.
 To build from source, you'll need Go 1.23+ installed.
 
 ```bash
-git clone https://github.com/arthur-debert/nanodoc-go.git
-cd nanodoc-go
+git clone https://github.com/arthur-debert/nanodoc.git
+cd nanodoc
 go build -o nanodoc ./cmd/nanodoc
 ```
 
 ### Using Go Install
 
 ```bash
-go install github.com/arthur-debert/nanodoc-go/cmd/nanodoc@latest
+go install github.com/arthur-debert/nanodoc/cmd/nanodoc@latest
 ```
 
 ## ✨ Features
