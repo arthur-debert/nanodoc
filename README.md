@@ -77,10 +77,16 @@ nanodoc src/*.go docs/*.md
 
 ### Bundle Files
 
-Create a `.bundle.txt` file to define reusable file lists:
+Create a `.bundle.txt` file to define reusable file lists and formatting options:
 
 ```txt
 # My project bundle
+--toc
+--global-line-numbers
+--header-style nice
+--sequence roman
+--theme classic-dark
+
 README.md
 src/main.go
 src/utils.go
@@ -88,6 +94,10 @@ docs/api.md
 ```
 
 Bundle files support:
+- **Bundle options**: Embed command-line flags directly in bundle files
+  - Lines starting with `--` are treated as command-line options
+  - Available options: `--toc`, `--theme`, `--line-numbers`, `--global-line-numbers`, `--no-header`, `--header-style`, `--sequence`, `--txt-ext`
+  - Command-line options override bundle options when both are specified
 - Comments (lines starting with `#`)
 - Relative and absolute paths
 - Recursive bundle inclusion
@@ -139,7 +149,26 @@ Flags:
 
 ## 📝 Examples
 
-### 1. Preview Before Processing
+### 1. Bundle Options for Consistent Output
+
+```bash
+# Create a bundle file with embedded options
+echo "# Project documentation
+--toc
+--global-line-numbers
+--header-style nice
+--sequence roman
+--theme classic-dark
+
+README.md
+docs/design.txt
+src/main.go" > project.bundle.txt
+
+# Just run the bundle - all options applied automatically
+nanodoc project.bundle.txt
+```
+
+### 2. Preview Before Processing
 
 ```bash
 # See what files would be included

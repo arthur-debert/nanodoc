@@ -12,10 +12,29 @@ Three ways to tell nanodoc which files to include:
 
 3. BUNDLE FILES:
    nanodoc my-bundle.txt
-   Where my-bundle.txt lists file paths, one per line:
-   chapter1.txt
-   images/diagram.md
-   /absolute/path/to/notes.txt
+   A bundle file is a text file listing the paths to include, one per line.
+
+   # my-bundle.txt
+   README.md
+   docs/
+   pkg/nanodoc/*.go
+
+   Bundle files can also embed configuration options using the same flags as
+   the command line. Lines starting with '#' are ignored as comments.
+
+   # my-bundle.txt with options
+   --toc
+   --global-line-numbers
+   --header-style nice
+   --theme classic-dark
+
+   README.md
+   docs/
+
+   PRECEDENCE:
+   Command-line arguments always override options set in a bundle file. This
+   allows a bundle to define a standard output that can be easily tweaked.
+
 
 4. LIVE BUNDLE FILES:
    nanodoc live-bundle.txt

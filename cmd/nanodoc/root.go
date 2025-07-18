@@ -18,6 +18,7 @@ var (
 	headerStyle        string
 	additionalExt      []string
 	dryRun             bool
+	explicitFlags      map[string]bool
 )
 
 var rootCmd = &cobra.Command{
@@ -29,6 +30,9 @@ Useful for prompts, personalized docs highlights for your teams or a note to you
 No config, nothing to learn nor remember. Short, simple, sweet.`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Track explicitly set flags
+		trackExplicitFlags(cmd)
+
 		// 1. Resolve Paths
 		pathInfos, err := nanodoc.ResolvePaths(args)
 		if err != nil {
@@ -65,14 +69,14 @@ No config, nothing to learn nor remember. Short, simple, sweet.`,
 			AdditionalExtensions: additionalExt,
 		}
 
-		// 3. Build Document
-		doc, err := nanodoc.BuildDocument(pathInfos, opts)
+		// 3. Build Document with explicit flags
+		doc, err := nanodoc.BuildDocumentWithExplicitFlags(pathInfos, opts, explicitFlags)
 		if err != nil {
 			return fmt.Errorf("error building document: %w", err)
 		}
 
 		// 4. Create Formatting Context
-		ctx, err := nanodoc.NewFormattingContext(opts)
+		ctx, err := nanodoc.NewFormattingContext(doc.FormattingOptions)
 		if err != nil {
 			return fmt.Errorf("error creating formatting context: %w", err)
 		}
@@ -88,6 +92,34 @@ No config, nothing to learn nor remember. Short, simple, sweet.`,
 
 		return nil
 	},
+}
+
+// trackExplicitFlags determines which flags were explicitly set by the user
+func trackExplicitFlags(cmd *cobra.Command) {
+	explicitFlags = make(map[string]bool)
+	
+	// Check if each flag was explicitly set
+	if cmd.Flags().Changed("toc") {
+		explicitFlags["toc"] = true
+	}
+	if cmd.Flags().Changed("theme") {
+		explicitFlags["theme"] = true
+	}
+	if cmd.Flags().Changed("line-numbers") || cmd.Flags().Changed("global-line-numbers") {
+		explicitFlags["line-numbers"] = true
+	}
+	if cmd.Flags().Changed("no-header") {
+		explicitFlags["no-header"] = true
+	}
+	if cmd.Flags().Changed("header-style") {
+		explicitFlags["header-style"] = true
+	}
+	if cmd.Flags().Changed("sequence") {
+		explicitFlags["sequence"] = true
+	}
+	if cmd.Flags().Changed("txt-ext") {
+		explicitFlags["txt-ext"] = true
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

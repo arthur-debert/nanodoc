@@ -1,0 +1,185 @@
+Bundle Options Feature
+======================
+
+As of this version, bundle files can now contain formatting options in addition to file paths. This allows you to define consistent, reproducible output formatting alongside your content specification.
+
+## Overview
+
+Bundle files can now include command-line options using the same syntax as the command line. This provides several advantages:
+
+- **Consistency**: Define formatting options once in the bundle file
+- **Reproducibility**: Anyone running the same bundle will get the same output
+- **Convenience**: No need to remember complex command-line options
+- **Flexibility**: Command-line options can still override bundle options
+
+## Syntax
+
+Bundle files use the same flag syntax as the command line:
+
+```
+# My Project Documentation Bundle
+#
+# Lines starting with '#' are comments. Empty lines are ignored.
+
+# --- Options ---
+--toc
+--global-line-numbers
+--header-style nice
+--sequence roman
+--theme classic-dark
+
+# --- Content ---
+README.md
+docs/api.md
+src/main.go
+```
+
+## Supported Options
+
+All formatting options are supported in bundle files:
+
+- `--toc` - Generate a table of contents
+- `--line-numbers` or `-n` - Enable per-file line numbering
+- `--global-line-numbers` or `-N` - Enable global line numbering
+- `--theme <name>` - Set the theme (classic, classic-dark, classic-light)
+- `--header-style <style>` - Set header style (nice, filename, path)
+- `--sequence <style>` - Set sequence style (numerical, letter, roman)
+- `--no-header` - Suppress file headers
+- `--txt-ext <ext>` - Additional file extensions to treat as text
+
+## Precedence Rules
+
+Command-line options always override bundle options:
+
+1. **Command-line explicit**: If you explicitly set a flag on the command line, it takes precedence
+2. **Bundle default**: If you don't set a flag on the command line, the bundle option is used
+3. **System default**: If neither command-line nor bundle specifies an option, the system default is used
+
+### Example
+
+Bundle file contains:
+```
+--theme classic-dark
+--sequence roman
+--toc
+```
+
+Command line usage:
+```bash
+# Uses classic-dark theme, roman sequence, and TOC from bundle
+nanodoc project.bundle.txt
+
+# Overrides theme to classic-light, keeps roman sequence and TOC from bundle
+nanodoc --theme classic-light project.bundle.txt
+
+# Overrides sequence to numerical, keeps classic-dark theme and TOC from bundle
+nanodoc --sequence numerical project.bundle.txt
+```
+
+## Usage Examples
+
+### Basic Bundle with Options
+
+Create a file named `project.bundle.txt`:
+
+```
+# Project Documentation Bundle
+--toc
+--global-line-numbers
+--sequence roman
+--theme classic-dark
+
+README.md
+docs/api.md
+src/main.go
+```
+
+Run it:
+```bash
+nanodoc project.bundle.txt
+```
+
+### Development vs Production Bundles
+
+Create different bundles for different contexts:
+
+`dev.bundle.txt`:
+```
+--line-numbers
+--header-style path
+--theme classic
+
+src/
+tests/
+```
+
+`release.bundle.txt`:
+```
+--toc
+--global-line-numbers
+--sequence letter
+--theme classic-dark
+--no-header
+
+README.md
+CHANGELOG.md
+docs/
+```
+
+### Override Bundle Options
+
+You can override any bundle option from the command line:
+
+```bash
+# Override the theme specified in the bundle
+nanodoc --theme classic-light project.bundle.txt
+
+# Override multiple options
+nanodoc --theme classic-light --sequence numerical project.bundle.txt
+```
+
+## Best Practices
+
+1. **Document your options**: Use comments to explain why specific options are chosen
+2. **Group related options**: Keep formatting options together at the top of the bundle
+3. **Test different combinations**: Use command-line overrides to test different formatting options
+4. **Version your bundles**: Include bundle files in version control alongside your code
+
+## Troubleshooting
+
+### Bundle Options Not Applied
+
+If bundle options aren't being applied, check:
+
+1. **Bundle file naming**: Ensure the file follows the `.bundle.*` pattern
+2. **Option syntax**: Use the exact same syntax as command-line flags
+3. **Command-line overrides**: Remember that command-line flags override bundle options
+
+### Invalid Option Errors
+
+If you get errors about invalid options:
+
+1. **Check spelling**: Ensure option names are spelled correctly
+2. **Check values**: Some options require values (e.g., `--theme classic-dark`)
+3. **Check syntax**: Each option should be on its own line
+
+### Mixed Content and Options
+
+Options can be mixed with content paths, but it's recommended to group them:
+
+```
+# Good: Options grouped at the top
+--toc
+--theme classic-dark
+
+README.md
+docs/api.md
+
+# Also works: Options mixed with content
+README.md
+--toc
+docs/api.md
+--theme classic-dark
+```
+
+Both approaches work, but grouping options at the top makes bundles more readable.
