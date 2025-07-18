@@ -36,7 +36,7 @@ Additional Commands:{{range $cmds}}{{if (and (eq .GroupID "") (or .IsAvailableCo
   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
 
 Flags:
-{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+{{.LocalFlags | groupedFlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
 
 Global Flags:
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
@@ -80,8 +80,8 @@ func groupedFlagUsages(fs *pflag.FlagSet) string {
 			return
 		}
 		
-		// Get group from annotation, default to "OTHER"
-		group := "OTHER"
+		// Get group from annotation, default to "MISC"
+		group := "MISC"
 		if ann := flag.Annotations["group"]; len(ann) > 0 {
 			group = ann[0]
 		}
@@ -92,12 +92,12 @@ func groupedFlagUsages(fs *pflag.FlagSet) string {
 		groups[group] = append(groups[group], flag)
 	})
 	
-	// Sort group order, ensuring OTHER is last
+	// Sort group order, ensuring MISC is last
 	sort.Slice(groupOrder, func(i, j int) bool {
-		if groupOrder[i] == "OTHER" {
+		if groupOrder[i] == "MISC" {
 			return false
 		}
-		if groupOrder[j] == "OTHER" {
+		if groupOrder[j] == "MISC" {
 			return true
 		}
 		return groupOrder[i] < groupOrder[j]
