@@ -21,25 +21,17 @@ const usageTemplate = `Usage:{{if .Runnable}}
   {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
 Aliases:
-  {{.NameAndAliases}}{{end}}{{if .HasExample}}
-
-Examples:
-{{.Example}}{{end}}{{if .HasAvailableSubCommands}}{{$cmds := .Commands}}{{if eq (len .Groups) 0}}
-
-Available Commands:{{range $cmds}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{else}}{{range $group := .Groups}}
-
-{{.Title}}{{range $cmds}}{{if (and (eq .GroupID $group.ID) (or .IsAvailableCommand (eq .Name "help")))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if not .AllChildCommandsHaveGroup}}
-
-Additional Commands:{{range $cmds}}{{if (and (eq .GroupID "") (or .IsAvailableCommand (eq .Name "help")))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+  {{.NameAndAliases}}{{end}}{{if .HasAvailableLocalFlags}}
 
 Flags:
+
 {{.LocalFlags | groupedFlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
 
 Global Flags:
-{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasExample}}
+
+Examples:
+{{.Example}}{{end}}{{if .HasHelpSubCommands}}
 
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
@@ -80,8 +72,8 @@ func groupedFlagUsages(fs *pflag.FlagSet) string {
 			return
 		}
 		
-		// Get group from annotation, default to "MISC"
-		group := "MISC"
+		// Get group from annotation, default to "Misc"
+		group := "Misc"
 		if ann := flag.Annotations["group"]; len(ann) > 0 {
 			group = ann[0]
 		}
@@ -92,12 +84,12 @@ func groupedFlagUsages(fs *pflag.FlagSet) string {
 		groups[group] = append(groups[group], flag)
 	})
 	
-	// Sort group order, ensuring MISC is last
+	// Sort group order, ensuring Misc is last
 	sort.Slice(groupOrder, func(i, j int) bool {
-		if groupOrder[i] == "MISC" {
+		if groupOrder[i] == "Misc" {
 			return false
 		}
-		if groupOrder[j] == "MISC" {
+		if groupOrder[j] == "Misc" {
 			return true
 		}
 		return groupOrder[i] < groupOrder[j]
