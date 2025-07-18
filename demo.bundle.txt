@@ -1,0 +1,10 @@
+# Demo bundle with options
+# This demonstrates the bundle options feature from GitHub issue #17
+
+# Bundle options (command-line flags)
+--toc
+--theme classic-dark
+--line-numbers
+
+# Files to include
+README.md
