@@ -347,7 +347,7 @@ func TestExtractFileContent(t *testing.T) {
 			name:          "full file",
 			pathWithRange: testFile,
 			wantContent:   strings.Join(testContent, "\n"),
-			wantRange:     Range{Start: 1, End: 0},
+			wantRange:     Range{Start: 1, End: 10}, // Now uses actual line count instead of 0
 		},
 		{
 			name:          "single line",

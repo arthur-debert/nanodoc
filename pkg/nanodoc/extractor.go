@@ -45,8 +45,14 @@ func ExtractFileContent(pathWithRange string) (*FileContent, error) {
 		}
 		r = parsedRange
 	} else {
-		// Default to full file
-		r = &Range{Start: 1, End: 0}
+		// Default to full file using L1-$1 notation
+		parsedRange, err := parseRange("L1-$1", len(lines))
+		if err != nil {
+			// Fallback to old behavior if parsing fails (shouldn't happen)
+			r = &Range{Start: 1, End: 0}
+		} else {
+			r = parsedRange
+		}
 	}
 
 	// Extract content based on range
