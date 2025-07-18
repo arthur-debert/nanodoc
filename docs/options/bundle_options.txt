@@ -1,101 +1,31 @@
 Bundle Options in Nanodoc
-=========================
+========================
 
-Bundle files can now store nanodoc processing options directly within the bundle file itself. This allows you to create reproducible and consistent documentation output by embedding formatting preferences alongside the content specification.
+Bundle files can now store nanodoc processing options directly within the file,
+allowing for predictable and consistent output when processing bundles.
 
-Overview
+OVERVIEW
 --------
 
-Previously, bundle files could only contain lists of files to process. With the new bundle options feature, you can now include command-line flags directly in your bundle files. This provides several benefits:
+Bundle files support embedding command-line options alongside file paths.
+This allows you to create self-contained bundle files that include both
+the content to process and the formatting options to apply.
 
-- **Reproducible output**: Every time you run the bundle, you get the same formatting
-- **Team consistency**: Share bundles that enforce consistent documentation standards
-- **Convenience**: No need to remember complex command-line options for each project
+SYNTAX
+------
 
-Basic Usage
------------
-
-To use options in a bundle file, simply add command-line flags as separate lines:
-
-```
-# My project bundle
---toc
---global-line-numbers
---theme classic-dark
-
-# Files to include
-README.md
-docs/
-src/*.go
-```
-
-When you run `nanodoc my-project.bundle.txt`, nanodoc will automatically apply the TOC, global line numbering, and classic-dark theme settings.
-
-Supported Options
------------------
-
-All major command-line options are supported in bundle files:
-
-**Table of Contents:**
-- `--toc` - Generate a table of contents
-
-**Line Numbering:**
-- `--line-numbers` or `-n` - Per-file line numbering
-- `--global-line-numbers` or `-N` - Global line numbering across all files
-
-**Headers:**
-- `--no-header` - Suppress file headers
-- `--header-style nice` - Use nice header style (default)
-- `--header-style filename` - Show only filename
-- `--header-style path` - Show full file path
-
-**Sequencing:**
-- `--sequence numerical` - Use numbers (1, 2, 3...)
-- `--sequence letter` - Use letters (a, b, c...)
-- `--sequence roman` - Use roman numerals (i, ii, iii...)
-
-**Theming:**
-- `--theme classic` - Default theme
-- `--theme classic-dark` - Dark theme
-- `--theme classic-light` - Light theme
-
-**File Extensions:**
-- `--txt-ext go` - Process .go files as text
-- `--txt-ext py` - Process .py files as text
-- Multiple `--txt-ext` entries are supported
-
-Precedence Rules
-----------------
-
-Command-line options always override bundle options. This allows you to:
-
-1. Define standard formatting in the bundle file
-2. Override specific options from the command line when needed
-
-Example:
-```bash
-# Bundle file contains --theme classic-dark
-# Command line overrides the theme:
-nanodoc --theme classic-light my-project.bundle.txt
-# Result: Uses classic-light theme
-```
-
-Bundle File Format
-------------------
-
-Bundle files follow these parsing rules:
-
-1. **Comments**: Lines starting with `#` are ignored
-2. **Empty lines**: Blank lines are ignored
-3. **Options**: Lines starting with `-` or `--` are treated as options
-4. **Files**: All other lines are treated as file/directory paths
+Options are specified using the same flags as the command line:
+- Lines starting with '--' are treated as command-line options
+- Lines starting with '-' are treated as short command-line options
+- All other lines (except comments) are treated as file paths
 
 Example bundle file:
-```
-# Project documentation bundle
-# This creates a comprehensive project overview
 
-# --- Formatting Options ---
+```
+# My Project Documentation Bundle
+# This bundle defines both formatting options and content
+
+# --- Options ---
 --toc
 --global-line-numbers
 --header-style nice
@@ -106,87 +36,159 @@ Example bundle file:
 
 # --- Content ---
 README.md
-docs/design.txt
 src/main.go
-tests/
+docs/api.md
 ```
 
-Multiple Bundle Files
----------------------
+SUPPORTED OPTIONS
+-----------------
 
-When processing multiple bundle files, options are merged using "first wins" logic:
+The following command-line options can be embedded in bundle files:
 
+Content Generation:
+  --toc                    Generate table of contents
+  
+Line Numbering:
+  --line-numbers / -n      Enable per-file line numbering
+  --global-line-numbers / -N  Enable global line numbering
+  
+Headers:
+  --no-header              Suppress file headers
+  --header-style STYLE     Set header style (nice, filename, path)
+  --sequence STYLE         Set sequence style (numerical, letter, roman)
+  
+Theming:
+  --theme NAME             Set theme (classic, classic-light, classic-dark)
+  
+File Processing:
+  --txt-ext EXTENSION      Add file extension to process as text
+                           (can be specified multiple times)
+
+PRECEDENCE RULES
+----------------
+
+Command-line options always override bundle options. This allows:
+- Bundle files to define standard, reproducible output
+- Users to make ad-hoc adjustments from the command line
+
+Example:
 ```bash
-nanodoc bundle1.bundle.txt bundle2.bundle.txt
+# Bundle contains --theme classic-dark
+# Command line specifies different theme
+nanodoc --theme classic-light my-bundle.bundle.txt
+# Result: classic-light theme is used (command line wins)
 ```
 
-If both bundles specify conflicting options, the options from `bundle1.bundle.txt` take precedence.
-
-Error Handling
+USAGE EXAMPLES
 --------------
 
-If a bundle file contains invalid options, nanodoc will report an error with the specific line number:
-
+1. Simple bundle with basic options:
 ```
-Error: error parsing option on line 5: --unknown-flag
+# Basic documentation bundle
+--toc
+--line-numbers
+--header-style filename
+
+README.md
+CHANGELOG.md
 ```
 
-This helps you quickly identify and fix issues in your bundle files.
+2. Advanced bundle with multiple options:
+```
+# Comprehensive project documentation
+--toc
+--global-line-numbers
+--header-style nice
+--sequence roman
+--theme classic-dark
+--txt-ext go
+--txt-ext py
+--txt-ext js
 
-Best Practices
+# Project overview
+README.md
+LICENSE
+
+# Source code
+src/main.go
+src/utils.py
+frontend/app.js
+
+# Documentation
+docs/api.md
+docs/guide.md
+```
+
+3. Code documentation bundle:
+```
+# Source code documentation
+--no-header
+--line-numbers
+--theme classic-light
+--txt-ext go
+--txt-ext mod
+
+# Go source files
+*.go
+go.mod
+go.sum
+```
+
+BEST PRACTICES
 --------------
 
-1. **Use comments** to document your bundle file structure
-2. **Group options** at the top of the file for clarity
-3. **Use consistent naming** for bundle files (e.g., `project.bundle.txt`)
-4. **Test your bundles** to ensure they produce the expected output
-5. **Version control** your bundle files alongside your project
+1. **Group options at the top**: Place all options before file paths for clarity
+2. **Use comments**: Document what each section does
+3. **Consistent naming**: Use descriptive names like `project.bundle.txt`
+4. **Version control**: Include bundle files in version control for team consistency
+5. **Test bundle files**: Use `--dry-run` to preview what will be processed
 
-Migration from Command Line
----------------------------
+INTEGRATION WITH EXISTING FEATURES
+-----------------------------------
 
-To migrate from command-line usage to bundle files:
+Bundle options work seamlessly with:
+- Nested bundle inclusion
+- Circular dependency detection
+- Live bundle processing
+- Directory and glob pattern processing
 
-1. Create a `.bundle.txt` file
-2. Add your commonly used flags to the top of the file
-3. List your files below the options
-4. Test the bundle to ensure it produces the same output
+TROUBLESHOOTING
+---------------
+
+Common issues and solutions:
+
+1. **Option not recognized**: Ensure the option is spelled correctly and supported
+2. **Option not applied**: Check that command-line options aren't overriding bundle options
+3. **Syntax errors**: Verify options start with '--' or '-' and have correct values
+4. **Multiple values**: Use multiple lines for options that accept multiple values (like --txt-ext)
+
+Example error:
+```
+Error: error parsing option on line 5: unknown option: --invalid-option
+```
+
+MIGRATION FROM COMMAND LINE
+----------------------------
+
+To convert command-line usage to bundle files:
 
 Before:
 ```bash
-nanodoc --toc --global-line-numbers --theme classic-dark README.md docs/ src/
+nanodoc --toc --theme classic-dark --line-numbers README.md src/*.go
 ```
 
 After:
 ```
-# project.bundle.txt
+# Create bundle file
+echo "# Project bundle
 --toc
---global-line-numbers
 --theme classic-dark
+--line-numbers
+--txt-ext go
 
 README.md
-docs/
-src/
-```
+src/" > project.bundle.txt
 
-```bash
+# Use bundle
 nanodoc project.bundle.txt
 ```
-
-Troubleshooting
----------------
-
-**Bundle options not being applied:**
-- Ensure options start with `-` or `--`
-- Check that the bundle file follows the `.bundle.` naming convention
-- Verify there are no typos in the option names
-
-**Unexpected output:**
-- Remember that command-line options override bundle options
-- Use `--dry-run` to preview what files will be processed
-- Check that file paths in the bundle are correct
-
-**Performance considerations:**
-- Bundle files are processed once at startup
-- Large bundles with many files may take longer to process
-- Consider using directory patterns instead of listing individual files

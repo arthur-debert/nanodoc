@@ -363,6 +363,185 @@ func TestBundleWithMissingFile(t *testing.T) {
 	}
 }
 
+func TestBundleOptions(t *testing.T) {
+	// Create temp directory
+	tempDir, err := os.MkdirTemp("", "nanodoc-bundle-options-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Logf("Failed to remove temp dir: %v", err)
+		}
+	}()
+
+	// Create test files
+	file1 := filepath.Join(tempDir, "file1.txt")
+	file2 := filepath.Join(tempDir, "file2.txt")
+	
+	if err := os.WriteFile(file1, []byte("Content of file 1"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file2, []byte("Content of file 2"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create bundle file with options
+	bundleFile := filepath.Join(tempDir, "test.bundle.txt")
+	bundleContent := []string{
+		"# Bundle with options",
+		"--toc",
+		"--theme classic-dark",
+		"--header-style filename",
+		"--sequence roman",
+		"--global-line-numbers",
+		"--txt-ext log",
+		"",
+		"# Files to include",
+		"file1.txt",
+		"file2.txt",
+	}
+	if err := os.WriteFile(bundleFile, []byte(strings.Join(bundleContent, "\n")), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Test parsing bundle options
+	bp := NewBundleProcessor()
+	result, err := bp.ProcessBundleFileWithOptions(bundleFile)
+	if err != nil {
+		t.Fatalf("ProcessBundleFileWithOptions() error = %v", err)
+	}
+
+	// Check that options were parsed correctly
+	if result.Options.ShowTOC == nil || !*result.Options.ShowTOC {
+		t.Error("Expected ShowTOC to be true")
+	}
+	if result.Options.Theme == nil || *result.Options.Theme != "classic-dark" {
+		t.Error("Expected Theme to be 'classic-dark'")
+	}
+	if result.Options.HeaderStyle == nil || *result.Options.HeaderStyle != HeaderStyleFilename {
+		t.Error("Expected HeaderStyle to be 'filename'")
+	}
+	if result.Options.SequenceStyle == nil || *result.Options.SequenceStyle != SequenceRoman {
+		t.Error("Expected SequenceStyle to be 'roman'")
+	}
+	if result.Options.LineNumbers == nil || *result.Options.LineNumbers != LineNumberGlobal {
+		t.Error("Expected LineNumbers to be LineNumberGlobal")
+	}
+	if len(result.Options.AdditionalExtensions) != 1 || result.Options.AdditionalExtensions[0] != "log" {
+		t.Error("Expected AdditionalExtensions to contain 'log'")
+	}
+
+	// Check that file paths were parsed correctly
+	if len(result.Paths) != 2 {
+		t.Errorf("Expected 2 paths, got %d", len(result.Paths))
+	}
+
+	// Test merging options with command-line defaults
+	cmdOptions := FormattingOptions{
+		Theme:         "classic",
+		ShowTOC:       false,
+		HeaderStyle:   HeaderStyleNice,
+		SequenceStyle: SequenceNumerical,
+		LineNumbers:   LineNumberNone,
+		ShowHeaders:   true,
+		AdditionalExtensions: []string{},
+	}
+
+	// Test merging with no explicit flags (bundle options should take precedence)
+	explicitFlags := map[string]bool{}
+	merged := MergeFormattingOptionsWithDefaults(result.Options, cmdOptions, explicitFlags)
+	
+	if merged.Theme != "classic-dark" {
+		t.Errorf("Expected merged theme to be 'classic-dark', got %s", merged.Theme)
+	}
+	if !merged.ShowTOC {
+		t.Error("Expected merged ShowTOC to be true")
+	}
+	if merged.HeaderStyle != HeaderStyleFilename {
+		t.Errorf("Expected merged HeaderStyle to be 'filename', got %s", merged.HeaderStyle)
+	}
+	if merged.SequenceStyle != SequenceRoman {
+		t.Errorf("Expected merged SequenceStyle to be 'roman', got %s", merged.SequenceStyle)
+	}
+	if merged.LineNumbers != LineNumberGlobal {
+		t.Errorf("Expected merged LineNumbers to be LineNumberGlobal, got %v", merged.LineNumbers)
+	}
+
+	// Test command-line flags override bundle options
+	explicitFlags["theme"] = true
+	explicitFlags["toc"] = true
+	merged = MergeFormattingOptionsWithDefaults(result.Options, cmdOptions, explicitFlags)
+	
+	if merged.Theme != "classic" {
+		t.Errorf("Expected merged theme to be 'classic' (CLI override), got %s", merged.Theme)
+	}
+	if merged.ShowTOC != false {
+		t.Error("Expected merged ShowTOC to be false (CLI override)")
+	}
+	// Header style should still come from bundle since it wasn't explicitly set
+	if merged.HeaderStyle != HeaderStyleFilename {
+		t.Errorf("Expected merged HeaderStyle to be 'filename', got %s", merged.HeaderStyle)
+	}
+}
+
+func TestBundleOptionsValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		option  string
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "valid header style",
+			option:  "--header-style filename",
+			wantErr: false,
+		},
+		{
+			name:    "invalid header style",
+			option:  "--header-style invalid",
+			wantErr: true,
+			errMsg:  "invalid header style: invalid",
+		},
+		{
+			name:    "valid sequence style",
+			option:  "--sequence roman",
+			wantErr: false,
+		},
+		{
+			name:    "invalid sequence style",
+			option:  "--sequence invalid",
+			wantErr: true,
+			errMsg:  "invalid sequence style: invalid",
+		},
+		{
+			name:    "missing theme value",
+			option:  "--theme",
+			wantErr: true,
+			errMsg:  "--theme requires a value",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var options BundleOptions
+			err := parseOption(tt.option, &options)
+			
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Expected error but got none")
+				} else if !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("Expected error message to contain '%s', got '%s'", tt.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
 func TestProcessLiveBundle(t *testing.T) {
 	tests := []struct {
 		name      string
