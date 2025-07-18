@@ -9,7 +9,8 @@ import (
 )
 
 // ExtractFileContent reads a file and extracts content based on optional range specification
-// The path can include a range suffix like "file.txt:L10-20" or "file.txt:L5"
+// The path can include a range suffix like "file.txt:L10-20", "file.txt:L5", or "file.txt:L$3-$1"
+// If no range is specified, the full file is extracted (equivalent to L1-$1)
 func ExtractFileContent(pathWithRange string) (*FileContent, error) {
 	// Parse the path and range
 	path, rangeSpec := parsePathWithRange(pathWithRange)
