@@ -485,6 +485,12 @@ func mergeBundleOptions(first, second BundleOptions) BundleOptions {
 // ProcessLiveBundles iterates through document content and processes inline bundles.
 func ProcessLiveBundles(doc *Document) error {
 	for i := range doc.ContentItems {
+		// Skip processing for common documentation files to avoid processing
+		// [[file:]] examples as actual directives
+		if shouldSkipLiveBundleProcessing(doc.ContentItems[i].Filepath) {
+			continue
+		}
+		
 		processedContent, err := ProcessLiveBundle(doc.ContentItems[i].Content)
 		if err != nil {
 			return err
@@ -492,6 +498,16 @@ func ProcessLiveBundles(doc *Document) error {
 		doc.ContentItems[i].Content = processedContent
 	}
 	return nil
+}
+
+// shouldSkipLiveBundleProcessing determines if a file should be skipped for live bundle processing
+func shouldSkipLiveBundleProcessing(filepath string) bool {
+	// Skip common documentation files that might contain [[file:]] examples
+	filename := strings.ToLower(filepath)
+	return strings.Contains(filename, "readme") || 
+		   strings.Contains(filename, "changelog") || 
+		   strings.Contains(filename, "troubleshooting") ||
+		   strings.HasSuffix(filename, ".md") // Skip all markdown files for now
 }
 
 // ProcessLiveBundle handles inline bundle processing
