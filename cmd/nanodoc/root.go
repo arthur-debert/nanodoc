@@ -21,6 +21,11 @@ var (
 	excludePatterns    []string
 	dryRun             bool
 	explicitFlags      map[string]bool
+	
+	// Version information - set by ldflags during build
+	version = "dev"      // Set by goreleaser: -X main.version={{.Version}}
+	commit  = "unknown"  // Set by goreleaser: -X main.commit={{.Commit}}
+	date    = "unknown"  // Set by goreleaser: -X main.date={{.Date}}
 )
 
 var rootCmd = &cobra.Command{
@@ -30,8 +35,18 @@ var rootCmd = &cobra.Command{
 Useful for prompts, personalized docs highlights for your teams or a note to your future self.
 
 No config, nothing to learn nor remember. Short, simple, sweet.`,
-	Args: cobra.MinimumNArgs(1),
+	Args: cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Check version flag first
+		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
+			fmt.Printf("nanodoc version %s (commit: %s, built: %s)\n", version, commit, date)
+			return nil
+		}
+		
+		// Check args only if not printing version
+		if len(args) < 1 {
+			return fmt.Errorf("requires at least 1 arg(s), only received %d", len(args))
+		}
 		// Track explicitly set flags
 		trackExplicitFlags(cmd)
 
@@ -167,16 +182,5 @@ func init() {
 	
 	// Other flags
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what files would be processed without actually processing them")
-
-	// Add version command
-	rootCmd.AddCommand(versionCmd)
-}
-
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print the version number",
-	Long:  `Print the version number of nanodoc`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("nanodoc version %s (commit: %s, built: %s)\n", version, commit, date)
-	},
+	rootCmd.Flags().BoolP("version", "v", false, "Print the version number")
 } 
