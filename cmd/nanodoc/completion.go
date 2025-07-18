@@ -7,8 +7,9 @@ import (
 )
 
 var completionCmd = &cobra.Command{
-	Use:   "completion [bash|zsh|fish|powershell]",
-	Short: "Generate completion script",
+	Use:    "completion [bash|zsh|fish|powershell]",
+	Short:  "Generate completion script",
+	Hidden: true, // Hide from help output but still accessible for build/packaging
 	Long: `To load completions:
 
 Bash:
