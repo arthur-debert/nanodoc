@@ -16,11 +16,8 @@ var docsFS embed.FS
 
 var topicsCmd = &cobra.Command{
 	Use:   "topics [topic-name]",
-	Short: "Display help topics",
-	Long: `Display available help topics or show the content of a specific topic.
-
-Running 'nanodoc topics' lists all available topics.
-Running 'nanodoc topics <topic-name>' displays the content of that topic.`,
+	Short: TopicsShort,
+	Long:  TopicsLong,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return listTopics(cmd)
@@ -37,10 +34,10 @@ func init() {
 func listTopics(cmd *cobra.Command) error {
 	topics, err := getAvailableTopics()
 	if err != nil {
-		return fmt.Errorf("failed to get available topics: %w", err)
+		return fmt.Errorf(ErrFailedToGetTopics, err)
 	}
 
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Available help topics:")
+	_, _ = fmt.Fprintln(cmd.OutOrStdout(), AvailableTopics)
 	_, _ = fmt.Fprintln(cmd.OutOrStdout())
 	
 	// Group topics by directory
@@ -82,7 +79,7 @@ func listTopics(cmd *cobra.Command) error {
 		_, _ = fmt.Fprintln(cmd.OutOrStdout())
 	}
 	
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), `Run "nanodoc topics <topic-name>" for more information.`)
+	_, _ = fmt.Fprintln(cmd.OutOrStdout(), RunTopicHelp)
 	return nil
 }
 
@@ -91,7 +88,7 @@ func showTopic(cmd *cobra.Command, topicName string) error {
 	// Try to find the topic file
 	content, err := findAndReadTopic(topicName)
 	if err != nil {
-		return fmt.Errorf("topic '%s' not found", topicName)
+		return fmt.Errorf(ErrTopicNotFound, topicName)
 	}
 	
 	_, _ = fmt.Fprint(cmd.OutOrStdout(), content)
@@ -157,5 +154,5 @@ func findAndReadTopic(topicName string) (string, error) {
 		}
 	}
 	
-	return "", fmt.Errorf("topic not found")
+	return "", fmt.Errorf("%s", TopicNotFoundMsg)
 }

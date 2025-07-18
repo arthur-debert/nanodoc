@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"sort"
 	"strings"
@@ -10,34 +11,8 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// helpTemplate is the custom template for the root command help
-const helpTemplate = `{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}
-
-{{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`
-
-// usageTemplate is the custom template for usage
-const usageTemplate = `Usage:{{if .Runnable}}
-  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
-  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
-
-Aliases:
-  {{.NameAndAliases}}{{end}}{{if .HasAvailableLocalFlags}}
-
-Flags:
-
-{{.LocalFlags | groupedFlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
-
-Global Flags:
-{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasExample}}
-
-Examples:
-{{.Example}}{{end}}{{if .HasHelpSubCommands}}
-
-Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
-  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
-
-Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
-`
+//go:embed help.txt
+var usageTemplate string
 
 // trimTrailingWhitespaces removes trailing whitespace
 func trimTrailingWhitespaces(s string) string {
@@ -53,7 +28,7 @@ func initHelpSystem() {
 	cobra.AddTemplateFunc("groupedFlagUsages", groupedFlagUsages)
 	
 	// Set custom templates
-	rootCmd.SetHelpTemplate(helpTemplate)
+	rootCmd.SetHelpTemplate(HelpTemplate)
 	rootCmd.SetUsageTemplate(usageTemplate)
 }
 
@@ -73,7 +48,7 @@ func groupedFlagUsages(fs *pflag.FlagSet) string {
 		}
 		
 		// Get group from annotation, default to "Misc"
-		group := "Misc"
+		group := MiscGroupName
 		if ann := flag.Annotations["group"]; len(ann) > 0 {
 			group = ann[0]
 		}
@@ -86,10 +61,10 @@ func groupedFlagUsages(fs *pflag.FlagSet) string {
 	
 	// Sort group order, ensuring Misc is last
 	sort.Slice(groupOrder, func(i, j int) bool {
-		if groupOrder[i] == "Misc" {
+		if groupOrder[i] == MiscGroupName {
 			return false
 		}
-		if groupOrder[j] == "Misc" {
+		if groupOrder[j] == MiscGroupName {
 			return true
 		}
 		return groupOrder[i] < groupOrder[j]
