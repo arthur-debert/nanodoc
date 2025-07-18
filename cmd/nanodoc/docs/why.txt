@@ -1,5 +1,6 @@
 																Why Nanodoc Exists
 
+
 1. The Problem Space
 --------------------
 
@@ -13,16 +14,16 @@
 	4. Investigation Notes: During debugging or research, you're pulling together information from multiple sources and want to create a coherent narrative.
 	5. Living Documentation: You want to create composite documents that automatically include current content from source files, so your documentation stays in sync.
 
+
 2. The Current Solutions Problem
 --------------------------------
 
 	Existing documentation tools tend to fall into two camps:
-
-	Heavy Documentation Systems: Tools like Sphinx, GitBook, or Confluence require significant setup, learning curves, and ongoing maintenance. They're designed for comprehensive documentation sites, not quick bundling tasks.
-
-	Manual Copy-Paste: Most engineers resort to manually copying content between files, which is time-consuming, error-prone, and creates stale copies that diverge from source material.
+		- Heavy Documentation Systems: Tools like Sphinx, GitBook, or Confluence require significant setup, learning curves, and ongoing maintenance. They're designed for comprehensive documentation sites, not quick bundling tasks.
+		- Manual Copy-Paste: Most engineers resort to manually copying content between files, which is time-consuming, error-prone, and creates stale copies that diverge from source material.
 
 	Neither approach handles the simple case well: "I need to quickly combine these specific files and sections into a single readable document."
+
 
 3. What Nanodoc Does Differently
 --------------------------------
@@ -39,6 +40,7 @@
 		2. Live Bundles: Documents that mix your own text with file inclusions. This lets you create narratives around code without copying the code itself.
 		3. Line Range Selection: Extract specific sections from files (e.g., `file.txt:L10-20`) so you can include only relevant parts.
 
+
 4. Practical Use Cases
 ----------------------
 
@@ -49,6 +51,7 @@
 	- Team Knowledge Sharing: Create focused bundles for specific topics (e.g., "authentication flow") that combine documentation, code, and examples in a logical reading order.
 	- Release Documentation: Automatically generate release notes that include current README content, changelog sections, and migration guides.
 
+
 5. Design Philosophy
 --------------------
 
@@ -57,6 +60,7 @@
 	The tool assumes you already have text files (documentation, source code, configuration) and you just want to combine them intelligently. It doesn't impose any structure on your project or require you to change how you write documentation.
 
 	This constraint is deliberate. By staying minimal, the tool remains useful across different projects, languages, and workflows without requiring adaptation or configuration.
+
 
 6. When Nanodoc Makes Sense
 ---------------------------
@@ -67,6 +71,7 @@
 		- You need to provide file context to AI tools or team members
 		- You prefer simple, scriptable tools over complex documentation platforms
 		- You're working with plain text files (documentation, source code, configuration)
+
 
 7. When It Doesn't
 -------------------
