@@ -112,7 +112,7 @@ func generateFileHeader(filePath string, style HeaderStyle, seqStyle SequenceSty
 
 	switch style {
 	case HeaderStyleFilename:
-		return filePath
+		return filepath.Base(filePath)
 	case HeaderStylePath:
 		return filePath
 	case HeaderStyleNice:
