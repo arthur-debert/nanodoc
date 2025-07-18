@@ -1,0 +1,7 @@
+# Simple test bundle with options
+
+--toc
+--theme classic-dark
+
+# Just one file
+README.md

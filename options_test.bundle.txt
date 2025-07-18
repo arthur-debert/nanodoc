@@ -1,0 +1,12 @@
+# Test Bundle with Options
+# This bundle demonstrates the bundle options feature
+
+# Options
+--toc
+--theme classic-dark
+--line-numbers
+--header-style nice
+--sequence roman
+
+# Content
+simple_test.txt

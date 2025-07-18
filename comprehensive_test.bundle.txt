@@ -1,0 +1,13 @@
+# Comprehensive Test Bundle
+# This bundle demonstrates all the bundle options features
+
+# Options
+--toc
+--theme classic-dark
+--global-line-numbers
+--header-style nice
+--sequence roman
+
+# Content
+file1.txt
+file2.md

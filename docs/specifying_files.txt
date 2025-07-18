@@ -17,6 +17,32 @@ Three ways to tell nanodoc which files to include:
    images/diagram.md
    /absolute/path/to/notes.txt
 
+   Bundle files can also contain formatting options mixed with file paths.
+   Lines starting with '--' are treated as command-line options:
+   
+   # My Project Bundle
+   --toc
+   --theme classic-dark
+   --line-numbers
+   --header-style nice
+   --sequence roman
+   
+   chapter1.txt
+   images/diagram.md
+   /absolute/path/to/notes.txt
+   
+   Available options in bundle files:
+   - --toc                     Generate table of contents
+   - --theme THEME             Set theme (classic, classic-dark, classic-light)
+   - --line-numbers / -n       Enable per-file line numbering
+   - --global-line-numbers / -N Enable global line numbering
+   - --no-header               Disable file headers
+   - --header-style STYLE      Set header style (nice, filename, path)
+   - --sequence STYLE          Set sequence style (numerical, letter, roman)
+   - --txt-ext EXTENSION       Add file extension to process
+   
+   Command-line options override bundle options when both are specified.
+
 4. LIVE BUNDLE FILES:
    nanodoc live-bundle.txt
    Where live-bundle.txt can mix text and file paths:

@@ -1,0 +1,8 @@
+Second Test File
+================
+
+This is the content of the second test file.
+It also contains multiple lines.
+This will show how global line numbering works.
+
+This is the end of the second file.
