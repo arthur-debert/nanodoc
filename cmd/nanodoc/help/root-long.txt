@@ -1,14 +1,14 @@
 a minimal document bundler stiching together smaller and more focused topics.  
 
   $ nanodoc <path1> <path...>
-	
-  # multiple paths, line ranges
+  
+  # Pass multiple paths, dirs, line-ranges: 
   $ nanodoc README.txt docs/intro.txt:L10-30 
-	
-  # dir exps with control
+  
+  # Control what gets bundled: 
   $ nanodoc docs/ --include=**/*.txt --exclude=**/*/.md 
-	
-  # insert toc, headers, line nums
+
+  # Insert toc, headers, line numbers: 
   $ nanodoc docs/*.txt --toc -n --header-style=title 
 
 Paths can be files, directories or bundle files ($ nanodoc topcis bundle)
