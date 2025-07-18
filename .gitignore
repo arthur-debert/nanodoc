@@ -32,3 +32,4 @@ local/
 /test-tabstop
 /.envr
 tmp
+cmd/nanodoc/docs
