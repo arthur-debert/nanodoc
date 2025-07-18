@@ -1,8 +1,0 @@
-First Test File
-===============
-
-This is the content of the first test file.
-It contains multiple lines.
-This line will help demonstrate line numbering.
-
-This is the last line of the first file.

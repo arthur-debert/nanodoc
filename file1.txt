@@ -1,3 +1,0 @@
-This is the first file.
-It contains multiple lines.
-Line 3 of file1.
