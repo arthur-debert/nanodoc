@@ -188,4 +188,7 @@ func init() {
 	// Other flags
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what files would be processed without actually processing them")
 	rootCmd.Flags().BoolP("version", "v", false, "Print the version number")
+	
+	// Initialize custom help system
+	initHelpSystem()
 } 
