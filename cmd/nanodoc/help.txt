@@ -1,0 +1,12 @@
+{{if gt (len .Aliases) 0}}
+Aliases:
+  {{.NameAndAliases}}{{end}}{{if .HasAvailableLocalFlags}}
+
+{{.LocalFlags | groupedFlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+Global Flags:
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}
+
+{{helpTopics}}{{if .HasAvailableSubCommands}}
+
+{{end}}

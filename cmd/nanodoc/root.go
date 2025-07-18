@@ -37,20 +37,21 @@ var rootExamples string
 
 var rootCmd = &cobra.Command{
 	Use:     "nanodoc [paths...]",
-	Short:   "A minimalist document bundler",
+	Short:   RootShort,
 	Long:    rootLongHelp,
 	Example: rootExamples,
 	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check version flag first
 		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
-			fmt.Printf("nanodoc version %s (commit: %s, built: %s)\n", version, commit, date)
+			fmt.Printf(VersionFormat, version, commit, date)
 			return nil
 		}
 		
 		// Check args only if not printing version
 		if len(args) < 1 {
-			return fmt.Errorf("requires at least 1 arg(s), only received %d", len(args))
+			_ = cmd.Help()
+			return nil
 		}
 		// Track explicitly set flags
 		trackExplicitFlags(cmd)
@@ -63,14 +64,14 @@ var rootCmd = &cobra.Command{
 		}
 		pathInfos, err := nanodoc.ResolvePathsWithOptions(args, pathOpts)
 		if err != nil {
-			return fmt.Errorf("error resolving paths: %w", err)
+			return fmt.Errorf(ErrResolvingPaths, err)
 		}
 
 		// If dry run, show what would be processed and exit
 		if dryRun {
 			dryRunInfo, err := nanodoc.GenerateDryRunInfo(pathInfos, additionalExt)
 			if err != nil {
-				return fmt.Errorf("error generating dry run info: %w", err)
+				return fmt.Errorf(ErrGeneratingDryRun, err)
 			}
 			
 			output := nanodoc.FormatDryRunOutput(dryRunInfo)
@@ -101,19 +102,19 @@ var rootCmd = &cobra.Command{
 		// 3. Build Document with explicit flags
 		doc, err := nanodoc.BuildDocumentWithExplicitFlags(pathInfos, opts, explicitFlags)
 		if err != nil {
-			return fmt.Errorf("error building document: %w", err)
+			return fmt.Errorf(ErrBuildingDocument, err)
 		}
 
 		// 4. Create Formatting Context
 		ctx, err := nanodoc.NewFormattingContext(doc.FormattingOptions)
 		if err != nil {
-			return fmt.Errorf("error creating formatting context: %w", err)
+			return fmt.Errorf(ErrCreatingContext, err)
 		}
 
 		// 5. Render Document
 		output, err := nanodoc.RenderDocument(doc, ctx)
 		if err != nil {
-			return fmt.Errorf("error rendering document: %w", err)
+			return fmt.Errorf(ErrRenderingDocument, err)
 		}
 
 		// 6. Print to stdout
@@ -165,39 +166,39 @@ func Execute() error {
 
 func init() {
 	// Line numbering flags
-	rootCmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, "Enable per-file line numbering (see: nanodoc topics line-numbering)")
-	rootCmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, "Enable global line numbering (see: nanodoc topics line-numbering)")
+	rootCmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, FlagLineNumbers)
+	rootCmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, FlagGlobalLineNumbers)
 	rootCmd.MarkFlagsMutuallyExclusive("line-numbers", "global-line-numbers")
 	_ = rootCmd.Flags().SetAnnotation("line-numbers", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("global-line-numbers", "group", []string{"Formatting"})
 
 	// TOC flag
-	rootCmd.Flags().BoolVar(&toc, "toc", false, "Generate a table of contents (see: nanodoc topics toc)")
+	rootCmd.Flags().BoolVar(&toc, "toc", false, FlagTOC)
 	_ = rootCmd.Flags().SetAnnotation("toc", "group", []string{"Features"})
 
 	// Theme flag
-	rootCmd.Flags().StringVar(&theme, "theme", "classic", "Set the theme for formatting (see: nanodoc topics themes)")
+	rootCmd.Flags().StringVar(&theme, "theme", "classic", FlagTheme)
 	_ = rootCmd.Flags().SetAnnotation("theme", "group", []string{"Formatting"})
 
 	// Header flags
-	rootCmd.Flags().BoolVar(&noHeader, "no-header", false, "Suppress file headers")
-	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style (see: nanodoc topics headers)")
-	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style (see: nanodoc topics headers)")
+	rootCmd.Flags().BoolVar(&noHeader, "no-header", false, FlagNoHeader)
+	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", FlagHeaderStyle)
+	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", FlagSequence)
 	_ = rootCmd.Flags().SetAnnotation("no-header", "group", []string{"Features"})
 	_ = rootCmd.Flags().SetAnnotation("header-style", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("sequence", "group", []string{"Features"})
 
 	// File filtering flags
-	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions to treat as text")
-	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching patterns (see: nanodoc topics content)")
-	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching patterns (see: nanodoc topics content)")
+	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, FlagTxtExt)
+	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
+	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, FlagExclude)
 	_ = rootCmd.Flags().SetAnnotation("txt-ext", "group", []string{"File Selection"})
 	_ = rootCmd.Flags().SetAnnotation("include", "group", []string{"File Selection"})
 	_ = rootCmd.Flags().SetAnnotation("exclude", "group", []string{"File Selection"})
 	
 	// Other flags
-	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what files would be processed without actually processing them")
-	rootCmd.Flags().BoolP("version", "v", false, "Print the version number")
+	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
+	rootCmd.Flags().BoolP("version", "v", false, FlagVersion)
 	_ = rootCmd.Flags().SetAnnotation("dry-run", "group", []string{"Misc"})
 	_ = rootCmd.Flags().SetAnnotation("version", "group", []string{"Misc"})
 	_ = rootCmd.Flags().SetAnnotation("help", "group", []string{"Misc"})

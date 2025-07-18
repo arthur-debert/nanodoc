@@ -1,50 +1,65 @@
 LINE NUMBERING MODES
-====================
 
 Nanodoc provides two distinct modes for adding line numbers to the output.
 
+
 MODES
------
 
-1.  **Per-File Numbering (`-n`):**
-    In this mode, line numbering restarts at `1` for each new file that is added to the bundle. This is useful when you want to see line counts relative to each individual file.
+    1. Per-File Numbering (-n):
+       In this mode, line numbering restarts at 1 for each new file that is added to the bundle. This is useful when you want to see line counts relative to each individual file.
 
-2.  **Global Numbering (`-N`):**
-    In this mode, line numbering is continuous across all files in the bundle. It starts at `1` for the first line of the first file and increments sequentially until the very last line of the last file. This is useful for getting a total line count or for referencing lines in the final combined document.
+    2. Global Numbering (-N):
+       In this mode, line numbering is continuous across all files in the bundle. It starts at 1 for the first line of the first file and increments sequentially until the very last line of the last file. This is useful for getting a total line count or for referencing lines in the final combined document.
+
 
 EXAMPLE
--------
 
 Given two files:
 
-`file1.txt`:
-    hello
-    world
+file1.txt:
+    -- 
+        hello
+        world
+    --
 
-`file2.txt`:
-    foo
-    bar
+file2.txt:
+    -- 
+        foo
+        bar
+    --
 
-### Per-File Numbering Output:
 
-    1. File1
+Per-File Numbering Output:
 
-    1 | hello
-    2 | world
+    -- 
+        1. File1
 
-    2. File2
+        1 | hello
+        2 | world
 
-    1 | foo
-    2 | bar
+        2. File2
 
-### Global Numbering Output:
+        1 | foo
+        2 | bar
+    --
 
-    1. File1
 
-    1 | hello
-    2 | world
+Global Numbering Output:
 
-    2. File2
+    -- 
+        1. File1
 
-    3 | foo
-    4 | bar
+        1 | hello
+        2 | world
+
+        2. File2
+
+        3 | foo
+        4 | bar
+    --
+
+
+OPTIONS
+
+    -n, --line-numbers         Per-file numbering: Each file starts from 1
+    -N, --global-line-numbers  Global numbering: Continues across all files
