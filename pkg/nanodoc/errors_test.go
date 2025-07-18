@@ -50,7 +50,7 @@ func TestCircularDependencyError(t *testing.T) {
 		Chain: []string{"bundle2.bundle.txt", "bundle3.bundle.txt", "bundle1.bundle.txt"},
 	}
 
-	want := "circular dependency detected: bundle1.bundle.txt -> [bundle2.bundle.txt bundle3.bundle.txt bundle1.bundle.txt]"
+	want := "circular dependency detected: bundle1.bundle.txt -> [bundle2.bundle.txt bundle3.bundle.txt bundle1.bundle.txt] (see: nanodoc topics circular-dependencies)"
 	if got := err.Error(); got != want {
 		t.Errorf("CircularDependencyError.Error() = %v, want %v", got, want)
 	}
@@ -69,7 +69,7 @@ func TestRangeError(t *testing.T) {
 				Input: "L10-5",
 				Err:   errors.New("end line before start line"),
 			},
-			wantMsg:  "invalid range 'L10-5': end line before start line",
+			wantMsg:  "invalid range 'L10-5': end line before start line (see: nanodoc topics file-parts)",
 			wantWrap: errors.New("end line before start line"),
 		},
 		{
@@ -78,7 +78,7 @@ func TestRangeError(t *testing.T) {
 				Input: "L-5",
 				Err:   errors.New("negative line number"),
 			},
-			wantMsg:  "invalid range 'L-5': negative line number",
+			wantMsg:  "invalid range 'L-5': negative line number (see: nanodoc topics file-parts)",
 			wantWrap: errors.New("negative line number"),
 		},
 	}
