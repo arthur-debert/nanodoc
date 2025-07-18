@@ -1,16 +1,20 @@
 package main
 
 import (
+	_ "embed"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
+//go:embed completion.txt
+var completionLong string
+
 var completionCmd = &cobra.Command{
 	Use:    "completion [bash|zsh|fish|powershell]",
 	Short:  CompletionShort,
 	Hidden: true, // Hide from help output but still accessible for build/packaging
-	Long:   CompletionLong,
+	Long:   completionLong,
 	DisableFlagsInUseLine: true,
 	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
