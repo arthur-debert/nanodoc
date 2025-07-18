@@ -25,14 +25,20 @@ archives:
         formats: [zip]
     name_template: "nanodoc_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
-      - "README.md"
-      - "LICENSE"
+      - src: "README.md"
+        dst: .
+      - src: "LICENSE"
+        dst: .
       - src: completions/*
         dst: completions
         strip_parent: true
+        info:
+          mode: 0644
       - src: man/man1/*
         dst: man/man1
         strip_parent: true
+        info:
+          mode: 0644
 
 checksum:
   name_template: "checksums.txt"
