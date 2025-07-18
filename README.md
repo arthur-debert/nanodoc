@@ -27,7 +27,8 @@ go install github.com/arthur-debert/nanodoc-go/cmd/nanodoc@latest
 - **Simple file bundling**: Combine multiple text files into one document
 - **Bundle files**: Create reusable file lists with `.bundle.*` files
 - **Live bundles**: Include files inline using `[[file:path]]` syntax
-- **Line ranges**: Extract specific lines with `file.txt:L10-20` syntax in bundle files
+- **Line ranges**: Extract specific lines with `file.txt:L10-20` syntax
+- **Pattern filtering**: Include/exclude files with gitignore-style patterns
 - **Line numbering**: Add line numbers per-file (`-n`) or globally (`-nn`)
 - **Table of contents**: Generate TOC with `--toc`
 - **Multiple themes**: Built-in themes (classic, classic-light, classic-dark)
@@ -73,6 +74,12 @@ nanodoc --theme=classic-dark --no-header *.md
 
 # Use glob patterns
 nanodoc src/*.go docs/*.md
+
+# Include/exclude patterns for directories
+nanodoc docs/ --include="**/api/*.md" --exclude="**/internal/**"
+
+# Process only Go source files, excluding tests
+nanodoc src/ --txt-ext=go --include="**/*.go" --exclude="**/*_test.go"
 ```
 
 ### Bundle Files
@@ -141,6 +148,8 @@ Flags:
       --sequence string       Header sequence type (numerical, letter, roman) (default "numerical")
       --style string          Header style (nice, filename, path) (default "nice")
       --txt-ext strings       Additional file extensions to process
+      --include strings       Include only files matching these patterns (gitignore-style)
+      --exclude strings       Exclude files matching these patterns (gitignore-style)
       --dry-run               Preview what files would be processed without processing them
   -v, --verbose               Enable verbose output
   -h, --help                  Help for nanodoc

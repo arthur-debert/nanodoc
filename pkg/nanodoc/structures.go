@@ -80,6 +80,12 @@ type FormattingOptions struct {
 
 	// Additional file extensions to process
 	AdditionalExtensions []string
+	
+	// Include patterns for file filtering (gitignore-style)
+	IncludePatterns []string
+	
+	// Exclude patterns for file filtering (gitignore-style)
+	ExcludePatterns []string
 }
 
 // NewRange creates a new Range with validation

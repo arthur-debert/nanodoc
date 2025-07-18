@@ -25,6 +25,11 @@ type PathInfo struct {
 // ResolvePaths takes a list of source paths and resolves them to absolute paths
 // It handles files, directories, and bundle files
 func ResolvePaths(sources []string) ([]PathInfo, error) {
+	return ResolvePathsWithOptions(sources, nil)
+}
+
+// ResolvePathsWithOptions resolves paths with optional pattern filtering
+func ResolvePathsWithOptions(sources []string, options *FormattingOptions) ([]PathInfo, error) {
 	if len(sources) == 0 {
 		return nil, ErrEmptySource
 	}
@@ -32,7 +37,7 @@ func ResolvePaths(sources []string) ([]PathInfo, error) {
 	results := make([]PathInfo, 0, len(sources))
 
 	for _, source := range sources {
-		pathInfo, err := resolveSinglePath(source)
+		pathInfo, err := resolveSinglePathWithOptions(source, options)
 		if err != nil {
 			return nil, &FileError{Path: source, Err: err}
 		}
@@ -48,14 +53,24 @@ func ResolvePaths(sources []string) ([]PathInfo, error) {
 
 // resolveSinglePath resolves a single path to PathInfo
 func resolveSinglePath(path string) (PathInfo, error) {
+	return resolveSinglePathWithOptions(path, nil)
+}
+
+// resolveSinglePathWithOptions resolves a single path with optional pattern filtering
+func resolveSinglePathWithOptions(path string, options *FormattingOptions) (PathInfo, error) {
 	if strings.ContainsAny(path, "*?[") {
-		return resolveGlobPath(path)
+		return resolveGlobPathWithOptions(path, options)
 	}
-	return resolveNonGlobPath(path)
+	return resolveNonGlobPathWithOptions(path, options)
 }
 
 // resolveNonGlobPath handles resolving a path that is not a glob pattern.
 func resolveNonGlobPath(path string) (PathInfo, error) {
+	return resolveNonGlobPathWithOptions(path, nil)
+}
+
+// resolveNonGlobPathWithOptions handles resolving a path with optional pattern filtering
+func resolveNonGlobPathWithOptions(path string, options *FormattingOptions) (PathInfo, error) {
 	// Parse out any range specification for file system operations
 	// but keep the original path with range for later processing
 	basePath := path
@@ -94,15 +109,33 @@ func resolveNonGlobPath(path string) (PathInfo, error) {
 	}
 
 	if info.IsDir() {
-		return handleDirectory(pathInfo)
+		return handleDirectoryWithOptions(pathInfo, options)
 	}
 	return handleFile(pathInfo)
 }
 
-// handleDirectory processes a directory path.
-func handleDirectory(pathInfo PathInfo) (PathInfo, error) {
+
+// handleDirectoryWithOptions processes a directory path with optional pattern filtering
+func handleDirectoryWithOptions(pathInfo PathInfo, options *FormattingOptions) (PathInfo, error) {
 	pathInfo.Type = "directory"
-	files, err := findTextFilesInDir(pathInfo.Absolute)
+	
+	var files []string
+	var err error
+	
+	// Check if we need pattern-based filtering
+	if options != nil && (len(options.IncludePatterns) > 0 || len(options.ExcludePatterns) > 0) {
+		matcher := NewPatternMatcher(pathInfo.Absolute, options.IncludePatterns, options.ExcludePatterns)
+		
+		if matcher.NeedsRecursion() {
+			files, err = findTextFilesRecursive(pathInfo.Absolute, options.AdditionalExtensions, matcher)
+		} else {
+			files, err = findTextFilesWithMatcher(pathInfo.Absolute, options.AdditionalExtensions, matcher)
+		}
+	} else {
+		// No patterns, use existing behavior
+		files, err = findTextFilesInDir(pathInfo.Absolute)
+	}
+	
 	if err != nil {
 		return PathInfo{}, err
 	}
@@ -122,6 +155,11 @@ func handleFile(pathInfo PathInfo) (PathInfo, error) {
 
 // resolveGlobPath resolves a glob pattern to matching files
 func resolveGlobPath(pattern string) (PathInfo, error) {
+	return resolveGlobPathWithOptions(pattern, nil)
+}
+
+// resolveGlobPathWithOptions resolves a glob pattern with optional additional filtering
+func resolveGlobPathWithOptions(pattern string, options *FormattingOptions) (PathInfo, error) {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return PathInfo{}, err
@@ -144,8 +182,14 @@ func resolveGlobPath(pattern string) (PathInfo, error) {
 			continue
 		}
 
-		if !info.IsDir() && isTextFile(absPath) {
-			files = append(files, absPath)
+		if !info.IsDir() {
+			isText := isTextFile(absPath)
+			if options != nil && len(options.AdditionalExtensions) > 0 {
+				isText = isTextFileWithExtensions(absPath, options.AdditionalExtensions)
+			}
+			if isText {
+				files = append(files, absPath)
+			}
 		}
 	}
 
@@ -194,15 +238,73 @@ func findTextFilesInDir(dir string) ([]string, error) {
 	return files, nil
 }
 
-// isTextFile checks if a file has a text extension
-func isTextFile(path string) bool {
-	ext := strings.ToLower(filepath.Ext(path))
-	for _, validExt := range DefaultTextExtensions {
-		if ext == validExt {
-			return true
+// findTextFilesWithMatcher finds text files in a directory with pattern matching
+func findTextFilesWithMatcher(dir string, additionalExtensions []string, matcher *PatternMatcher) ([]string, error) {
+	var files []string
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		fullPath := filepath.Join(dir, entry.Name())
+		if isTextFileWithExtensions(fullPath, additionalExtensions) {
+			shouldInclude, err := matcher.ShouldInclude(fullPath)
+			if err != nil {
+				return nil, err
+			}
+			if shouldInclude {
+				files = append(files, fullPath)
+			}
 		}
 	}
-	return false
+
+	sortPaths(files)
+	return files, nil
+}
+
+// findTextFilesRecursive recursively finds text files with pattern matching
+func findTextFilesRecursive(dir string, additionalExtensions []string, matcher *PatternMatcher) ([]string, error) {
+	var files []string
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		if isTextFileWithExtensions(path, additionalExtensions) {
+			shouldInclude, err := matcher.ShouldInclude(path)
+			if err != nil {
+				return err
+			}
+			if shouldInclude {
+				files = append(files, path)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	sortPaths(files)
+	return files, nil
+}
+
+// isTextFile checks if a file has a text extension
+func isTextFile(path string) bool {
+	return isTextFileWithExtensions(path, nil)
 }
 
 // sortPaths sorts paths alphabetically

@@ -17,6 +17,8 @@ var (
 	sequence           string
 	headerStyle        string
 	additionalExt      []string
+	includePatterns    []string
+	excludePatterns    []string
 	dryRun             bool
 	explicitFlags      map[string]bool
 )
@@ -33,8 +35,13 @@ No config, nothing to learn nor remember. Short, simple, sweet.`,
 		// Track explicitly set flags
 		trackExplicitFlags(cmd)
 
-		// 1. Resolve Paths
-		pathInfos, err := nanodoc.ResolvePaths(args)
+		// 1. Resolve Paths with pattern options
+		pathOpts := &nanodoc.FormattingOptions{
+			AdditionalExtensions: additionalExt,
+			IncludePatterns: includePatterns,
+			ExcludePatterns: excludePatterns,
+		}
+		pathInfos, err := nanodoc.ResolvePathsWithOptions(args, pathOpts)
 		if err != nil {
 			return fmt.Errorf("error resolving paths: %w", err)
 		}
@@ -67,6 +74,8 @@ No config, nothing to learn nor remember. Short, simple, sweet.`,
 			SequenceStyle: nanodoc.SequenceStyle(sequence),
 			HeaderStyle:   nanodoc.HeaderStyle(headerStyle),
 			AdditionalExtensions: additionalExt,
+			IncludePatterns: includePatterns,
+			ExcludePatterns: excludePatterns,
 		}
 
 		// 3. Build Document with explicit flags
@@ -120,6 +129,12 @@ func trackExplicitFlags(cmd *cobra.Command) {
 	if cmd.Flags().Changed("txt-ext") {
 		explicitFlags["txt-ext"] = true
 	}
+	if cmd.Flags().Changed("include") {
+		explicitFlags["include"] = true
+	}
+	if cmd.Flags().Changed("exclude") {
+		explicitFlags["exclude"] = true
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -145,8 +160,12 @@ func init() {
 	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style (nice, filename, path)")
 	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style for headers (numerical, letter, roman)")
 
-	// Other flags
+	// File filtering flags
 	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions to treat as text (e.g., .log,.conf)")
+	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching these patterns (e.g., **/api/*.md)")
+	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching these patterns (e.g., **/test/*.md)")
+	
+	// Other flags
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what files would be processed without actually processing them")
 
 	// Add version command

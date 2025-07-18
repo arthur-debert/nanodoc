@@ -214,14 +214,21 @@ func uniqueStrings(slice []string) []string {
 
 // isTextFileWithExtensions checks if a file is a text file considering additional extensions
 func isTextFileWithExtensions(path string, additionalExtensions []string) bool {
-	// First check default extensions
-	if isTextFile(path) {
-		return true
+	ext := strings.ToLower(filepath.Ext(path))
+	
+	// Check default extensions
+	for _, validExt := range DefaultTextExtensions {
+		if ext == validExt {
+			return true
+		}
 	}
 	
 	// Then check additional extensions
-	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
 	for _, addExt := range additionalExtensions {
+		// Normalize extension (add leading dot if missing)
+		if !strings.HasPrefix(addExt, ".") {
+			addExt = "." + addExt
+		}
 		if ext == strings.ToLower(addExt) {
 			return true
 		}

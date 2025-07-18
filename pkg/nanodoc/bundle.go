@@ -30,6 +30,12 @@ type BundleOptions struct {
 
 	// Additional file extensions to process
 	AdditionalExtensions []string
+	
+	// Include patterns for file filtering
+	IncludePatterns []string
+	
+	// Exclude patterns for file filtering
+	ExcludePatterns []string
 }
 
 // BundleResult holds both the options and file paths parsed from a bundle file
@@ -63,6 +69,29 @@ func mergeAdditionalExtensions(cmdExtensions, bundleExtensions []string) []strin
 	return result
 }
 
+// mergePatterns merges pattern lists from command-line and bundle options
+func mergePatterns(cmdPatterns, bundlePatterns []string) []string {
+	if len(bundlePatterns) == 0 {
+		return cmdPatterns
+	}
+	
+	patternMap := make(map[string]bool)
+	result := make([]string, len(cmdPatterns))
+	copy(result, cmdPatterns)
+	
+	for _, pattern := range cmdPatterns {
+		patternMap[pattern] = true
+	}
+	
+	for _, pattern := range bundlePatterns {
+		if !patternMap[pattern] {
+			result = append(result, pattern)
+		}
+	}
+	
+	return result
+}
+
 // applyBundleOption is a helper that applies a bundle option to the result if conditions are met
 func applyBundleOption[T any](bundleValue *T, resultValue *T, shouldApply bool) {
 	if bundleValue != nil && shouldApply {
@@ -89,6 +118,18 @@ func MergeFormattingOptions(bundleOpts BundleOptions, cmdOpts FormattingOptions)
 		bundleOpts.AdditionalExtensions,
 	)
 	
+	// Merge include patterns
+	result.IncludePatterns = mergePatterns(
+		cmdOpts.IncludePatterns,
+		bundleOpts.IncludePatterns,
+	)
+	
+	// Merge exclude patterns
+	result.ExcludePatterns = mergePatterns(
+		cmdOpts.ExcludePatterns,
+		bundleOpts.ExcludePatterns,
+	)
+	
 	return result
 }
 
@@ -109,6 +150,18 @@ func MergeFormattingOptionsWithDefaults(bundleOpts BundleOptions, cmdOpts Format
 	result.AdditionalExtensions = mergeAdditionalExtensions(
 		cmdOpts.AdditionalExtensions,
 		bundleOpts.AdditionalExtensions,
+	)
+	
+	// Merge include patterns
+	result.IncludePatterns = mergePatterns(
+		cmdOpts.IncludePatterns,
+		bundleOpts.IncludePatterns,
+	)
+	
+	// Merge exclude patterns
+	result.ExcludePatterns = mergePatterns(
+		cmdOpts.ExcludePatterns,
+		bundleOpts.ExcludePatterns,
 	)
 	
 	return result
@@ -300,6 +353,18 @@ func parseOption(optionLine string, options *BundleOptions) error {
 		}
 		options.AdditionalExtensions = append(options.AdditionalExtensions, parts[1])
 		
+	case "--include":
+		if len(parts) < 2 {
+			return fmt.Errorf("--include requires a value")
+		}
+		options.IncludePatterns = append(options.IncludePatterns, parts[1])
+		
+	case "--exclude":
+		if len(parts) < 2 {
+			return fmt.Errorf("--exclude requires a value")
+		}
+		options.ExcludePatterns = append(options.ExcludePatterns, parts[1])
+		
 	default:
 		return fmt.Errorf("unknown option: %s", flag)
 	}
@@ -486,6 +551,10 @@ func mergeBundleOptions(first, second BundleOptions) BundleOptions {
 	
 	// For additional extensions, merge them
 	result.AdditionalExtensions = append(result.AdditionalExtensions, second.AdditionalExtensions...)
+	
+	// For include/exclude patterns, merge them
+	result.IncludePatterns = append(result.IncludePatterns, second.IncludePatterns...)
+	result.ExcludePatterns = append(result.ExcludePatterns, second.ExcludePatterns...)
 	
 	return result
 }

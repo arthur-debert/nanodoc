@@ -343,7 +343,7 @@ func TestIsTextFileWithExtensions(t *testing.T) {
 			name: "extension with dot in additional extensions",
 			path: "/tmp/file.py",
 			additionalExtensions: []string{".py"},
-			want: false, // Should not match because we trim the dot
+			want: true, // Should match - we normalize extensions
 		},
 	}
 
