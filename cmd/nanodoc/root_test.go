@@ -273,8 +273,20 @@ func newRootCmd() (*cobra.Command, *nanodoc.FormattingOptions) {
 			if cmd.Flags().Changed("txt-ext") {
 				explicitFlags["txt-ext"] = true
 			}
+			if cmd.Flags().Changed("include") {
+				explicitFlags["include"] = true
+			}
+			if cmd.Flags().Changed("exclude") {
+				explicitFlags["exclude"] = true
+			}
 
-			pathInfos, err := nanodoc.ResolvePaths(args)
+			// Resolve paths with pattern options
+			pathOpts := &nanodoc.FormattingOptions{
+				AdditionalExtensions: additionalExt,
+				IncludePatterns: includePatterns,
+				ExcludePatterns: excludePatterns,
+			}
+			pathInfos, err := nanodoc.ResolvePathsWithOptions(args, pathOpts)
 			if err != nil {
 				return fmt.Errorf("Error resolving paths: %w", err)
 			}
@@ -294,6 +306,8 @@ func newRootCmd() (*cobra.Command, *nanodoc.FormattingOptions) {
 				SequenceStyle: nanodoc.SequenceStyle(sequence),
 				HeaderStyle:   nanodoc.HeaderStyle(headerStyle),
 				AdditionalExtensions: additionalExt,
+				IncludePatterns: includePatterns,
+				ExcludePatterns: excludePatterns,
 			}
 
 			doc, err := nanodoc.BuildDocumentWithExplicitFlags(pathInfos, opts, explicitFlags)
@@ -326,6 +340,8 @@ func newRootCmd() (*cobra.Command, *nanodoc.FormattingOptions) {
 	cmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style")
 	cmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style")
 	cmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions")
+	cmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching these patterns")
+	cmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching these patterns")
 
 	return cmd, &opts
 }
