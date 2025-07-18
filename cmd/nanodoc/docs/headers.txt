@@ -1,50 +1,53 @@
 HEADERS AND SEQUENCING
-=======================
 
 Nanodoc can automatically generate headers for each file included in a bundle. The appearance of these headers is controlled by two main settings: the header style and the sequence style.
 
+
 HEADER STYLES
--------------
 
 There are three available header styles:
 
-1.  `filename`: Displays the simple filename (e.g., `my_document.txt`).
-2.  `path`: Displays the full resolved path to the file.
-3.  `nice` (Default): This style attempts to create a clean, human-readable title from the filename. The process is:
-    - If a Table of Contents is generated, the file's primary title from the TOC is used.
-    - Otherwise, it takes the filename, removes the extension, and cleans it up:
-        - Replaces underscores and hyphens with spaces.
-        - Splits camelCase words (e.g., `myDocument` becomes `my Document`).
-        - Converts the result to Title Case (e.g., `My Document`).
+    1. filename: Displays the simple filename (e.g., my_document.txt).
+    2. path: Displays the full resolved path to the file.
+    3. nice (Default): This style attempts to create a clean, human-readable title from the filename. The process is:
+        - If a Table of Contents is generated, the file's primary title from the TOC is used.
+        - Otherwise, it takes the filename, removes the extension, and cleans it up:
+            - Replaces underscores and hyphens with spaces.
+            - Splits camelCase words (e.g., myDocument becomes my Document).
+            - Converts the result to Title Case (e.g., My Document).
+
 
 SEQUENCE STYLES
----------------
 
 The sequence style determines the marker placed before the header title.
 
-1.  `numerical` (Default): `1.`, `2.`, `3.`
-2.  `letter`: `a.`, `b.`, `c.`
-3.  `roman`: `i.`, `ii.`, `iii.`
+    1. numerical (Default): 1., 2., 3.
+    2. letter: a., b., c.
+    3. roman: i., ii., iii.
+
 
 EXAMPLE
--------
 
-Given a file named `my_first_document.md`, using the default `nice` header style and `numerical` sequence would produce the following header:
+Given a file named my_first_document.md, using the default nice header style and numerical sequence would produce the following header:
 
-    1. My First Document
+    -- 
+        1. My First Document
+    --
+
 
 OPTIONS
--------
 
---no-header             Hide headers completely
---sequence=TYPE         Add sequence numbers (numerical, letter, roman)
---header-style=STYLE    Change format (nice [default], filename, path)
+    --no-header             Hide headers completely
+    --sequence=TYPE         Add sequence numbers (numerical, letter, roman)
+    --header-style=STYLE    Change format (nice [default], filename, path)
+
 
 EXAMPLES
---------
 
-"File (file.txt)"       Default style (nice: titled with original in parentheses)
-"file.txt"              Filename style
-"/path/to/file.txt"     Path style (full path)
-"1. file.txt"           With numerical sequence
-"a. File (file.txt)"    Combined letter sequence with nice style
+    -- 
+        "File (file.txt)"       Default style (nice: titled with original in parentheses)
+        "file.txt"              Filename style
+        "/path/to/file.txt"     Path style (full path)
+        "1. file.txt"           With numerical sequence
+        "a. File (file.txt)"    Combined letter sequence with nice style
+    --

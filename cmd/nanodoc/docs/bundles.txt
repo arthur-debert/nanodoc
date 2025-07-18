@@ -1,237 +1,258 @@
 BUNDLES IN NANODOC
-==================
 
 Bundles are a powerful feature in nanodoc that allow you to create reusable document specifications. There are two types of bundles: traditional bundles and live bundles.
 
-## Traditional Bundles
 
-Traditional bundle files (`.bundle.*` extension) contain lists of file paths and optional formatting options. They are perfect for creating reproducible document sets with consistent formatting.
+Traditional Bundles
 
-### Basic Bundle Syntax
+Traditional bundle files (.bundle.* extension) contain lists of file paths and optional formatting options. They are perfect for creating reproducible document sets with consistent formatting.
 
-```
-# My Project Documentation Bundle
-# Lines starting with '#' are comments. Empty lines are ignored.
 
-# --- Options ---
---toc
---global-line-numbers
---header-style nice
---sequence roman
---theme classic-dark
+Basic Bundle Syntax
 
-# --- Content ---
-README.md
-docs/api.md
-src/main.go
-```
+    -- 
+        # My Project Documentation Bundle
+        # Lines starting with '#' are comments. Empty lines are ignored.
 
-### Supported Options
+        # --- Options ---
+        --toc
+        --global-line-numbers
+        --header-style nice
+        --sequence roman
+        --theme classic-dark
+
+        # --- Content ---
+        README.md
+        docs/api.md
+        src/main.go
+    --
+
+
+Supported Options
 
 All formatting options are supported in bundle files:
 
-- `--toc` - Generate a table of contents
-- `--line-numbers` or `-n` - Enable per-file line numbering
-- `--global-line-numbers` or `-N` - Enable global line numbering
-- `--theme <name>` - Set the theme (classic, classic-dark, classic-light)
-- `--header-style <style>` - Set header style (nice, filename, path)
-- `--sequence <style>` - Set sequence style (numerical, letter, roman)
-- `--no-header` - Suppress file headers
-- `--txt-ext <ext>` - Additional file extensions to treat as text
-- `--include <pattern>` - Include only files matching patterns
-- `--exclude <pattern>` - Exclude files matching patterns
+    - --toc - Generate a table of contents
+    - --line-numbers or -n - Enable per-file line numbering
+    - --global-line-numbers or -N - Enable global line numbering
+    - --theme <name> - Set the theme (classic, classic-dark, classic-light)
+    - --header-style <style> - Set header style (nice, filename, path)
+    - --sequence <style> - Set sequence style (numerical, letter, roman)
+    - --no-header - Suppress file headers
+    - --txt-ext <ext> - Additional file extensions to treat as text
+    - --include <pattern> - Include only files matching patterns
+    - --exclude <pattern> - Exclude files matching patterns
 
-### Precedence Rules
+
+Precedence Rules
 
 Command-line options always override bundle options:
 
-1. **Command-line explicit**: If you explicitly set a flag on the command line, it takes precedence
-2. **Bundle default**: If you don't set a flag on the command line, the bundle option is used
-3. **System default**: If neither command-line nor bundle specifies an option, the system default is used
+    1. Command-line explicit: If you explicitly set a flag on the command line, it takes precedence
+    2. Bundle default: If you don't set a flag on the command line, the bundle option is used
+    3. System default: If neither command-line nor bundle specifies an option, the system default is used
 
-### Example: Development vs Production Bundles
 
-`dev.bundle.txt`:
-```
---line-numbers
---header-style path
---theme classic
+Example: Development vs Production Bundles
 
-src/
-tests/
-```
+dev.bundle.txt:
+    -- 
+        --line-numbers
+        --header-style path
+        --theme classic
 
-`release.bundle.txt`:
-```
---toc
---global-line-numbers
---sequence letter
---theme classic-dark
---no-header
+        src/
+        tests/
+    --
 
-README.md
-CHANGELOG.md
-docs/
-```
+release.bundle.txt:
+    -- 
+        --toc
+        --global-line-numbers
+        --sequence letter
+        --theme classic-dark
+        --no-header
 
-## Live Bundles
+        README.md
+        CHANGELOG.md
+        docs/
+    --
+
+
+Live Bundles
 
 Live bundles allow you to create documents that seamlessly integrate content from multiple files with your own text. Unlike traditional bundles, live bundles mix narrative text with file inclusions.
 
-### Key Differences from Traditional Bundles
+
+Key Differences from Traditional Bundles
 
 Traditional bundles:
-- Contain only file paths and options
-- Each file is processed separately with its own title
-- Clear visual separation between files
+    - Contain only file paths and options
+    - Each file is processed separately with its own title
+    - Clear visual separation between files
 
 Live bundles:
-- Can mix text and file paths
-- File paths are replaced with their content inline
-- No file titles or line number resets at file boundaries
-- Seamless integration of content
+    - Can mix text and file paths
+    - File paths are replaced with their content inline
+    - No file titles or line number resets at file boundaries
+    - Seamless integration of content
 
-### Creating a Live Bundle
+
+Creating a Live Bundle
 
 Any text file can be a live bundle. Simply include file paths on their own lines:
 
-```
-Introduction to my document
+    -- 
+        Introduction to my document
 
-/path/to/chapter1.txt
+        /path/to/chapter1.txt
 
-This text will appear between chapters
+        This text will appear between chapters
 
-/path/to/chapter2.txt
+        /path/to/chapter2.txt
 
-Conclusion
-```
+        Conclusion
+    --
 
-### Inline File Inclusion
 
-Live bundles support inline file inclusion using the `[[file:path]]` syntax:
+Inline File Inclusion
 
-```
-This paragraph includes [[file:/path/to/quote.txt]] right in the middle of the text.
-```
+Live bundles support inline file inclusion using the [[file:path]] syntax:
+
+    -- 
+        This paragraph includes [[file:/path/to/quote.txt]] right in the middle of the text.
+    --
 
 The file content is inserted inline without line breaks, perfect for short snippets within paragraphs.
 
 You can also use line references:
-```
-The most important part is [[file:document.txt:L42-45]] as shown here.
-```
+    -- 
+        The most important part is [[file:document.txt:L42-45]] as shown here.
+    --
 
-### Line References
+
+Line References
 
 Both full-line and inline inclusions support line references:
 
-```
-Introduction
+    -- 
+        Introduction
 
-/path/to/file.txt:L10-20
+        /path/to/file.txt:L10-20
 
-Middle section with inline reference: [[file:/path/to/file.txt:L50-60]]
+        Middle section with inline reference: [[file:/path/to/file.txt:L50-60]]
 
-/path/to/file.txt:L100-$1
-```
+        /path/to/file.txt:L100-$1
+    --
 
-## Bundle File Patterns
 
-### Include/Exclude Patterns
+Bundle File Patterns
+
+
+Include/Exclude Patterns
 
 Bundle files can specify include and exclude patterns:
 
-```
-# Include only Go source files, exclude tests
---include "**/*.go"
---exclude "**/*_test.go"
+    -- 
+        # Include only Go source files, exclude tests
+        --include "**/*.go"
+        --exclude "**/*_test.go"
 
-src/
-pkg/
-```
+        src/
+        pkg/
+    --
 
-### Circular Dependencies
+
+Circular Dependencies
 
 Nanodoc detects and prevents circular dependencies in bundles:
-- Bundle A cannot include Bundle B if Bundle B includes Bundle A
-- Live bundles cannot have circular `[[file:]]` references
-- Clear error messages show the dependency chain
+    - Bundle A cannot include Bundle B if Bundle B includes Bundle A
+    - Live bundles cannot have circular [[file:]] references
+    - Clear error messages show the dependency chain
 
-## Best Practices
 
-1. **Traditional Bundles**:
-   - Use `.bundle.txt` extension for clarity
-   - Group options at the top of the file
-   - Document your options with comments
-   - Version your bundles alongside your code
+Best Practices
 
-2. **Live Bundles**:
-   - Keep file paths on their own lines for clarity
-   - Use relative paths for portability
-   - Use inline inclusion for short snippets
-   - Test bundles to ensure paths resolve correctly
+    1. Traditional Bundles:
+       - Use .bundle.txt extension for clarity
+       - Group options at the top of the file
+       - Document your options with comments
+       - Version your bundles alongside your code
 
-3. **General**:
-   - Choose traditional bundles for formal documentation sets
-   - Choose live bundles for narrative documents with examples
-   - Consider using line references to include only relevant parts
-   - Use descriptive names for your bundle files
+    2. Live Bundles:
+       - Keep file paths on their own lines for clarity
+       - Use relative paths for portability
+       - Use inline inclusion for short snippets
+       - Test bundles to ensure paths resolve correctly
 
-## Example Use Cases
+    3. General:
+       - Choose traditional bundles for formal documentation sets
+       - Choose live bundles for narrative documents with examples
+       - Consider using line references to include only relevant parts
+       - Use descriptive names for your bundle files
 
-### Traditional Bundles
-- Project documentation sets with consistent formatting
-- Release documentation with specific themes
-- Code review bundles with line numbers
-- API documentation with table of contents
 
-### Live Bundles
-- Tutorials with inline code examples
-- Composite documents with commentary
-- Prompt templates with dynamic content
-- Documentation with narrative flow
+Example Use Cases
 
-## Troubleshooting
 
-### Bundle Options Not Applied
-- Ensure file follows `.bundle.*` pattern for traditional bundles
-- Check option syntax matches command-line flags
-- Remember command-line flags override bundle options
+Traditional Bundles
+    - Project documentation sets with consistent formatting
+    - Release documentation with specific themes
+    - Code review bundles with line numbers
+    - API documentation with table of contents
 
-### File Not Found
-- Check relative vs absolute paths
-- Ensure files exist at specified locations
-- Use `--dry-run` to preview what will be processed
 
-### Circular Dependencies
-- Review the error message showing the dependency chain
-- Remove the circular reference
-- Consider restructuring your bundles
+Live Bundles
+    - Tutorials with inline code examples
+    - Composite documents with commentary
+    - Prompt templates with dynamic content
+    - Documentation with narrative flow
+
+
+Troubleshooting
+
+
+Bundle Options Not Applied
+    - Ensure file follows .bundle.* pattern for traditional bundles
+    - Check option syntax matches command-line flags
+    - Remember command-line flags override bundle options
+
+
+File Not Found
+    - Check relative vs absolute paths
+    - Ensure files exist at specified locations
+    - Use --dry-run to preview what will be processed
+
+
+Circular Dependencies
+    - Review the error message showing the dependency chain
+    - Remove the circular reference
+    - Consider restructuring your bundles
+
 
 OPTIONS
--------
 
 Bundle files can include formatting options that apply to the entire bundle. Options use the same syntax as command-line flags:
 
-### Supported Options in Bundles
 
---toc                      Generate a table of contents
---line-numbers, -n         Enable per-file line numbering
---global-line-numbers, -N  Enable global line numbering
---theme <name>             Set theme (classic, classic-dark, classic-light)
---header-style <style>     Set header style (nice, filename, path)
---sequence <style>         Set sequence style (numerical, letter, roman)
---no-header                Suppress file headers
---txt-ext <ext>            Additional file extensions to treat as text
---include <pattern>        Include only files matching patterns
---exclude <pattern>        Exclude files matching patterns
+Supported Options in Bundles
 
-### Precedence
+    --toc                      Generate a table of contents
+    --line-numbers, -n         Enable per-file line numbering
+    --global-line-numbers, -N  Enable global line numbering
+    --theme <name>             Set theme (classic, classic-dark, classic-light)
+    --header-style <style>     Set header style (nice, filename, path)
+    --sequence <style>         Set sequence style (numerical, letter, roman)
+    --no-header                Suppress file headers
+    --txt-ext <ext>            Additional file extensions to treat as text
+    --include <pattern>        Include only files matching patterns
+    --exclude <pattern>        Exclude files matching patterns
 
-1. Command-line flags (highest priority)
-2. Bundle file options
-3. System defaults (lowest priority)
 
-Example: If bundle contains `--theme dark` but you run `nanodoc --theme light bundle.txt`, 
-the light theme wins because command-line flags override bundle options.
+Precedence
+
+    1. Command-line flags (highest priority)
+    2. Bundle file options
+    3. System defaults (lowest priority)
+
+Example: If bundle contains --theme dark but you run nanodoc --theme light bundle.txt, the light theme wins because command-line flags override bundle options.
