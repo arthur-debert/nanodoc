@@ -323,7 +323,7 @@ func parseOption(optionLine string, options *BundleOptions) error {
 		
 	case "--header-style":
 		if len(parts) < 2 {
-			return fmt.Errorf("--header-style requires a value. Available styles: nice, filename, path (see: nanodoc topics headers-and-sequencing)")
+			return fmt.Errorf("--header-style requires a value. Available styles: nice, filename, path (see: nanodoc topics headers)")
 		}
 		style := HeaderStyle(parts[1])
 		// Validate header style

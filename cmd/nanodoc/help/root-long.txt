@@ -15,4 +15,4 @@ patterns, or special .bundle files.
 You can also specify line ranges to extract specific parts of a file using
 the format: 'path/to/file.txt:L<start>-<end>,L<line>'.
 
-For more details, run "nanodoc topics specifying-files".
+For more details, run "nanodoc topics content".

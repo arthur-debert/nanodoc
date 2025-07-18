@@ -172,7 +172,7 @@ func init() {
 	_ = rootCmd.Flags().SetAnnotation("global-line-numbers", "group", []string{"Formatting"})
 
 	// TOC flag
-	rootCmd.Flags().BoolVar(&toc, "toc", false, "Generate a table of contents (see: nanodoc topics table-of-contents)")
+	rootCmd.Flags().BoolVar(&toc, "toc", false, "Generate a table of contents (see: nanodoc topics toc)")
 	_ = rootCmd.Flags().SetAnnotation("toc", "group", []string{"Features"})
 
 	// Theme flag
@@ -181,16 +181,16 @@ func init() {
 
 	// Header flags
 	rootCmd.Flags().BoolVar(&noHeader, "no-header", false, "Suppress file headers")
-	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style (see: nanodoc topics headers-and-sequencing)")
-	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style (see: nanodoc topics headers-and-sequencing)")
+	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style (see: nanodoc topics headers)")
+	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style (see: nanodoc topics headers)")
 	_ = rootCmd.Flags().SetAnnotation("no-header", "group", []string{"Features"})
 	_ = rootCmd.Flags().SetAnnotation("header-style", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("sequence", "group", []string{"Features"})
 
 	// File filtering flags
 	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions to treat as text")
-	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching patterns (see: nanodoc topics specifying-files)")
-	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching patterns (see: nanodoc topics specifying-files)")
+	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching patterns (see: nanodoc topics content)")
+	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching patterns (see: nanodoc topics content)")
 	_ = rootCmd.Flags().SetAnnotation("txt-ext", "group", []string{"File Selection"})
 	_ = rootCmd.Flags().SetAnnotation("include", "group", []string{"File Selection"})
 	_ = rootCmd.Flags().SetAnnotation("exclude", "group", []string{"File Selection"})

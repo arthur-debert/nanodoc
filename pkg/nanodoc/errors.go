@@ -14,7 +14,7 @@ var (
 	ErrCircularDependency = errors.New("circular dependency detected (see: nanodoc topics circular-dependencies)")
 
 	// ErrInvalidRange is returned when a line range is invalid
-	ErrInvalidRange = errors.New("invalid line range (see: nanodoc topics file-parts)")
+	ErrInvalidRange = errors.New("invalid line range (see: nanodoc topics content)")
 
 	// ErrEmptySource is returned when no source files are provided
 	ErrEmptySource = errors.New("no source files provided")
@@ -54,7 +54,7 @@ type RangeError struct {
 }
 
 func (e *RangeError) Error() string {
-	return fmt.Sprintf("invalid range '%s': %v (see: nanodoc topics file-parts)", e.Input, e.Err)
+	return fmt.Sprintf("invalid range '%s': %v (see: nanodoc topics content)", e.Input, e.Err)
 }
 
 func (e *RangeError) Unwrap() error {

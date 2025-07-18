@@ -108,8 +108,8 @@ func getAvailableTopics() ([]string, error) {
 		}
 		
 		if !d.IsDir() && strings.HasSuffix(path, ".txt") {
-			// Skip example files
-			if strings.Contains(path, "/examples/") {
+			// Skip example files and internal files
+			if strings.Contains(path, "/examples/") || strings.Contains(path, "/internal/") {
 				return nil
 			}
 			
