@@ -2,7 +2,6 @@
 
 
 1. The Problem Space
---------------------
 
 	Most software projects end up with information scattered across multiple files: README files, design documents, code comments, API documentation, troubleshooting guides, deployment notes. When you need to understand a system or create documentation for a specific purpose, you're constantly switching between files, copying and pasting sections, and losing context.
 
@@ -16,7 +15,6 @@
 
 
 2. The Current Solutions Problem
---------------------------------
 
 	Existing documentation tools tend to fall into two camps:
 		- Heavy Documentation Systems: Tools like Sphinx, GitBook, or Confluence require significant setup, learning curves, and ongoing maintenance. They're designed for comprehensive documentation sites, not quick bundling tasks.
@@ -26,7 +24,6 @@
 
 
 3. What Nanodoc Does Differently
---------------------------------
 
 	Nanodoc is designed around a single principle: combining text files should be as simple as listing them. No configuration files, no learning curve, no setup overhead.
 
@@ -42,7 +39,6 @@
 
 
 4. Practical Use Cases
-----------------------
 
 	- Code Review Preparation: Create a bundle that includes the main files being changed plus relevant documentation, giving reviewers full context in a single document.
 	- Architecture Discussions: Combine the current design documents with key implementation files to show how decisions are actually reflected in code.
@@ -53,7 +49,6 @@
 
 
 5. Design Philosophy
---------------------
 
 	Nanodoc follows Unix philosophy: do one thing well. It's not trying to replace comprehensive documentation systems or become a content management platform.
 
@@ -63,7 +58,6 @@
 
 
 6. When Nanodoc Makes Sense
----------------------------
 
 	Nanodoc is most valuable when:
 		- You frequently need to create composite documents from existing files
@@ -74,7 +68,6 @@
 
 
 7. When It Doesn't
--------------------
 
 	Nanodoc isn't the right choice if:
 		- You need rich formatting, images, or complex layouts
