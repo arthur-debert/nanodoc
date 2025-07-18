@@ -1290,3 +1290,112 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		t.Error("Expected output to contain line numbers due to --global-line-numbers option")
 	}
 }
+
+func TestBuildDocumentWithExplicitFlags(t *testing.T) {
+	// Create temp directory
+	tempDir, err := os.MkdirTemp("", "nanodoc-explicit-flags-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Logf("Failed to remove temp dir: %v", err)
+		}
+	}()
+
+	// Create test files
+	file1 := filepath.Join(tempDir, "file1.txt")
+	if err := os.WriteFile(file1, []byte("line1\nline2"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create bundle file with options
+	bundleFile := filepath.Join(tempDir, "test.bundle.txt")
+	bundleContent := []string{
+		"# Bundle with options",
+		"--toc",
+		"--theme classic-dark",
+		"--header-style path",
+		"--line-numbers",
+		"",
+		"file1.txt",
+	}
+	if err := os.WriteFile(bundleFile, []byte(strings.Join(bundleContent, "\n")), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Resolve paths
+	pathInfos, err := ResolvePaths([]string{bundleFile})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Test 1: Bundle options should be used when CLI flags are not explicitly set
+	cmdOpts := FormattingOptions{
+		Theme:         "classic",      // default value
+		ShowTOC:       false,          // default value
+		LineNumbers:   LineNumberNone, // default value
+		HeaderStyle:   HeaderStyleNice, // default value
+		ShowHeaders:   true,           // default value
+		SequenceStyle: SequenceNumerical, // default value
+	}
+	
+	explicitFlags := map[string]bool{} // No flags explicitly set
+	
+	doc, err := BuildDocumentWithExplicitFlags(pathInfos, cmdOpts, explicitFlags)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Bundle options should be used
+	if doc.FormattingOptions.Theme != "classic-dark" {
+		t.Errorf("Expected theme 'classic-dark' from bundle, got %s", doc.FormattingOptions.Theme)
+	}
+	if doc.FormattingOptions.ShowTOC != true {
+		t.Errorf("Expected ShowTOC true from bundle, got %t", doc.FormattingOptions.ShowTOC)
+	}
+	if doc.FormattingOptions.LineNumbers != LineNumberFile {
+		t.Errorf("Expected LineNumbers LineNumberFile from bundle, got %v", doc.FormattingOptions.LineNumbers)
+	}
+	if doc.FormattingOptions.HeaderStyle != HeaderStylePath {
+		t.Errorf("Expected HeaderStyle path from bundle, got %v", doc.FormattingOptions.HeaderStyle)
+	}
+
+	// Test 2: CLI options should override bundle options when explicitly set
+	cmdOptsWithOverride := FormattingOptions{
+		Theme:         "classic-light",    // explicitly set, should override bundle
+		ShowTOC:       false,              // default value, bundle should be used
+		LineNumbers:   LineNumberGlobal,   // explicitly set, should override bundle
+		HeaderStyle:   HeaderStyleFilename, // explicitly set, should override bundle
+		ShowHeaders:   true,               // default value, bundle should be used
+		SequenceStyle: SequenceNumerical,  // default value, bundle should be used
+	}
+	
+	explicitFlags = map[string]bool{
+		"theme":        true,  // explicitly set
+		"line-numbers": true,  // explicitly set
+		"header-style": true,  // explicitly set
+		// toc, no-header, sequence not set - should use bundle values
+	}
+	
+	docWithOverride, err := BuildDocumentWithExplicitFlags(pathInfos, cmdOptsWithOverride, explicitFlags)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// CLI options should override bundle options when explicitly set
+	if docWithOverride.FormattingOptions.Theme != "classic-light" {
+		t.Errorf("Expected theme 'classic-light' from CLI override, got %s", docWithOverride.FormattingOptions.Theme)
+	}
+	if docWithOverride.FormattingOptions.LineNumbers != LineNumberGlobal {
+		t.Errorf("Expected LineNumbers LineNumberGlobal from CLI override, got %v", docWithOverride.FormattingOptions.LineNumbers)
+	}
+	if docWithOverride.FormattingOptions.HeaderStyle != HeaderStyleFilename {
+		t.Errorf("Expected HeaderStyle filename from CLI override, got %v", docWithOverride.FormattingOptions.HeaderStyle)
+	}
+	
+	// Bundle options should be used for non-explicitly set flags
+	if docWithOverride.FormattingOptions.ShowTOC != true {
+		t.Errorf("Expected ShowTOC true from bundle (not overridden), got %t", docWithOverride.FormattingOptions.ShowTOC)
+	}
+}
