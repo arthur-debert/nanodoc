@@ -1,52 +1,17 @@
 # Bundle Options Feature Implementation Summary
 
 ## Overview
-The Bundle Options feature from GitHub Issue #17 has been **fully implemented** and is working correctly. This feature allows bundle files to store nanodoc processing options (like `--toc`, `--global-line-numbers`, etc.) alongside the file paths they currently contain.
+
+The bundle options feature from [Issue #17](https://github.com/arthur-debert/nanodoc-go/issues/17) has been **successfully implemented** and is working correctly. This feature allows users to embed nanodoc processing options directly in bundle files, enabling consistent and predictable output when running `nanodoc bundle.txt`.
 
 ## What Was Implemented
 
 ### Core Functionality
-- **Bundle Options Parsing**: Bundle files can now contain command-line options mixed with file paths
-- **Option Precedence**: Command-line options override bundle options when both are specified
-- **All Options Supported**: All command-line options can be used in bundle files
-- **Syntax**: Lines starting with `--` or `-` are treated as command-line options
+1. **Bundle Options Parsing**: Bundle files can now contain command-line flags mixed with file paths
+2. **Option Merging**: Bundle options are merged with command-line options, with CLI options taking precedence
+3. **Full Option Support**: All relevant command-line options are supported in bundle files
 
-### Implementation Details
-- `BundleOptions` struct holds formatting options parsed from bundle files
-- `BundleResult` struct holds both options and file paths
-- `parseOption` function parses individual options from bundle files
-- `ProcessBundleFileWithOptions` processes bundle files with options
-- `MergeFormattingOptions` handles precedence rules
-- `ExtractAndMergeBundleOptions` extracts and merges options from multiple bundle files
-
-### Documentation Updates
-- Updated `docs/specifying_files.txt` with comprehensive bundle options documentation
-- Updated `README.md` to include bundle options information
-- Added examples of bundle files with options
-
-## Testing
-- All existing tests pass
-- Comprehensive test coverage for bundle options functionality
-- Tests for option parsing, merging, and precedence rules
-- Manual testing confirms all features work correctly
-
-## Example Usage
-
-### Bundle File Format
-```
-# My Project Bundle
---toc
---theme classic-dark
---line-numbers
---header-style nice
---sequence roman
-
-README.md
-docs/
-pkg/nanodoc/*.go
-```
-
-### Available Options
+### Supported Options in Bundle Files
 - `--toc` - Generate table of contents
 - `--theme THEME` - Set theme (classic, classic-dark, classic-light)
 - `--line-numbers` / `-n` - Enable per-file line numbering
@@ -56,14 +21,89 @@ pkg/nanodoc/*.go
 - `--sequence STYLE` - Set sequence style (numerical, letter, roman)
 - `--txt-ext EXTENSION` - Add file extension to process
 
-### Command Usage
-```bash
-# Use bundle with options
-nanodoc my-bundle.bundle.txt
+### Example Bundle File
+```
+# My Project Bundle
+--toc
+--global-line-numbers
+--header-style nice
+--sequence roman
+--theme classic-dark
 
-# Override bundle options with command-line options
-nanodoc my-bundle.bundle.txt --theme classic-light --no-header
+README.md
+src/main.go
+docs/api.md
 ```
 
-## Status
-✅ **COMPLETE** - The feature is fully implemented, tested, and documented.
+## Implementation Details
+
+### Key Components
+1. **Option Parsing**: `parseOption()` function in `pkg/nanodoc/bundle.go` handles parsing command-line flags from bundle files
+2. **Option Merging**: `MergeFormattingOptionsWithDefaults()` function merges bundle options with CLI options
+3. **Explicit Flag Tracking**: `trackExplicitFlags()` in `cmd/nanodoc/root.go` determines which CLI flags were explicitly set
+4. **Integration**: `BuildDocumentWithExplicitFlags()` orchestrates the entire process
+
+### Precedence Rules
+- Command-line options **always** override bundle options
+- Bundle options override default values when no explicit CLI flags are set
+- Multiple bundle files: first bundle wins for conflicting options
+- Additional extensions are merged from all sources
+
+## Testing
+
+### Comprehensive Test Suite
+Created `pkg/nanodoc/bundle_options_test.go` with extensive test coverage:
+- Option parsing validation
+- Error handling for invalid options
+- Precedence rule verification
+- Integration testing
+- Edge cases and error scenarios
+
+### Test Results
+```
+=== RUN   TestParseOption
+--- PASS: TestParseOption (0.00s)
+=== RUN   TestMergeFormattingOptions
+--- PASS: TestMergeFormattingOptions (0.00s)
+=== RUN   TestProcessBundleFileWithOptions
+--- PASS: TestProcessBundleFileWithOptions (0.00s)
+=== RUN   TestBundleOptionsIntegration
+--- PASS: TestBundleOptionsIntegration (0.00s)
+=== RUN   TestEndToEndBundleOptions
+--- PASS: TestEndToEndBundleOptions (0.00s)
+```
+
+### Live Demo
+Successfully demonstrated the feature working end-to-end:
+1. Created bundle file with embedded options
+2. Verified options are applied correctly
+3. Confirmed CLI options override bundle options
+
+## Current Status
+
+✅ **COMPLETE**: The feature from Issue #17 is fully implemented and working correctly.
+
+### What's Already Working
+- Bundle option parsing for all supported flags
+- Option merging with correct precedence
+- Error handling for invalid options
+- Comprehensive test coverage
+- Documentation is already updated in README.md
+
+### Documentation Updates
+The following documentation already reflects the feature:
+- `README.md` - Contains examples of bundle files with options
+- `docs/specifying_files.txt` - Documents the bundle options syntax
+- Feature is listed in the main features section
+
+## Conclusion
+
+The bundle options feature requested in Issue #17 has been fully implemented and is working correctly. Users can now create bundle files with embedded formatting options, achieving the goal of predictable and consistent output when running `nanodoc bundle.txt`.
+
+The implementation follows the exact design specified in the issue:
+- Same syntax as command-line flags
+- Comments support with `#`
+- Command-line options override bundle options
+- Simple and intuitive to use
+
+No further implementation is needed for this feature.
