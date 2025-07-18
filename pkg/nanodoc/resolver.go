@@ -133,7 +133,11 @@ func handleDirectoryWithOptions(pathInfo PathInfo, options *FormattingOptions) (
 		}
 	} else {
 		// No patterns, use existing behavior
-		files, err = findTextFilesInDir(pathInfo.Absolute)
+		var additionalExts []string
+		if options != nil {
+			additionalExts = options.AdditionalExtensions
+		}
+		files, err = findTextFilesInDirWithExtensions(pathInfo.Absolute, additionalExts)
 	}
 	
 	if err != nil {
@@ -212,8 +216,9 @@ func isBundleFile(path string) bool {
 	return strings.Contains(base, BundlePattern)
 }
 
-// findTextFilesInDir finds all text files in a directory
-func findTextFilesInDir(dir string) ([]string, error) {
+
+// findTextFilesInDirWithExtensions finds all text files in a directory with optional additional extensions
+func findTextFilesInDirWithExtensions(dir string, additionalExtensions []string) ([]string, error) {
 	var files []string
 
 	entries, err := os.ReadDir(dir)
@@ -227,7 +232,7 @@ func findTextFilesInDir(dir string) ([]string, error) {
 		}
 
 		fullPath := filepath.Join(dir, entry.Name())
-		if isTextFile(fullPath) {
+		if isTextFileWithExtensions(fullPath, additionalExtensions) {
 			files = append(files, fullPath)
 		}
 	}
