@@ -73,7 +73,7 @@ Create a `.bundle.txt` file to define reusable file lists and formatting options
 # My project bundle
 --toc
 --linenum global
---file-style nice
+--header-format nice
 --file-numbering roman
 --theme classic-dark
 
@@ -86,7 +86,7 @@ docs/api.md
 Bundle files support:
 - **Bundle options**: Embed command-line flags directly in bundle files
   - Lines starting with `--` are treated as command-line options
-  - Available options: `--toc`, `--theme`, `--linenum`, `--filenames`, `--file-style`, `--file-numbering`, `--ext`
+  - Available options: `--toc`, `--theme`, `--linenum`, `--filenames`, `--header-format`, `--file-numbering`, `--ext`
   - Command-line options override bundle options when both are specified
 - Comments (lines starting with `#`)
 - Relative and absolute paths

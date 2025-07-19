@@ -69,8 +69,8 @@ type FormattingOptions struct {
 	// Whether to show filenames
 	ShowFilenames bool
 
-	// Filename style
-	FilenameStyle FilenameStyle
+	// Header format
+	HeaderFormat HeaderFormat
 
 	// Filename sequence type
 	SequenceStyle SequenceStyle
@@ -129,7 +129,7 @@ func NewDocument() *Document {
 		FormattingOptions: FormattingOptions{
 			Theme:         ThemeClassic,
 			ShowFilenames:   true,
-			FilenameStyle:   FilenameStyleNice,
+			HeaderFormat:   HeaderFormatNice,
 			SequenceStyle: SequenceNumerical,
 			LineNumbers:   LineNumberNone,
 		},

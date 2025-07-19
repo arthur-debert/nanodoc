@@ -17,7 +17,7 @@ Basic Bundle Syntax
         # --- Options ---
         --toc
         --linenum global
-        --file-style nice
+        --header-format nice
         --file-numbering roman
         --theme classic-dark
 
@@ -35,7 +35,7 @@ All formatting options are supported in bundle files:
     - --toc - Generate a table of contents
     - --linenum <mode> or -l <mode> - Enable line numbering (file or global)
     - --theme <name> - Set the theme (classic, classic-dark, classic-light)
-    - --file-style <style> - Set filename display style (nice, filename, path)
+    - --header-format <style> - Set header display style (nice, filename, path)
     - --file-numbering <style> - Set file numbering style (numerical, alphabetical, roman)
     - --filenames=false - Hide file headers (default: true)
     - --ext <ext> - Additional file extensions to treat as text
@@ -57,7 +57,7 @@ Example: Development vs Production Bundles
 dev.bundle.txt:
     -- 
         --linenum file
-        --file-style path
+        --header-format path
         --theme classic
 
         src/
@@ -197,7 +197,7 @@ Example saved bundle:
         --toc
         --linenum global
         --theme classic-dark
-        --file-style nice
+        --header-format nice
         --file-numbering numerical
 
         # --- Content ---
@@ -282,7 +282,7 @@ Supported Options in Bundles
     --toc                      Generate a table of contents
     --linenum <mode>, -l       Enable line numbering (file or global)
     --theme <name>             Set theme (classic, classic-dark, classic-light)
-    --file-style <style>       Set filename display style (nice, filename, path)
+    --header-format <style>    Set header display style (nice, filename, path)
     --file-numbering <style>   Set file numbering style (numerical, alphabetical, roman)
     --filenames[=bool]         Show/hide file headers (default: true)
     --ext <ext>                Additional file extensions to treat as text

@@ -18,7 +18,7 @@ var (
 	theme              string
 	showFilenames      bool
 	fileNumbering      string
-	fileStyle          string
+	headerFormat       string
 	additionalExt      []string
 	includePatterns    []string
 	excludePatterns    []string
@@ -86,7 +86,7 @@ var rootCmd = &cobra.Command{
 			Theme:         theme,
 			ShowFilenames:   showFilenames,
 			SequenceStyle: nanodoc.SequenceStyle(fileNumbering),
-			FilenameStyle:   nanodoc.FilenameStyle(fileStyle),
+			HeaderFormat:   nanodoc.HeaderFormat(headerFormat),
 			AdditionalExtensions: additionalExt,
 			IncludePatterns: includePatterns,
 			ExcludePatterns: excludePatterns,
@@ -182,8 +182,8 @@ func trackExplicitFlags(cmd *cobra.Command) {
 	if cmd.Flags().Changed("filenames") {
 		explicitFlags["no-header"] = true
 	}
-	if cmd.Flags().Changed("file-style") {
-		explicitFlags["filename-style"] = true
+	if cmd.Flags().Changed("header-format") {
+		explicitFlags["header-format"] = true
 	}
 	if cmd.Flags().Changed("file-numbering") {
 		explicitFlags["sequence"] = true
@@ -235,8 +235,8 @@ func saveBundleFile(path string, args []string, opts nanodoc.FormattingOptions, 
 		content.WriteString("--filenames=false\n")
 	}
 
-	// File style
-	content.WriteString(fmt.Sprintf("--file-style=%s\n", string(opts.FilenameStyle)))
+	// File header format
+	content.WriteString(fmt.Sprintf("--header-format=%s\n", string(opts.HeaderFormat)))
 
 	// File numbering
 	content.WriteString(fmt.Sprintf("--file-numbering=%s\n", string(opts.SequenceStyle)))
@@ -277,7 +277,7 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 	var bundleTheme string
 	var bundleShowFilenames bool
 	var bundleFileNumbering string
-	var bundleFileStyle string
+	var bundleHeaderFormat string
 	var bundleAdditionalExt []string
 	var bundleIncludePatterns []string
 	var bundleExcludePatterns []string
@@ -286,7 +286,7 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 	tempCmd.Flags().BoolVar(&bundleToc, "toc", false, "")
 	tempCmd.Flags().StringVar(&bundleTheme, "theme", "classic", "")
 	tempCmd.Flags().BoolVar(&bundleShowFilenames, "filenames", true, "")
-	tempCmd.Flags().StringVar(&bundleFileStyle, "file-style", "nice", "")
+	tempCmd.Flags().StringVar(&bundleHeaderFormat, "header-format", "nice", "")
 	tempCmd.Flags().StringVar(&bundleFileNumbering, "file-numbering", "numerical", "")
 	tempCmd.Flags().StringSliceVar(&bundleAdditionalExt, "ext", []string{}, "")
 	tempCmd.Flags().StringSliceVar(&bundleIncludePatterns, "include", []string{}, "")
@@ -320,7 +320,7 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 		Theme:                bundleTheme,
 		ShowFilenames:          bundleShowFilenames,
 		SequenceStyle:        nanodoc.SequenceStyle(bundleFileNumbering),
-		FilenameStyle:          nanodoc.FilenameStyle(bundleFileStyle),
+		HeaderFormat:          nanodoc.HeaderFormat(bundleHeaderFormat),
 		AdditionalExtensions: bundleAdditionalExt,
 		IncludePatterns:      bundleIncludePatterns,
 		ExcludePatterns:      bundleExcludePatterns,
@@ -341,8 +341,8 @@ func mergeOptionsWithExplicitFlags(bundleOpts, cmdOpts nanodoc.FormattingOptions
 	if !explicitFlags["no-header"] {
 		result.ShowFilenames = bundleOpts.ShowFilenames
 	}
-	if !explicitFlags["filename-style"] {
-		result.FilenameStyle = bundleOpts.FilenameStyle
+	if !explicitFlags["header-format"] {
+		result.HeaderFormat = bundleOpts.HeaderFormat
 	}
 	if !explicitFlags["sequence"] {
 		result.SequenceStyle = bundleOpts.SequenceStyle
@@ -427,8 +427,8 @@ func init() {
 
 	// File name flags
 	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
-	rootCmd.Flags().StringVar(&fileStyle, "file-style", "nice", FlagFileStyle)
-	_ = rootCmd.RegisterFlagCompletionFunc("file-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	rootCmd.Flags().StringVar(&headerFormat, "header-format", "nice", FlagHeaderFormat)
+	_ = rootCmd.RegisterFlagCompletionFunc("header-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"nice", "simple", "path", "filename", "title"}, cobra.ShellCompDirectiveNoFileComp
 	})
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
@@ -436,7 +436,7 @@ func init() {
 		return []string{"numerical", "alphabetical", "roman"}, cobra.ShellCompDirectiveNoFileComp
 	})
 	_ = rootCmd.Flags().SetAnnotation("filenames", "group", []string{"Features"})
-	_ = rootCmd.Flags().SetAnnotation("file-style", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("header-format", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("file-numbering", "group", []string{"Features"})
 
 	// File filtering flags
@@ -458,4 +458,4 @@ func init() {
 	
 	// Initialize custom help system
 	initHelpSystem()
-} 
+}

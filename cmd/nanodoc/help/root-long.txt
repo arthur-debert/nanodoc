@@ -9,6 +9,6 @@ a minimal document bundler stiching together smaller and more focused topics.
   $ nanodoc docs/ --include=**/*.txt --exclude=**/*/.md 
 
   # Insert toc, filenames, line numbers: 
-  $ nanodoc docs/*.txt --toc --linenum=file --file-style=title 
+  $ nanodoc docs/*.txt --toc --linenum=file --header-format=title 
 
 Paths can be files, directories or bundle files ($ nanodoc topcis bundle)

@@ -278,7 +278,7 @@ func TestBuildDocument(t *testing.T) {
 
 	options := FormattingOptions{
 		ShowFilenames:   true,
-		FilenameStyle:   FilenameStyleNice,
+		HeaderFormat:   HeaderFormatNice,
 		LineNumbers:   LineNumberNone,
 		SequenceStyle: SequenceNumerical,
 	}
@@ -297,8 +297,8 @@ func TestBuildDocument(t *testing.T) {
 	if doc.FormattingOptions.ShowFilenames != options.ShowFilenames {
 		t.Errorf("FormattingOptions.ShowFilenames not set correctly")
 	}
-	if doc.FormattingOptions.FilenameStyle != options.FilenameStyle {
-		t.Errorf("FormattingOptions.FilenameStyle not set correctly")
+	if doc.FormattingOptions.HeaderFormat != options.HeaderFormat {
+		t.Errorf("FormattingOptions.HeaderFormat not set correctly")
 	}
 }
 
@@ -392,7 +392,7 @@ func TestBundleOptions(t *testing.T) {
 		"# Bundle with options",
 		"--toc",
 		"--theme classic-dark",
-		"--file-style filename",
+		"--header-format filename",
 		"--file-numbering roman",
 		"--linenum global",
 		"--ext log",
@@ -416,7 +416,7 @@ func TestBundleOptions(t *testing.T) {
 	expectedOptions := []string{
 		"--toc",
 		"--theme classic-dark",
-		"--file-style filename",
+		"--header-format filename",
 		"--file-numbering roman",
 		"--linenum global",
 		"--ext log",
@@ -447,22 +447,16 @@ func TestProcessLiveBundle(t *testing.T) {
 	}{
 		{
 			name: "simple_live_bundle",
-			content: `This is a test document.
-Here we include a file: [[file:test.txt]]
-And here is more text.`,
+			content: "This is a test document.\nHere we include a file: [[file:test.txt]]\nAnd here is more text.",
 			setupFunc: func(tempDir string) error {
 				return os.WriteFile(filepath.Join(tempDir, "test.txt"), []byte("Included content"), 0644)
 			},
-			want: `This is a test document.
-Here we include a file: Included content
-And here is more text.`,
+			want: "This is a test document.\nHere we include a file: Included content\nAnd here is more text.",
 			wantErr: false,
 		},
 		{
 			name: "nested_live_bundle",
-			content: `Main document
-[[file:file1.txt]]
-End of main`,
+			content: "Main document\n[[file:file1.txt]]\nEnd of main",
 			setupFunc: func(tempDir string) error {
 				// file1.txt includes file2.txt
 				if err := os.WriteFile(filepath.Join(tempDir, "file1.txt"), 
@@ -473,11 +467,7 @@ End of main`,
 				return os.WriteFile(filepath.Join(tempDir, "file2.txt"), 
 					[]byte("File 2 content"), 0644)
 			},
-			want: `Main document
-File 1 start
-File 2 content
-File 1 end
-End of main`,
+			want: "Main document\nFile 1 start\nFile 2 content\nFile 1 end\nEnd of main",
 			wantErr: false,
 		},
 		{
@@ -578,9 +568,7 @@ func TestProcessLiveBundleWithRanges(t *testing.T) {
 
 	// Test with range
 	input := `Include lines 2-4: [[file:multiline.txt:L2-4]]`
-	want := `Include lines 2-4: Line 2
-Line 3
-Line 4`
+	want := "Include lines 2-4: Line 2\nLine 3\nLine 4"
 
 	got, err := ProcessLiveBundle(input)
 	if err != nil {
@@ -677,7 +665,7 @@ func TestProcessBundleFileWithOptions(t *testing.T) {
 		"# --- Options ---",
 		"--toc",
 		"--linenum global",
-		"--file-style nice",
+		"--header-format nice",
 		"--file-numbering roman",
 		"--theme classic-dark",
 		"--ext go",
@@ -707,7 +695,7 @@ func TestProcessBundleFileWithOptions(t *testing.T) {
 	expectedOptions := []string{
 		"--toc",
 		"--linenum global",
-		"--file-style nice",
+		"--header-format nice",
 		"--file-numbering roman",
 		"--theme classic-dark",
 		"--ext go",
@@ -823,7 +811,7 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		"",
 		"--toc",
 		"--linenum global",
-		"--file-style nice",
+		"--header-format nice",
 		"--file-numbering roman",
 		"--theme classic-dark",
 		"",
@@ -851,7 +839,7 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		ShowTOC:       true,
 		LineNumbers:   LineNumberGlobal,
 		ShowFilenames:   true,
-		FilenameStyle:   FilenameStyleNice,
+		HeaderFormat:   HeaderFormatNice,
 		SequenceStyle: SequenceRoman,
 	}
 
@@ -871,8 +859,8 @@ func TestEndToEndBundleOptions(t *testing.T) {
 	if doc.FormattingOptions.LineNumbers != LineNumberGlobal {
 		t.Error("Expected LineNumbers to be LineNumberGlobal from bundle")
 	}
-	if doc.FormattingOptions.FilenameStyle != FilenameStyleNice {
-		t.Error("Expected FilenameStyle to be FilenameStyleNice from bundle")
+	if doc.FormattingOptions.HeaderFormat != HeaderFormatNice {
+		t.Error("Expected HeaderFormat to be HeaderFormatNice from bundle")
 	}
 	if doc.FormattingOptions.SequenceStyle != SequenceRoman {
 		t.Error("Expected SequenceStyle to be SequenceRoman from bundle")
@@ -885,7 +873,7 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		ShowTOC:       true,                // From bundle (CLI was default)
 		LineNumbers:   LineNumberFile,      // CLI override
 		ShowFilenames:   true,
-		FilenameStyle:   FilenameStyleFilename, // CLI override
+		HeaderFormat:   HeaderFormatFilename, // CLI override
 		SequenceStyle: SequenceRoman,       // From bundle (CLI was default)
 	}
 
@@ -904,8 +892,8 @@ func TestEndToEndBundleOptions(t *testing.T) {
 	if doc2.FormattingOptions.LineNumbers != LineNumberFile {
 		t.Error("Expected LineNumbers to be LineNumberFile from CLI override")
 	}
-	if doc2.FormattingOptions.FilenameStyle != FilenameStyleFilename {
-		t.Error("Expected FilenameStyle to be FilenameStyleFilename from CLI override")
+	if doc2.FormattingOptions.HeaderFormat != HeaderFormatFilename {
+		t.Error("Expected HeaderFormat to be HeaderFormatFilename from CLI override")
 	}
 	if doc2.FormattingOptions.SequenceStyle != SequenceRoman {
 		t.Error("Expected SequenceStyle to be SequenceRoman from bundle (CLI was default)")
@@ -963,7 +951,7 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		"# Bundle with options",
 		"--toc",
 		"--theme classic-dark",
-		"--file-style path",
+		"--header-format path",
 		"--linenum file",
 		"",
 		"file1.txt",
@@ -984,7 +972,7 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		Theme:         "classic-dark",  // from bundle
 		ShowTOC:       true,            // from bundle
 		LineNumbers:   LineNumberFile,  // from bundle
-		FilenameStyle:   FilenameStylePath, // from bundle
+		HeaderFormat:   HeaderFormatPath, // from bundle
 		ShowFilenames:   true,
 		SequenceStyle: SequenceNumerical,
 	}
@@ -1006,8 +994,8 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 	if doc.FormattingOptions.LineNumbers != LineNumberFile {
 		t.Errorf("Expected LineNumbers LineNumberFile from bundle, got %v", doc.FormattingOptions.LineNumbers)
 	}
-	if doc.FormattingOptions.FilenameStyle != FilenameStylePath {
-		t.Errorf("Expected FilenameStyle path from bundle, got %v", doc.FormattingOptions.FilenameStyle)
+	if doc.FormattingOptions.HeaderFormat != HeaderFormatPath {
+		t.Errorf("Expected HeaderFormat path from bundle, got %v", doc.FormattingOptions.HeaderFormat)
 	}
 
 	// Test 2: Options that would result from CLI overriding some bundle options
@@ -1016,7 +1004,7 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		Theme:         "classic-light",     // CLI override
 		ShowTOC:       true,                // from bundle (not overridden)
 		LineNumbers:   LineNumberGlobal,    // CLI override
-		FilenameStyle:   FilenameStyleFilename, // CLI override
+		HeaderFormat:   HeaderFormatFilename, // CLI override
 		ShowFilenames:   true,
 		SequenceStyle: SequenceNumerical,
 	}
@@ -1036,8 +1024,8 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 	if docWithOverride.FormattingOptions.LineNumbers != LineNumberGlobal {
 		t.Errorf("Expected LineNumbers LineNumberGlobal from CLI override, got %v", docWithOverride.FormattingOptions.LineNumbers)
 	}
-	if docWithOverride.FormattingOptions.FilenameStyle != FilenameStyleFilename {
-		t.Errorf("Expected FilenameStyle filename from CLI override, got %v", docWithOverride.FormattingOptions.FilenameStyle)
+	if docWithOverride.FormattingOptions.HeaderFormat != HeaderFormatFilename {
+		t.Errorf("Expected HeaderFormat filename from CLI override, got %v", docWithOverride.FormattingOptions.HeaderFormat)
 	}
 	
 	// Options from bundle (not overridden)

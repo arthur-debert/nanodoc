@@ -154,7 +154,7 @@ func TestNewFormattingContext(t *testing.T) {
 				Theme:         "classic",
 				LineNumbers:   LineNumberNone,
 				ShowFilenames:   true,
-				FilenameStyle:   FilenameStyleNice,
+				HeaderFormat:   HeaderFormatNice,
 				SequenceStyle: SequenceNumerical,
 				ShowTOC:       false,
 			},

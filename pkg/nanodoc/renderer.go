@@ -22,7 +22,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 	var parts []string
 
 	// Generate TOC first, as it's used for filenames
-	if ctx.ShowTOC || ctx.FilenameStyle == FilenameStyleNice {
+	if ctx.ShowTOC || ctx.HeaderFormat == HeaderFormatNice {
 		slog.Debug("Generating table of contents for filenames/TOC")
 		generateTOC(doc)
 	}
@@ -59,7 +59,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 
 			// Generate filename
 			sequenceNumber++
-			filename := generateFilename(item.Filepath, ctx.FilenameStyle, ctx.SequenceStyle, sequenceNumber, doc)
+			filename := generateFilename(item.Filepath, ctx.HeaderFormat, ctx.SequenceStyle, sequenceNumber, doc)
 			parts = append(parts, filename)
 			parts = append(parts, "\n\n")
 		}
@@ -100,7 +100,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 }
 
 // generateFilename creates a filename for a file
-func generateFilename(filePath string, style FilenameStyle, seqStyle SequenceStyle, seqNum int, doc *Document) string {
+func generateFilename(filePath string, format HeaderFormat, seqStyle SequenceStyle, seqNum int, doc *Document) string {
 	// Find the primary title for this file from the TOC
 	var title string
 	for _, entry := range doc.TOC {
@@ -110,21 +110,21 @@ func generateFilename(filePath string, style FilenameStyle, seqStyle SequenceSty
 		}
 	}
 
-	switch style {
-	case FilenameStyleFilename:
+	switch format {
+	case HeaderFormatFilename:
 		filename := filepath.Base(filePath)
 		seq := generateSequence(seqNum, seqStyle)
 		if seq != "" {
 			return fmt.Sprintf("%s. %s", seq, filename)
 		}
 		return filename
-	case FilenameStylePath:
+	case HeaderFormatPath:
 		seq := generateSequence(seqNum, seqStyle)
 		if seq != "" {
 			return fmt.Sprintf("%s. %s", seq, filePath)
 		}
 		return filePath
-	case FilenameStyleNice:
+	case HeaderFormatNice:
 		fallthrough
 	default:
 		// Use title from TOC if available, otherwise generate from filename
