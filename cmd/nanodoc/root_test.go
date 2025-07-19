@@ -42,7 +42,10 @@ func executeCommand(args ...string) (string, error) {
 	rootCmd.Flags().BoolVar(&toc, "toc", false, FlagTOC)
 	rootCmd.Flags().StringVar(&theme, "theme", "classic", FlagTheme)
 	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
-	rootCmd.Flags().StringVar(&headerFormat, "header-format", "nice", FlagHeaderFormat)
+	rootCmd.Flags().StringVar(&filenameFormat, "header-format", "nice", FlagHeaderFormat)
+	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment (left, center, right)")
+	rootCmd.Flags().StringVar(&filenameBanner, "header-style", "none", "Header style")
+	rootCmd.Flags().IntVar(&pageWidth, "page-width", 80, "Page width for alignment")
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
 	rootCmd.Flags().StringSliceVar(&additionalExt, "ext", []string{}, FlagExt)
 	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
@@ -263,7 +266,10 @@ func resetFlags() {
 	theme = "classic"
 	showFilenames = true
 	fileNumbering = "numerical"
-	headerFormat = "nice"
+	filenameFormat = "nice"
+	filenameAlign = "left"
+	filenameBanner = "none"
+	pageWidth = 80
 	additionalExt = []string{}
 	includePatterns = []string{}
 	excludePatterns = []string{}

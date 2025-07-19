@@ -18,9 +18,9 @@ var (
 	theme              string
 	showFilenames      bool
 	fileNumbering      string
-	headerFormat       string
-	headerAlign        string
-	headerStyle        string
+	filenameFormat     string  // renamed from headerFormat
+	filenameAlign      string  // renamed from headerAlign
+	filenameBanner     string  // renamed from headerStyle
 	pageWidth          int
 	additionalExt      []string
 	includePatterns    []string
@@ -89,9 +89,9 @@ var rootCmd = &cobra.Command{
 			Theme:         theme,
 			ShowFilenames:   showFilenames,
 			SequenceStyle: nanodoc.SequenceStyle(fileNumbering),
-			HeaderFormat:   nanodoc.HeaderFormat(headerFormat),
-			HeaderAlignment: headerAlign,
-			HeaderStyle:     headerStyle,
+			HeaderFormat:   nanodoc.HeaderFormat(filenameFormat),
+			HeaderAlignment: filenameAlign,
+			HeaderStyle:     filenameBanner,
 			PageWidth:       pageWidth,
 			AdditionalExtensions: additionalExt,
 			IncludePatterns: includePatterns,
@@ -295,9 +295,9 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 	var bundleTheme string
 	var bundleShowFilenames bool
 	var bundleFileNumbering string
-	var bundleHeaderFormat string
-	var bundleHeaderAlign string
-	var bundleHeaderStyle string
+	var bundleFilenameFormat string
+	var bundleFilenameAlign string
+	var bundleFilenameBanner string
 	var bundlePageWidth int
 	var bundleAdditionalExt []string
 	var bundleIncludePatterns []string
@@ -307,9 +307,9 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 	tempCmd.Flags().BoolVar(&bundleToc, "toc", false, "")
 	tempCmd.Flags().StringVar(&bundleTheme, "theme", "classic", "")
 	tempCmd.Flags().BoolVar(&bundleShowFilenames, "filenames", true, "")
-	tempCmd.Flags().StringVar(&bundleHeaderFormat, "header-format", "nice", "")
-	tempCmd.Flags().StringVar(&bundleHeaderAlign, "header-align", "left", "")
-	tempCmd.Flags().StringVar(&bundleHeaderStyle, "header-style", "none", "")
+	tempCmd.Flags().StringVar(&bundleFilenameFormat, "header-format", "nice", "")
+	tempCmd.Flags().StringVar(&bundleFilenameAlign, "header-align", "left", "")
+	tempCmd.Flags().StringVar(&bundleFilenameBanner, "header-style", "none", "")
 	tempCmd.Flags().IntVar(&bundlePageWidth, "page-width", nanodoc.OUTPUT_WIDTH, "")
 	tempCmd.Flags().StringVar(&bundleFileNumbering, "file-numbering", "numerical", "")
 	tempCmd.Flags().StringSliceVar(&bundleAdditionalExt, "ext", []string{}, "")
@@ -344,9 +344,9 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 		Theme:                bundleTheme,
 		ShowFilenames:          bundleShowFilenames,
 		SequenceStyle:        nanodoc.SequenceStyle(bundleFileNumbering),
-		HeaderFormat:          nanodoc.HeaderFormat(bundleHeaderFormat),
-		HeaderAlignment:      bundleHeaderAlign,
-		HeaderStyle:          bundleHeaderStyle,
+		HeaderFormat:          nanodoc.HeaderFormat(bundleFilenameFormat),
+		HeaderAlignment:      bundleFilenameAlign,
+		HeaderStyle:          bundleFilenameBanner,
 		PageWidth:            bundlePageWidth,
 		AdditionalExtensions: bundleAdditionalExt,
 		IncludePatterns:      bundleIncludePatterns,
@@ -463,15 +463,15 @@ func init() {
 
 	// File name flags
 	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
-	rootCmd.Flags().StringVar(&headerFormat, "header-format", "nice", FlagHeaderFormat)
+	rootCmd.Flags().StringVar(&filenameFormat, "header-format", "nice", FlagHeaderFormat)
 	_ = rootCmd.RegisterFlagCompletionFunc("header-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"nice", "simple", "path", "filename", "title"}, cobra.ShellCompDirectiveNoFileComp
 	})
-	rootCmd.Flags().StringVar(&headerAlign, "header-align", "left", "Header alignment (left, center, right)")
+	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment (left, center, right)")
 	_ = rootCmd.RegisterFlagCompletionFunc("header-align", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"left", "center", "right"}, cobra.ShellCompDirectiveNoFileComp
 	})
-	rootCmd.Flags().StringVar(&headerStyle, "header-style", "none", "Header style")
+	rootCmd.Flags().StringVar(&filenameBanner, "header-style", "none", "Header style")
 	_ = rootCmd.RegisterFlagCompletionFunc("header-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		// Dynamically get banner styles from registry
 		return nanodoc.GetBannerStyleNames(), cobra.ShellCompDirectiveNoFileComp
