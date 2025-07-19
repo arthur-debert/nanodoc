@@ -16,14 +16,14 @@ Glob patterns are handled internally by nanodoc using gitignore-style matching. 
 1. How Directory Expansion Works:
 
   1. When expanding a directory, nanodoc will filter by file extensions. By default those are `.txt` and `.md`
-  2. Additional extensions like js or py can be added with the --txt-ext option.
+  2. Additional extensions like js or py can be added with the --ext option.
 
 
 2. The include and exclude options:
 
      Both options use glob patterns. For directory expansion, they filter files
      AFTER extension checking. This means --include alone cannot override the
-     extension filter - you must use --txt-ext to add extensions first.
+     extension filter - you must use --ext to add extensions first.
 
      However, when using glob patterns as arguments (e.g., **/*.js), the extension filter is bypassed entirely. 
 
@@ -79,8 +79,29 @@ Glob patterns are handled internally by nanodoc using gitignore-style matching. 
 
 		--
 		# Process Python files
-		nanodoc --txt-ext py src/
+		nanodoc --ext py src/
 
 		# Multiple extensions
-		nanodoc --txt-ext py --txt-ext js --txt-ext yaml project/
+		nanodoc --ext py --ext js --ext yaml project/
 		--
+
+
+5. File Order Preservation
+
+	Nanodoc preserves the order of files exactly as you specify them. This is important for maintaining document flow and logical structure.
+
+		-- file order examples:
+		
+			# Files are processed in the exact order given
+			nanodoc intro.md main.go appendix.md
+			# Result: intro.md first, then main.go, then appendix.md
+
+			# When using globs, files are sorted alphabetically within each pattern
+			nanodoc intro.md **/*.go conclusion.md
+			# Result: intro.md first, all .go files (sorted), then conclusion.md
+
+			# Mix specific files and directories
+			nanodoc overview.txt src/ summary.txt
+			# Result: overview.txt, then src/ contents, then summary.txt
+		
+		-- bash
