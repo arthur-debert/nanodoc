@@ -1,6 +1,7 @@
 package nanodoc
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -168,4 +169,48 @@ func MergeOptionsWithExplicitFlags(bundleOpts, cmdOpts FormattingOptions, explic
 	}
 	
 	return result
+}
+
+// BuildFormattingOptions constructs FormattingOptions from command-line flag values
+func BuildFormattingOptions(
+	lineNum string,
+	toc bool,
+	theme string,
+	showFilenames bool,
+	fileNumbering string,
+	filenameFormat string,
+	filenameAlign string,
+	filenameBanner string,
+	pageWidth int,
+	additionalExt []string,
+	includePatterns []string,
+	excludePatterns []string,
+) (FormattingOptions, error) {
+	// Parse line number mode
+	lineNumberMode := LineNumberNone
+	switch lineNum {
+	case "file":
+		lineNumberMode = LineNumberFile
+	case "global":
+		lineNumberMode = LineNumberGlobal
+	case "":
+		// Default is none
+	default:
+		return FormattingOptions{}, fmt.Errorf("invalid --linenum value: %s (must be 'file' or 'global')", lineNum)
+	}
+
+	return FormattingOptions{
+		LineNumbers:          lineNumberMode,
+		ShowTOC:              toc,
+		Theme:                theme,
+		ShowFilenames:        showFilenames,
+		SequenceStyle:        SequenceStyle(fileNumbering),
+		HeaderFormat:         HeaderFormat(filenameFormat),
+		HeaderAlignment:      filenameAlign,
+		HeaderStyle:          filenameBanner,
+		PageWidth:            pageWidth,
+		AdditionalExtensions: additionalExt,
+		IncludePatterns:      includePatterns,
+		ExcludePatterns:      excludePatterns,
+	}, nil
 }
