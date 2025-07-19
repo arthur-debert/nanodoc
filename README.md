@@ -52,8 +52,8 @@ nanodoc -nn *.txt
 # With table of contents
 nanodoc --toc chapter*.md
 
-# With dark theme and no headers
-nanodoc --theme=classic-dark --no-header *.md
+# With dark theme and no filenames
+nanodoc --theme=classic-dark --filenames=false *.md
 
 # Use glob patterns
 nanodoc src/*.go docs/*.md
@@ -62,7 +62,7 @@ nanodoc src/*.go docs/*.md
 nanodoc docs/ --include="**/api/*.md" --exclude="**/internal/**"
 
 # Process only Go source files, excluding tests
-nanodoc src/ --txt-ext=go --include="**/*.go" --exclude="**/*_test.go"
+nanodoc src/ --ext=go --include="**/*.go" --exclude="**/*_test.go"
 ```
 
 ### Bundle Files
@@ -72,9 +72,9 @@ Create a `.bundle.txt` file to define reusable file lists and formatting options
 ```txt
 # My project bundle
 --toc
---global-line-numbers
---header-style nice
---sequence roman
+--linenum global
+--file-style nice
+--file-numbering roman
 --theme classic-dark
 
 README.md
@@ -86,7 +86,7 @@ docs/api.md
 Bundle files support:
 - **Bundle options**: Embed command-line flags directly in bundle files
   - Lines starting with `--` are treated as command-line options
-  - Available options: `--toc`, `--theme`, `--line-numbers`, `--global-line-numbers`, `--no-header`, `--header-style`, `--sequence`, `--txt-ext`
+  - Available options: `--toc`, `--theme`, `--linenum`, `--filenames`, `--file-style`, `--file-numbering`, `--ext`
   - Command-line options override bundle options when both are specified
 - Comments (lines starting with `#`)
 - Relative and absolute paths
