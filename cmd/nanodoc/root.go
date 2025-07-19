@@ -317,7 +317,9 @@ func init() {
 		// Dynamically get banner styles from registry
 		return nanodoc.GetBannerStyleNames(), cobra.ShellCompDirectiveNoFileComp
 	})
-	rootCmd.Flags().IntVar(&pageWidth, "page-width", nanodoc.OUTPUT_WIDTH, "Page width for alignment")
+	// Auto-detect terminal width as default for page width
+	defaultPageWidth := nanodoc.GetTerminalWidth()
+	rootCmd.Flags().IntVar(&pageWidth, "page-width", defaultPageWidth, "Page width for alignment (auto-detected from terminal)")
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
 	_ = rootCmd.RegisterFlagCompletionFunc("file-numbering", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"numerical", "alphabetical", "roman"}, cobra.ShellCompDirectiveNoFileComp
