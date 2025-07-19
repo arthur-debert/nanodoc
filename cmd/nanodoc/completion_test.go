@@ -11,9 +11,19 @@ import (
 )
 
 func TestCompletionOutput(t *testing.T) {
+	// Get project root from environment or use relative path
+	projectRoot := os.Getenv("PROJECT_ROOT")
+	if projectRoot == "" {
+		// If PROJECT_ROOT is not set, we're already in the right directory
+		projectRoot = "."
+	} else {
+		// If PROJECT_ROOT is set, navigate to cmd/nanodoc
+		projectRoot = projectRoot + "/cmd/nanodoc"
+	}
+	
 	// Build the binary first
 	buildCmd := exec.Command("go", "build", "-o", "/tmp/nanodoc-test", ".")
-	buildCmd.Dir = "/Users/adebert/h/nanodoc/cmd/nanodoc"
+	buildCmd.Dir = projectRoot
 	if err := buildCmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}
