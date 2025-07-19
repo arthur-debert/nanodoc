@@ -1,0 +1,68 @@
+OUTPUT FORMATS
+
+Nanodoc supports different output formats to suit various documentation workflows.
+
+AVAILABLE FORMATS
+
+    term (default)  Terminal-optimized output with formatting, colors, and decorations
+    plain           Plain text output without any formatting
+    markdown        Raw markdown concatenation (Phase 1 - basic implementation)
+
+USAGE
+
+    $ nanodoc --output-format=markdown *.md
+    $ nanodoc --output-format=plain docs/
+
+OUTPUT FORMAT DETAILS
+
+    term
+        The default output format, optimized for terminal display. Includes:
+        - File headers with configurable styles
+        - Line numbers (when enabled)
+        - Table of contents formatting
+        - Theme-based styling
+
+    plain
+        Simple text concatenation without any formatting. Useful for:
+        - Piping to other tools
+        - Creating raw text files
+        - Processing with external scripts
+
+    markdown
+        Basic markdown file concatenation. Currently (Phase 1):
+        - Simply concatenates markdown files
+        - No header level adjustment
+        - No added formatting elements
+        - Future phases will add intelligent markdown handling
+
+BUNDLE SUPPORT
+
+You can specify the output format in bundle files:
+
+    # API Documentation Bundle
+    --output-format=markdown
+    --toc
+    
+    docs/intro.md
+    docs/api/*.md
+
+EXAMPLES
+
+    # Generate markdown output
+    $ nanodoc --output-format=markdown README.md CHANGELOG.md > combined.md
+
+    # Create plain text documentation
+    $ nanodoc --output-format=plain src/*.go > code-docs.txt
+
+    # Use in a bundle
+    $ cat docs.bundle.txt
+    --output-format=markdown
+    docs/**/*.md
+    
+    $ nanodoc docs.bundle.txt > full-docs.md
+
+NOTES
+
+- Command-line flags override bundle settings
+- The markdown output format is currently in Phase 1 (basic concatenation)
+- Future updates will enhance markdown output with intelligent formatting

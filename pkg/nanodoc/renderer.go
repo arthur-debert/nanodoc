@@ -19,6 +19,16 @@ type RendererOptions struct {
 
 // RenderDocument renders a Document object to a string
 func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
+	// For markdown output in Phase 1, just concatenate without any formatting
+	if doc.FormattingOptions.OutputFormat == "markdown" {
+		return renderMarkdownBasic(doc)
+	}
+
+	// For plain output, concatenate without any formatting
+	if doc.FormattingOptions.OutputFormat == "plain" {
+		return renderPlainText(doc)
+	}
+
 	var parts []string
 
 	// Generate TOC first, as it's used for filenames
@@ -351,4 +361,40 @@ func extractHeadings(doc *Document) map[string][]HeadingInfo {
 	}
 	
 	return headingByFile
+}
+
+// renderMarkdownBasic performs basic concatenation of markdown files without any modifications
+func renderMarkdownBasic(doc *Document) (string, error) {
+	var parts []string
+
+	for _, item := range doc.ContentItems {
+		// Simply append the content as-is
+		parts = append(parts, item.Content)
+		
+		// Ensure content ends with newline
+		if len(parts) > 0 && !strings.HasSuffix(parts[len(parts)-1], "\n") {
+			parts = append(parts, "\n")
+		}
+	}
+
+	result := strings.Join(parts, "")
+	return result, nil
+}
+
+// renderPlainText performs basic concatenation without any formatting
+func renderPlainText(doc *Document) (string, error) {
+	var parts []string
+
+	for _, item := range doc.ContentItems {
+		// Simply append the content as-is
+		parts = append(parts, item.Content)
+		
+		// Ensure content ends with newline
+		if len(parts) > 0 && !strings.HasSuffix(parts[len(parts)-1], "\n") {
+			parts = append(parts, "\n")
+		}
+	}
+
+	result := strings.Join(parts, "")
+	return result, nil
 }
