@@ -10,13 +10,12 @@ import (
 
 var (
 	// Flags
-	lineNumbers        bool
-	globalLineNumbers  bool
+	lineNum            string
 	toc                bool
 	theme              string
-	noHeader           bool
-	sequence           string
-	headerStyle        string
+	showFilenames      bool
+	fileNumbering      string
+	fileStyle          string
 	additionalExt      []string
 	includePatterns    []string
 	excludePatterns    []string
@@ -89,19 +88,24 @@ var rootCmd = &cobra.Command{
 
 		// 2. Set up Formatting Options
 		lineNumberMode := nanodoc.LineNumberNone
-		if globalLineNumbers {
-			lineNumberMode = nanodoc.LineNumberGlobal
-		} else if lineNumbers {
+		switch lineNum {
+		case "file":
 			lineNumberMode = nanodoc.LineNumberFile
+		case "global":
+			lineNumberMode = nanodoc.LineNumberGlobal
+		case "":
+			// Default is none
+		default:
+			return fmt.Errorf("invalid --linenum value: %s (must be 'file' or 'global')", lineNum)
 		}
 
 		opts := nanodoc.FormattingOptions{
 			LineNumbers:   lineNumberMode,
 			ShowTOC:       toc,
 			Theme:         theme,
-			ShowHeaders:   !noHeader,
-			SequenceStyle: nanodoc.SequenceStyle(sequence),
-			HeaderStyle:   nanodoc.HeaderStyle(headerStyle),
+			ShowHeaders:   showFilenames,
+			SequenceStyle: nanodoc.SequenceStyle(fileNumbering),
+			HeaderStyle:   nanodoc.HeaderStyle(fileStyle),
 			AdditionalExtensions: additionalExt,
 			IncludePatterns: includePatterns,
 			ExcludePatterns: excludePatterns,
@@ -143,19 +147,19 @@ func trackExplicitFlags(cmd *cobra.Command) {
 	if cmd.Flags().Changed("theme") {
 		explicitFlags["theme"] = true
 	}
-	if cmd.Flags().Changed("line-numbers") || cmd.Flags().Changed("global-line-numbers") {
+	if cmd.Flags().Changed("linenum") {
 		explicitFlags["line-numbers"] = true
 	}
-	if cmd.Flags().Changed("no-header") {
+	if cmd.Flags().Changed("filenames") {
 		explicitFlags["no-header"] = true
 	}
-	if cmd.Flags().Changed("header-style") {
+	if cmd.Flags().Changed("file-style") {
 		explicitFlags["header-style"] = true
 	}
-	if cmd.Flags().Changed("sequence") {
+	if cmd.Flags().Changed("file-numbering") {
 		explicitFlags["sequence"] = true
 	}
-	if cmd.Flags().Changed("txt-ext") {
+	if cmd.Flags().Changed("ext") {
 		explicitFlags["txt-ext"] = true
 	}
 	if cmd.Flags().Changed("include") {
@@ -173,12 +177,12 @@ func Execute() error {
 }
 
 func init() {
-	// Line numbering flags
-	rootCmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, FlagLineNumbers)
-	rootCmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, FlagGlobalLineNumbers)
-	rootCmd.MarkFlagsMutuallyExclusive("line-numbers", "global-line-numbers")
-	_ = rootCmd.Flags().SetAnnotation("line-numbers", "group", []string{"Formatting"})
-	_ = rootCmd.Flags().SetAnnotation("global-line-numbers", "group", []string{"Formatting"})
+	// Line numbering flag
+	rootCmd.Flags().StringVarP(&lineNum, "linenum", "l", "", FlagLineNum)
+	_ = rootCmd.RegisterFlagCompletionFunc("linenum", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"file", "global"}, cobra.ShellCompDirectiveNoFileComp
+	})
+	_ = rootCmd.Flags().SetAnnotation("linenum", "group", []string{"Formatting"})
 
 	// TOC flag
 	rootCmd.Flags().BoolVar(&toc, "toc", false, FlagTOC)
@@ -195,25 +199,25 @@ func init() {
 	})
 	_ = rootCmd.Flags().SetAnnotation("theme", "group", []string{"Formatting"})
 
-	// Header flags
-	rootCmd.Flags().BoolVar(&noHeader, "no-header", false, FlagNoHeader)
-	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", FlagHeaderStyle)
-	_ = rootCmd.RegisterFlagCompletionFunc("header-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	// File name flags
+	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
+	rootCmd.Flags().StringVar(&fileStyle, "file-style", "nice", FlagFileStyle)
+	_ = rootCmd.RegisterFlagCompletionFunc("file-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"nice", "simple", "path", "filename", "title"}, cobra.ShellCompDirectiveNoFileComp
 	})
-	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", FlagSequence)
-	_ = rootCmd.RegisterFlagCompletionFunc("sequence", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
+	_ = rootCmd.RegisterFlagCompletionFunc("file-numbering", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"numerical", "alphabetical", "roman"}, cobra.ShellCompDirectiveNoFileComp
 	})
-	_ = rootCmd.Flags().SetAnnotation("no-header", "group", []string{"Features"})
-	_ = rootCmd.Flags().SetAnnotation("header-style", "group", []string{"Formatting"})
-	_ = rootCmd.Flags().SetAnnotation("sequence", "group", []string{"Features"})
+	_ = rootCmd.Flags().SetAnnotation("filenames", "group", []string{"Features"})
+	_ = rootCmd.Flags().SetAnnotation("file-style", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("file-numbering", "group", []string{"Features"})
 
 	// File filtering flags
-	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, FlagTxtExt)
+	rootCmd.Flags().StringSliceVar(&additionalExt, "ext", []string{}, FlagExt)
 	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
 	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, FlagExclude)
-	_ = rootCmd.Flags().SetAnnotation("txt-ext", "group", []string{"File Selection"})
+	_ = rootCmd.Flags().SetAnnotation("ext", "group", []string{"File Selection"})
 	_ = rootCmd.Flags().SetAnnotation("include", "group", []string{"File Selection"})
 	_ = rootCmd.Flags().SetAnnotation("exclude", "group", []string{"File Selection"})
 	

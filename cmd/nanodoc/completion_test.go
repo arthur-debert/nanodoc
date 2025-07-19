@@ -40,10 +40,10 @@ func TestCompletionOutput(t *testing.T) {
 			args: []string{"__complete", "nanodoc", "-"},
 			wantContains: []string{
 				"--theme",
-				"--header-style",
-				"--sequence",
+				"--file-style",
+				"--file-numbering",
 				"--toc",
-				"--line-numbers",
+				"--linenum",
 			},
 		},
 		{
@@ -56,8 +56,8 @@ func TestCompletionOutput(t *testing.T) {
 			},
 		},
 		{
-			name: "header-style value completion",
-			args: []string{"__complete", "nanodoc", "--header-style", ""},
+			name: "file-style value completion",
+			args: []string{"__complete", "nanodoc", "--file-style", ""},
 			wantContains: []string{
 				"nice",
 				"simple",
@@ -67,12 +67,20 @@ func TestCompletionOutput(t *testing.T) {
 			},
 		},
 		{
-			name: "sequence value completion",
-			args: []string{"__complete", "nanodoc", "--sequence", ""},
+			name: "file-numbering value completion",
+			args: []string{"__complete", "nanodoc", "--file-numbering", ""},
 			wantContains: []string{
 				"numerical",
 				"alphabetical",
 				"roman",
+			},
+		},
+		{
+			name: "linenum value completion",
+			args: []string{"__complete", "nanodoc", "--linenum", ""},
+			wantContains: []string{
+				"file",
+				"global",
 			},
 		},
 	}

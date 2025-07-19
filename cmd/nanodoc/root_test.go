@@ -38,15 +38,13 @@ func executeCommand(args ...string) (string, error) {
 	// Reset all flag values to ensure clean state
 	rootCmd.ResetFlags()
 	// Re-initialize flags after reset
-	rootCmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, FlagLineNumbers)
-	rootCmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, FlagGlobalLineNumbers)
-	rootCmd.MarkFlagsMutuallyExclusive("line-numbers", "global-line-numbers")
+	rootCmd.Flags().StringVarP(&lineNum, "linenum", "l", "", FlagLineNum)
 	rootCmd.Flags().BoolVar(&toc, "toc", false, FlagTOC)
 	rootCmd.Flags().StringVar(&theme, "theme", "classic", FlagTheme)
-	rootCmd.Flags().BoolVar(&noHeader, "no-header", false, FlagNoHeader)
-	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", FlagHeaderStyle)
-	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", FlagSequence)
-	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, FlagTxtExt)
+	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
+	rootCmd.Flags().StringVar(&fileStyle, "file-style", "nice", FlagFileStyle)
+	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
+	rootCmd.Flags().StringSliceVar(&additionalExt, "ext", []string{}, FlagExt)
 	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
 	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, FlagExclude)
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
@@ -83,13 +81,13 @@ func TestRootCmd(t *testing.T) {
 		},
 		{
 			name:       "with line numbers",
-			args:       []string{"-n", file1},
+			args:       []string{"-l", "file", file1},
 			wantOutput: []string{"1 | hello", "2 | world"},
 			wantErr:    false,
 		},
 		{
 			name:       "with global line numbers",
-			args:       []string{"-N", file1, file2},
+			args:       []string{"-l", "global", file1, file2},
 			wantOutput: []string{"1. File1", "1 | hello", "2 | world", "2. Title", "3 | # Title", "5 | content"},
 			wantErr:    false,
 		},
@@ -100,8 +98,8 @@ func TestRootCmd(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name:          "with no header",
-			args:          []string{"--no-header", file1},
+			name:          "without filenames",
+			args:          []string{"--filenames=false", file1},
 			wantOutput:    []string{"hello", "world"},
 			dontWantOutput:[]string{"1. File1"},
 			wantErr:       false,
@@ -208,22 +206,22 @@ func TestRootCmdBundleOptions(t *testing.T) {
 		},
 		{
 			name: "cli_overrides_bundle",
-			args: []string{"--header-style", "filename", bundleFile},
+			args: []string{"--file-style", "filename", bundleFile},
 			wantOutput: []string{
 				"Table of Contents",  // --toc from bundle (not overridden)
-				"1 | line1",          // --line-numbers from bundle (not overridden)
-				"test.txt",           // --header-style filename overrides bundle's path
+				"1 | line1",          // --linenum file from bundle (not overridden)
+				"test.txt",           // --file-style filename overrides bundle's path
 			},
 			dontWantOutput: []string{
 				tempDir,              // Should not show full path
 			},
 		},
 		{
-			name: "cli_no_header_overrides_bundle",
-			args: []string{"--no-header", bundleFile},
+			name: "cli_no_filenames_overrides_bundle",
+			args: []string{"--filenames=false", bundleFile},
 			wantOutput: []string{
 				"Table of Contents",  // --toc from bundle (not overridden)
-				"1 | line1",          // --line-numbers from bundle (not overridden)
+				"1 | line1",          // --linenum file from bundle (not overridden)
 			},
 			dontWantOutput: []string{
 				"test.txt",           // No header should be shown
@@ -259,13 +257,12 @@ func TestRootCmdBundleOptions(t *testing.T) {
 
 // resetFlags resets all persistent flags to their default values.
 func resetFlags() {
-	lineNumbers = false
-	globalLineNumbers = false
+	lineNum = ""
 	toc = false
 	theme = "classic"
-	noHeader = false
-	sequence = "numerical"
-	headerStyle = "nice"
+	showFilenames = true
+	fileNumbering = "numerical"
+	fileStyle = "nice"
 	additionalExt = []string{}
 	includePatterns = []string{}
 	excludePatterns = []string{}
