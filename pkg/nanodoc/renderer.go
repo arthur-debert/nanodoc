@@ -152,7 +152,7 @@ func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc 
 	case "center":
 		return fmt.Sprintf("%*s", len(baseName)+10, baseName)
 	case "right":
-		return fmt.Sprintf("%*s", 80, baseName)
+		return fmt.Sprintf("%*s", OUTPUT_WIDTH, baseName)
 	}
 
 	return baseName

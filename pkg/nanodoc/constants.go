@@ -51,3 +51,7 @@ const (
 
 // FilePatterns are the default file patterns to match when scanning directories
 var FilePatterns = []string{"*.txt", "*.md"}
+
+// Default output width for alignment
+const OUTPUT_WIDTH = 80
+
