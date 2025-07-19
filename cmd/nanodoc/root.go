@@ -43,6 +43,10 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.ArbitraryArgs,
 	SilenceUsage: true,
 	SilenceErrors: true,
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		// Default to file completion
+		return nil, cobra.ShellCompDirectiveDefault
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check version flag first
 		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
@@ -182,12 +186,25 @@ func init() {
 
 	// Theme flag
 	rootCmd.Flags().StringVar(&theme, "theme", "classic", FlagTheme)
+	_ = rootCmd.RegisterFlagCompletionFunc("theme", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		themes, err := nanodoc.GetAvailableThemes()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+		return themes, cobra.ShellCompDirectiveNoFileComp
+	})
 	_ = rootCmd.Flags().SetAnnotation("theme", "group", []string{"Formatting"})
 
 	// Header flags
 	rootCmd.Flags().BoolVar(&noHeader, "no-header", false, FlagNoHeader)
 	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", FlagHeaderStyle)
+	_ = rootCmd.RegisterFlagCompletionFunc("header-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"nice", "simple", "path", "filename", "title"}, cobra.ShellCompDirectiveNoFileComp
+	})
 	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", FlagSequence)
+	_ = rootCmd.RegisterFlagCompletionFunc("sequence", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"numerical", "alphabetical", "roman"}, cobra.ShellCompDirectiveNoFileComp
+	})
 	_ = rootCmd.Flags().SetAnnotation("no-header", "group", []string{"Features"})
 	_ = rootCmd.Flags().SetAnnotation("header-style", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("sequence", "group", []string{"Features"})
