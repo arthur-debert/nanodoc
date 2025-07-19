@@ -179,8 +179,7 @@ func TestGenerateFilename(t *testing.T) {
 	tests := []struct {
 		name     string
 		filepath string
-		format    HeaderFormat
-		seqStyle SequenceStyle
+		opts     *FormattingOptions
 		seqNum   int
 		doc      *Document
 		want     string
@@ -188,44 +187,73 @@ func TestGenerateFilename(t *testing.T) {
 		{
 			name:     "nice style with sequence",
 			filepath: "/path/to/test_file.txt",
-			format:    HeaderFormatNice,
-			seqStyle: SequenceNumerical,
-			seqNum:   1,
-			doc:      &Document{},
-			want:     "1. Test File",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatNice,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "1. Test File",
 		},
 		{
 			name:     "filename style",
 			filepath: "/path/to/test_file.txt",
-			format:    HeaderFormatFilename,
-			seqStyle: SequenceNumerical,
-			seqNum:   1,
-			doc:      &Document{},
-			want:     "1. test_file.txt",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatFilename,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "1. test_file.txt",
 		},
 		{
 			name:     "path style",
 			filepath: "/path/to/test_file.txt",
-			format:    HeaderFormatPath,
-			seqStyle: SequenceNumerical,
-			seqNum:   1,
-			doc:      &Document{},
-			want:     "1. /path/to/test_file.txt",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatPath,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "1. /path/to/test_file.txt",
 		},
 		{
 			name:     "camelCase file with TOC title",
 			filepath: "/path/to/myTestFile.txt",
-			format:    HeaderFormatNice,
-			seqStyle: SequenceRoman,
-			seqNum:   2,
-			doc:      doc,
-			want:     "ii. My Test File",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatNice,
+				SequenceStyle:   SequenceRoman,
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+			},
+			seqNum: 2,
+			doc:    doc,
+			want:   "ii. My Test File",
+		},
+		{
+			name:     "dashed style",
+			filepath: "/path/to/test_file.txt",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatNice,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "left",
+				HeaderStyle:     "dashed",
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "------------\n1. Test File\n------------",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := generateFilename(tt.filepath, tt.format, tt.seqStyle, tt.seqNum, tt.doc)
+			got := generateFilename(tt.filepath, tt.opts, tt.seqNum, tt.doc)
 			if got != tt.want {
 				t.Errorf("generateFilename() = %v, want %v", got, tt.want)
 			}
@@ -235,7 +263,6 @@ func TestGenerateFilename(t *testing.T) {
 
 func TestExtractHeadings(t *testing.T) {
 	t.Skip("Skipping failing test")
-
 	doc := &Document{
 		ContentItems: []FileContent{
 			{

@@ -78,12 +78,18 @@ type FormattingOptions struct {
 	// Whether to show table of contents
 	ShowTOC bool
 
+	// Header alignment
+	HeaderAlignment string
+
+	// Header style
+	HeaderStyle string
+
 	// Additional file extensions to process
 	AdditionalExtensions []string
-	
+
 	// Include patterns for file filtering (gitignore-style)
 	IncludePatterns []string
-	
+
 	// Exclude patterns for file filtering (gitignore-style)
 	ExcludePatterns []string
 }
@@ -127,11 +133,13 @@ func NewDocument() *Document {
 		ContentItems: make([]FileContent, 0),
 		TOC:          make([]TOCEntry, 0),
 		FormattingOptions: FormattingOptions{
-			Theme:         ThemeClassic,
+			Theme:           ThemeClassic,
 			ShowFilenames:   true,
-			HeaderFormat:   HeaderFormatNice,
-			SequenceStyle: SequenceNumerical,
-			LineNumbers:   LineNumberNone,
+			HeaderFormat:    HeaderFormatNice,
+			SequenceStyle:   SequenceNumerical,
+			LineNumbers:     LineNumberNone,
+			HeaderAlignment: "left",
+			HeaderStyle:     "none",
 		},
 	}
 }

@@ -59,7 +59,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 
 			// Generate filename
 			sequenceNumber++
-			filename := generateFilename(item.Filepath, ctx.HeaderFormat, ctx.SequenceStyle, sequenceNumber, doc)
+			filename := generateFilename(item.Filepath, &doc.FormattingOptions, sequenceNumber, doc)
 			parts = append(parts, filename)
 			parts = append(parts, "\n\n")
 		}
@@ -99,8 +99,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 	return result, nil
 }
 
-// generateFilename creates a filename for a file
-func generateFilename(filePath string, format HeaderFormat, seqStyle SequenceStyle, seqNum int, doc *Document) string {
+func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc *Document) string {
 	// Find the primary title for this file from the TOC
 	var title string
 	for _, entry := range doc.TOC {
@@ -110,20 +109,12 @@ func generateFilename(filePath string, format HeaderFormat, seqStyle SequenceSty
 		}
 	}
 
-	switch format {
+	var baseName string
+	switch opts.HeaderFormat {
 	case HeaderFormatFilename:
-		filename := filepath.Base(filePath)
-		seq := generateSequence(seqNum, seqStyle)
-		if seq != "" {
-			return fmt.Sprintf("%s. %s", seq, filename)
-		}
-		return filename
+		baseName = filepath.Base(filePath)
 	case HeaderFormatPath:
-		seq := generateSequence(seqNum, seqStyle)
-		if seq != "" {
-			return fmt.Sprintf("%s. %s", seq, filePath)
-		}
-		return filePath
+		baseName = filePath
 	case HeaderFormatNice:
 		fallthrough
 	default:
@@ -137,14 +128,34 @@ func generateFilename(filePath string, format HeaderFormat, seqStyle SequenceSty
 			niceName = splitCamelCase(niceName)
 			niceName = toTitleCase(niceName)
 		}
-		
-		// Add sequence number
-		seq := generateSequence(seqNum, seqStyle)
-		if seq != "" {
-			return fmt.Sprintf("%s. %s", seq, niceName)
-		}
-		return niceName
+		baseName = niceName
 	}
+
+	// Add sequence number
+	seq := generateSequence(seqNum, opts.SequenceStyle)
+	if seq != "" {
+		baseName = fmt.Sprintf("%s. %s", seq, baseName)
+	}
+
+	// Apply banner style
+	switch opts.HeaderStyle {
+	case "dashed":
+		line := strings.Repeat("-", len(baseName))
+		return fmt.Sprintf("%s\n%s\n%s", line, baseName, line)
+	case "solid":
+		line := strings.Repeat("=", len(baseName))
+		return fmt.Sprintf("%s\n%s\n%s", line, baseName, line)
+	}
+
+	// Apply alignment
+	switch opts.HeaderAlignment {
+	case "center":
+		return fmt.Sprintf("%*s", len(baseName)+10, baseName)
+	case "right":
+		return fmt.Sprintf("%*s", 80, baseName)
+	}
+
+	return baseName
 }
 
 // generateSequence generates a sequence number in the specified style
