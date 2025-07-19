@@ -319,7 +319,7 @@ func init() {
 	})
 	// Auto-detect terminal width as default for page width
 	defaultPageWidth := nanodoc.GetTerminalWidth()
-	rootCmd.Flags().IntVar(&pageWidth, "page-width", defaultPageWidth, "Page width for alignment (auto-detected from terminal)")
+	rootCmd.Flags().IntVar(&pageWidth, "page-width", defaultPageWidth, "Page width for alignment (auto-detected)")
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
 	_ = rootCmd.RegisterFlagCompletionFunc("file-numbering", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"numerical", "alphabetical", "roman"}, cobra.ShellCompDirectiveNoFileComp

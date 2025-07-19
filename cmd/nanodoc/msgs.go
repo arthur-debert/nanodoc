@@ -32,16 +32,16 @@ const (
 
 // Flag descriptions
 const (
-	FlagLineNum           = "Enable line numbering (file|global) (see: nanodoc topics line-numbering)"
-	FlagTOC               = "Generate a table of contents (see: nanodoc topics toc)"
-	FlagTheme             = "Set the theme for formatting (see: nanodoc topics themes)"
+	FlagLineNum           = "Line numbers: file|global (help line-numbering)"
+	FlagTOC               = "Generate a table of contents (help toc)"
+	FlagTheme             = "Formatting theme (help themes)"
 	FlagFilenames         = "Show filenames between concatenated files"
-	FlagHeaderFormat         = "Set the header display style (see: nanodoc topics filenames)"
-	FlagFileNumbering     = "Set the file numbering style (see: nanodoc topics filenames)"
+	FlagHeaderFormat      = "Header display style (help filenames)"
+	FlagFileNumbering     = "File numbering style (help filenames)"
 	FlagExt               = "Additional file extensions to treat as text"
-	FlagInclude           = "Include only files matching patterns (see: nanodoc topics content)"
-	FlagExclude           = "Exclude files matching patterns (see: nanodoc topics content)"
-	FlagDryRun            = "Show what files would be processed without actually processing them"
+	FlagInclude           = "Include files matching patterns (help content)"
+	FlagExclude           = "Exclude files matching patterns (help content)"
+	FlagDryRun            = "Preview files to process without bundling"
 	FlagVersion           = "Print the version number"
 )
 
