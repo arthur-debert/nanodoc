@@ -299,10 +299,14 @@ func parseOption(optionLine string, options *BundleOptions) error {
 	switch flag {
 	case "--toc":
 		options.ShowTOC = &trueVal
-	case "--no-header", "--filenames=false":
+	case "--no-header":
 		options.ShowHeaders = &falseVal
-	case "--filenames", "--filenames=true":
-		options.ShowHeaders = &trueVal
+	case "--filenames":
+		if value == "false" {
+			options.ShowHeaders = &falseVal
+		} else {
+			options.ShowHeaders = &trueVal
+		}
 	case "--linenum", "--line-numbers", "-n", "-l":
 		if value == "" {
 			if len(strings.Fields(optionLine)) > 1 {

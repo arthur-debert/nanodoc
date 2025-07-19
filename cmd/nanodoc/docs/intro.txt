@@ -1,0 +1,126 @@
+nanodoc is a document bundler that scales downs.
+
+
+Why
+----
+
+    Most projects have code  related documentation, thinks like JavaDoc and 
+python's docstrings and user facing documents (be it end-user or developer oriented). 
+
+    The former lives next to the code it's describing. The latter however, is
+treated as an entirely different thing, apart from the code, somewhere else in
+the repo and often times in another repo. 
+
+    This is far from ideal. For developers working on the codebase, the friction of
+remembering to check the documentation somewhere else and figuring out where in
+the documentation lives his tasks as hand means that one seldom do it.
+it is a supped up cat, joining files with some added niceties, such as
+inserting the file name as a header, generating a table of content and showing
+line numbers both file and global numbers.
+
+    As the code changes, developers must also do the effort of figuring out if
+their changes have documentation for , where that would be and change that.
+
+    Just like having source code docs in code, collocated to what's being documented
+makes it much easier to consume and update, the same is true for non-source
+code docs like domain knowledge, design decisions, architecture maps and so on.
+
+
+Focused and Collocated Information
+
+    This allows us to think of documentation under a different light: instead of
+the document centric view regular tools use (sphinx, mkdocs), one can keep
+short txt or md files through out the codebase. These documentation "fragments"
+are collocated, that is, when working on that part of the codebase one sees it,
+and it  becomes better integrated, easier to update and consult, than a
+separate file somewhere else in that repo or even at another repo.
+
+    Having doc fragments through the codebase give us these benefits of locality
+and a lower barrier to product them (no need to think how this fits the full
+picture, which doc it should be in). 
+
+    However, there is still value in bundling these tidbits into more complex
+documents and providing aggregated views of the project. that's where nanodoc
+is useful.
+
+
+Nanodoc
+-------
+
+  Nanodoc is a simple tool to help you stitch these fragments together into a
+cohesive user facing document, keeping the benefits of locality and bundled
+docs for out of band reading.
+
+    nanodoc is dead simple: no commands, nothing to lear. pass it the file(s)
+your are bundling, optionally add helper information and that's it.
+
+This command will concatenate both files: 
+
+    $ nanodoc formats/json/about.doc.txt formats/yaml/about.doc.txt
+
+So far so good, but cat would do just as well. You can specify line ranges: 
+
+    $ nanodoc formats/json/about.doc.txt:L10-L30
+    formats/yaml/about.doc.txt:L4-10,L15-30,L40
+
+In the example above the yaml doc will include multiple ranges, including a
+single line.
+
+We now have file names as headers to tell them apart, and a toc.
+
+    $ nanodoc --filename --toc formats/json/json.doc.txt formats/yaml/yaml.doc.txt
+
+Of course one could also bundle all files in a directory: 
+
+    $ nanodoc formats 
+
+By default, nanodoc will bundle .txt and .md files, which can be changed: 
+
+    $ nanodoc formats --ext rst
+
+This will now bundle rst formats too. 
+
+The includes and excludes options give you finer detail over directory
+expansion: 
+
+    $ nanodoc formats --ext rst --includes=docs/intro.rst
+    --excludes=**/README.txt
+
+    Great! We've seen how nanodoc will help us craft a more cohesive and useful
+view of doc fragments. Often, you will want to update  this document as the
+fragment themselves changes. Having to remember the exact files, patterns and
+options would be tedious and error prone.
+
+
+Bundles
+-------
+
+    Bundles are simple txt files that capture a recipe , a description of what 
+and how to bundle. Bundles are quite simple: each line will contain a path, be it
+to a file a directory of a glob  pattern + the options used to render it. Here's
+a sample file: 
+
+    --toc
+    -- lineum file
+
+    docs/intro.txt
+    docs/design.txt:L20-L200
+    docs/development/*.rst
+
+    Note that paths can be specified in bundles in the exact same way as arguments:
+with line range(s), patterns , both files and directories. 
+
+    Bundles give you a predictable and automated way to generate the same 
+output and keep documents up to data as it's pieces change.
+
+    You can write a bundle yourself and test it with: 
+
+        $ nanodoc file.bundle.txt
+
+    More likely, you will use the --save-to-bundle option and have nanodoc generate
+it for you. Once you are happy with the output of a call, just add --save
+to-bundle <path>.
+
+
+
+

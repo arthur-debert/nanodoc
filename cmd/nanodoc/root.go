@@ -254,8 +254,21 @@ func reconstructCommand(cmd *cobra.Command, args []string) string {
 	var parts []string
 	cmd.Flags().Visit(func(f *pflag.Flag) {
 		if f.Name != "save-to-bundle" {
-			if f.Value.String() != "" {
-				parts = append(parts, fmt.Sprintf("--%s=%q", f.Name, f.Value.String()))
+			// Handle boolean flags specially
+			if f.Value.Type() == "bool" {
+				if f.Value.String() == "true" {
+					parts = append(parts, "--"+f.Name)
+				} else {
+					parts = append(parts, fmt.Sprintf("--%s=false", f.Name))
+				}
+			} else if f.Value.String() != "" {
+				// For non-boolean flags, check if value contains spaces or special chars
+				val := f.Value.String()
+				if strings.ContainsAny(val, " \t*?") {
+					parts = append(parts, fmt.Sprintf("--%s=%q", f.Name, val))
+				} else {
+					parts = append(parts, fmt.Sprintf("--%s=%s", f.Name, val))
+				}
 			} else {
 				parts = append(parts, "--"+f.Name)
 			}
