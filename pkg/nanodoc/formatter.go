@@ -22,7 +22,7 @@ type FormattingContext struct {
 	Theme         *Theme
 	LineNumbers   LineNumberMode
 	ShowFilenames   bool
-	FilenameStyle   FilenameStyle
+	HeaderFormat   HeaderFormat
 	SequenceStyle SequenceStyle
 	ShowTOC       bool
 }
@@ -136,7 +136,7 @@ func NewFormattingContext(options FormattingOptions) (*FormattingContext, error)
 		Theme:         theme,
 		LineNumbers:   options.LineNumbers,
 		ShowFilenames:   options.ShowFilenames,
-		FilenameStyle:   options.FilenameStyle,
+		HeaderFormat:   options.HeaderFormat,
 		SequenceStyle: options.SequenceStyle,
 		ShowTOC:       options.ShowTOC,
 	}, nil

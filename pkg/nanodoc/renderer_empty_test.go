@@ -23,13 +23,13 @@ func TestRenderEmptyFiles(t *testing.T) {
 				},
 				FormattingOptions: FormattingOptions{
 					ShowFilenames:   true,
-					FilenameStyle:   FilenameStyleNice,
+					HeaderFormat:   HeaderFormatNice,
 					SequenceStyle: SequenceNumerical,
 				},
 			},
 			ctx: &FormattingContext{
 				ShowFilenames:   true,
-				FilenameStyle:   FilenameStyleNice,
+				HeaderFormat:   HeaderFormatNice,
 				SequenceStyle: SequenceNumerical,
 				LineNumbers:   LineNumberNone,
 			},
@@ -46,13 +46,13 @@ func TestRenderEmptyFiles(t *testing.T) {
 				},
 				FormattingOptions: FormattingOptions{
 					ShowFilenames:   true,
-					FilenameStyle:   FilenameStyleNice,
+					HeaderFormat:   HeaderFormatNice,
 					SequenceStyle: SequenceNumerical,
 				},
 			},
 			ctx: &FormattingContext{
 				ShowFilenames:   true,
-				FilenameStyle:   FilenameStyleNice,
+				HeaderFormat:   HeaderFormatNice,
 				SequenceStyle: SequenceNumerical,
 				LineNumbers:   LineNumberFile,
 			},
@@ -73,13 +73,13 @@ func TestRenderEmptyFiles(t *testing.T) {
 				},
 				FormattingOptions: FormattingOptions{
 					ShowFilenames:   true,
-					FilenameStyle:   FilenameStyleNice,
+					HeaderFormat:   HeaderFormatNice,
 					SequenceStyle: SequenceNumerical,
 				},
 			},
 			ctx: &FormattingContext{
 				ShowFilenames:   true,
-				FilenameStyle:   FilenameStyleNice,
+				HeaderFormat:   HeaderFormatNice,
 				SequenceStyle: SequenceNumerical,
 				LineNumbers:   LineNumberGlobal,
 			},
@@ -100,13 +100,13 @@ func TestRenderEmptyFiles(t *testing.T) {
 				},
 				FormattingOptions: FormattingOptions{
 					ShowFilenames:   true,
-					FilenameStyle:   FilenameStyleNice,
+					HeaderFormat:   HeaderFormatNice,
 					SequenceStyle: SequenceNumerical,
 				},
 			},
 			ctx: &FormattingContext{
 				ShowFilenames:   true,
-				FilenameStyle:   FilenameStyleNice,
+				HeaderFormat:   HeaderFormatNice,
 				SequenceStyle: SequenceNumerical,
 				LineNumbers:   LineNumberNone,
 			},
@@ -155,14 +155,14 @@ func TestEmptyFileIntegration(t *testing.T) {
 		},
 		FormattingOptions: FormattingOptions{
 			ShowFilenames:   true,
-			FilenameStyle:   FilenameStyleNice,
+			HeaderFormat:   HeaderFormatNice,
 			SequenceStyle: SequenceNumerical,
 		},
 	}
 
 	ctx := &FormattingContext{
 		ShowFilenames:   true,
-		FilenameStyle:   FilenameStyleNice,
+		HeaderFormat:   HeaderFormatNice,
 		SequenceStyle: SequenceNumerical,
 		LineNumbers:   LineNumberNone,
 	}
@@ -186,5 +186,126 @@ func TestEmptyFileIntegration(t *testing.T) {
 		if !strings.Contains(got, part) {
 			t.Errorf("Output missing expected part: %q\nGot:\n%s", part, got)
 		}
+	}
+}
+
+func TestEmptyDocument(t *testing.T) {
+	// Test rendering a document with no content items
+	doc := &Document{
+		ContentItems: []FileContent{},
+		FormattingOptions: FormattingOptions{
+			ShowFilenames:   true,
+			HeaderFormat:   HeaderFormatNice,
+			SequenceStyle: SequenceNumerical,
+		},
+	}
+
+	ctx := &FormattingContext{
+		ShowFilenames:   true,
+		HeaderFormat:   HeaderFormatNice,
+		SequenceStyle: SequenceNumerical,
+		LineNumbers:   LineNumberNone,
+	}
+
+	got, err := RenderDocument(doc, ctx)
+	if err != nil {
+		t.Fatalf("RenderDocument() error = %v", err)
+	}
+
+	if got != "" {
+		t.Errorf("Expected empty string for empty document, got %q", got)
+	}
+}
+
+func TestDocumentWithOnlyEmptyFiles(t *testing.T) {
+	// Test rendering a document with only empty files
+	doc := &Document{
+		ContentItems: []FileContent{
+			{
+				Filepath: "empty1.txt",
+				Content:  "",
+			},
+			{
+				Filepath: "empty2.txt",
+				Content:  "",
+			},
+		},
+		FormattingOptions: FormattingOptions{
+			ShowFilenames:   true,
+			HeaderFormat:   HeaderFormatNice,
+			SequenceStyle: SequenceNumerical,
+		},
+	}
+
+	ctx := &FormattingContext{
+		ShowFilenames:   true,
+		HeaderFormat:   HeaderFormatNice,
+		SequenceStyle: SequenceNumerical,
+		LineNumbers:   LineNumberNone,
+	}
+
+	got, err := RenderDocument(doc, ctx)
+	if err != nil {
+		t.Fatalf("RenderDocument() error = %v", err)
+	}
+
+	// Check structure
+	expectedParts := []string{
+		"1. Empty1",
+		"(empty file)",
+		"2. Empty2",
+		"(empty file)",
+	}
+
+	for _, part := range expectedParts {
+		if !strings.Contains(got, part) {
+			t.Errorf("Output missing expected part: %q\nGot:\n%s", part, got)
+		}
+	}
+}
+
+func TestEmptyFileWithTOC(t *testing.T) {
+	// Test that empty files don't break TOC generation
+	doc := &Document{
+		ContentItems: []FileContent{
+			{
+				Filepath: "empty.md",
+				Content:  "",
+			},
+			{
+				Filepath: "content.md",
+				Content:  "# Title\nSome content",
+			},
+		},
+		FormattingOptions: FormattingOptions{
+			ShowFilenames:   true,
+			HeaderFormat:   HeaderFormatNice,
+			SequenceStyle: SequenceNumerical,
+			ShowTOC:       true,
+		},
+	}
+
+	ctx := &FormattingContext{
+		ShowFilenames:   true,
+		HeaderFormat:   HeaderFormatNice,
+		SequenceStyle: SequenceNumerical,
+		LineNumbers:   LineNumberNone,
+		ShowTOC:       true,
+	}
+
+	got, err := RenderDocument(doc, ctx)
+	if err != nil {
+		t.Fatalf("RenderDocument() error = %v", err)
+	}
+
+	// Check that TOC is generated correctly
+	if !strings.Contains(got, "Table of Contents") {
+		t.Error("Output missing TOC")
+	}
+	if !strings.Contains(got, "- Title (content.md)") {
+		t.Error("Output missing TOC entry for content.md")
+	}
+	if strings.Contains(got, "empty.md") {
+		t.Error("Output should not contain TOC entry for empty.md")
 	}
 }

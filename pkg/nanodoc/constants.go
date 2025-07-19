@@ -18,16 +18,16 @@ const (
 	LineNumberGlobal
 )
 
-// FilenameStyle represents different filename styles
-type FilenameStyle string
+// HeaderFormat represents different header formats
+type HeaderFormat string
 
 const (
-	// FilenameStyleNice - formatted filenames with decorations
-	FilenameStyleNice FilenameStyle = "nice"
-	// FilenameStyleFilename - just the filename
-	FilenameStyleFilename FilenameStyle = "filename"
-	// FilenameStylePath - full file path
-	FilenameStylePath FilenameStyle = "path"
+	// HeaderFormatNice - formatted headers with decorations
+	HeaderFormatNice HeaderFormat = "nice"
+	// HeaderFormatFilename - just the filename
+	HeaderFormatFilename HeaderFormat = "filename"
+	// HeaderFormatPath - full file path
+	HeaderFormatPath HeaderFormat = "path"
 )
 
 // SequenceStyle represents different sequence numbering styles
@@ -51,3 +51,7 @@ const (
 
 // FilePatterns are the default file patterns to match when scanning directories
 var FilePatterns = []string{"*.txt", "*.md"}
+
+// Default output width for alignment
+const OUTPUT_WIDTH = 80
+

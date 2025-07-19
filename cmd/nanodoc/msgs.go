@@ -36,7 +36,7 @@ const (
 	FlagTOC               = "Generate a table of contents (see: nanodoc topics toc)"
 	FlagTheme             = "Set the theme for formatting (see: nanodoc topics themes)"
 	FlagFilenames         = "Show filenames between concatenated files"
-	FlagFileStyle         = "Set the filename display style (see: nanodoc topics filenames)"
+	FlagHeaderFormat         = "Set the header display style (see: nanodoc topics filenames)"
 	FlagFileNumbering     = "Set the file numbering style (see: nanodoc topics filenames)"
 	FlagExt               = "Additional file extensions to treat as text"
 	FlagInclude           = "Include only files matching patterns (see: nanodoc topics content)"

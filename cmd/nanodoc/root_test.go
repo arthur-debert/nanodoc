@@ -42,7 +42,10 @@ func executeCommand(args ...string) (string, error) {
 	rootCmd.Flags().BoolVar(&toc, "toc", false, FlagTOC)
 	rootCmd.Flags().StringVar(&theme, "theme", "classic", FlagTheme)
 	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
-	rootCmd.Flags().StringVar(&fileStyle, "file-style", "nice", FlagFileStyle)
+	rootCmd.Flags().StringVar(&filenameFormat, "header-format", "nice", FlagHeaderFormat)
+	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment (left, center, right)")
+	rootCmd.Flags().StringVar(&filenameBanner, "header-style", "none", "Header style")
+	rootCmd.Flags().IntVar(&pageWidth, "page-width", 80, "Page width for alignment")
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
 	rootCmd.Flags().StringSliceVar(&additionalExt, "ext", []string{}, FlagExt)
 	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
@@ -179,7 +182,7 @@ func TestRootCmdBundleOptions(t *testing.T) {
 		"# Bundle with options",
 		"--toc",
 		"--theme classic-dark",
-		"--file-style path",
+		"--header-format path",
 		"--linenum file",
 		"",
 		"test.txt",
@@ -202,16 +205,16 @@ func TestRootCmdBundleOptions(t *testing.T) {
 				"1 | line1",          // --linenum file from bundle
 				"2 | line2",          // line numbers continue
 				"3 | line3",
-				tempDir,              // --file-style path shows full path
+				tempDir,              // --header-format path shows full path
 			},
 		},
 		{
 			name: "cli_overrides_bundle",
-			args: []string{"--file-style", "filename", bundleFile},
+			args: []string{"--header-format", "filename", bundleFile},
 			wantOutput: []string{
 				"Table of Contents",  // --toc from bundle (not overridden)
 				"1 | line1",          // --linenum file from bundle (not overridden)
-				"test.txt",           // --file-style filename overrides bundle's path
+				"test.txt",           // --header-format filename overrides bundle's path
 			},
 			dontWantOutput: []string{
 				tempDir,              // Should not show full path
@@ -263,7 +266,10 @@ func resetFlags() {
 	theme = "classic"
 	showFilenames = true
 	fileNumbering = "numerical"
-	fileStyle = "nice"
+	filenameFormat = "nice"
+	filenameAlign = "left"
+	filenameBanner = "none"
+	pageWidth = 80
 	additionalExt = []string{}
 	includePatterns = []string{}
 	excludePatterns = []string{}

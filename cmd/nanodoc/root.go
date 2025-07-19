@@ -18,18 +18,21 @@ var (
 	theme              string
 	showFilenames      bool
 	fileNumbering      string
-	fileStyle          string
+	filenameFormat     string  // renamed from headerFormat
+	filenameAlign      string  // renamed from headerAlign
+	filenameBanner     string  // renamed from headerStyle
+	pageWidth          int
 	additionalExt      []string
 	includePatterns    []string
 	excludePatterns    []string
 	dryRun             bool
 	saveToBundlePath   string
 	explicitFlags      map[string]bool
-	
+
 	// Version information - set by ldflags during build
-	version = "dev"      // Set by goreleaser: -X main.version={{.Version}}
-	commit  = "unknown"  // Set by goreleaser: -X main.commit={{.Commit}}
-	date    = "unknown"  // Set by goreleaser: -X main.date={{.Date}}
+	version = "dev"     // Set by goreleaser: -X main.version={{.Version}}
+	commit  = "unknown" // Set by goreleaser: -X main.commit={{.Commit}}
+	date    = "unknown" // Set by goreleaser: -X main.date={{.Date}}
 )
 
 //go:embed help/root-long.txt
@@ -86,7 +89,10 @@ var rootCmd = &cobra.Command{
 			Theme:         theme,
 			ShowFilenames:   showFilenames,
 			SequenceStyle: nanodoc.SequenceStyle(fileNumbering),
-			FilenameStyle:   nanodoc.FilenameStyle(fileStyle),
+			HeaderFormat:   nanodoc.HeaderFormat(filenameFormat),
+			HeaderAlignment: filenameAlign,
+			HeaderStyle:     filenameBanner,
+			PageWidth:       pageWidth,
 			AdditionalExtensions: additionalExt,
 			IncludePatterns: includePatterns,
 			ExcludePatterns: excludePatterns,
@@ -182,8 +188,17 @@ func trackExplicitFlags(cmd *cobra.Command) {
 	if cmd.Flags().Changed("filenames") {
 		explicitFlags["no-header"] = true
 	}
-	if cmd.Flags().Changed("file-style") {
-		explicitFlags["filename-style"] = true
+	if cmd.Flags().Changed("header-format") {
+		explicitFlags["header-format"] = true
+	}
+	if cmd.Flags().Changed("header-align") {
+		explicitFlags["header-align"] = true
+	}
+	if cmd.Flags().Changed("header-style") {
+		explicitFlags["header-style"] = true
+	}
+	if cmd.Flags().Changed("page-width") {
+		explicitFlags["page-width"] = true
 	}
 	if cmd.Flags().Changed("file-numbering") {
 		explicitFlags["sequence"] = true
@@ -235,8 +250,11 @@ func saveBundleFile(path string, args []string, opts nanodoc.FormattingOptions, 
 		content.WriteString("--filenames=false\n")
 	}
 
-	// File style
-	content.WriteString(fmt.Sprintf("--file-style=%s\n", string(opts.FilenameStyle)))
+	// File header format
+	content.WriteString(fmt.Sprintf("--header-format=%s\n", string(opts.HeaderFormat)))
+	content.WriteString(fmt.Sprintf("--header-align=%s\n", opts.HeaderAlignment))
+	content.WriteString(fmt.Sprintf("--header-style=%s\n", opts.HeaderStyle))
+	content.WriteString(fmt.Sprintf("--page-width=%d\n", opts.PageWidth))
 
 	// File numbering
 	content.WriteString(fmt.Sprintf("--file-numbering=%s\n", string(opts.SequenceStyle)))
@@ -277,7 +295,10 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 	var bundleTheme string
 	var bundleShowFilenames bool
 	var bundleFileNumbering string
-	var bundleFileStyle string
+	var bundleFilenameFormat string
+	var bundleFilenameAlign string
+	var bundleFilenameBanner string
+	var bundlePageWidth int
 	var bundleAdditionalExt []string
 	var bundleIncludePatterns []string
 	var bundleExcludePatterns []string
@@ -286,7 +307,10 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 	tempCmd.Flags().BoolVar(&bundleToc, "toc", false, "")
 	tempCmd.Flags().StringVar(&bundleTheme, "theme", "classic", "")
 	tempCmd.Flags().BoolVar(&bundleShowFilenames, "filenames", true, "")
-	tempCmd.Flags().StringVar(&bundleFileStyle, "file-style", "nice", "")
+	tempCmd.Flags().StringVar(&bundleFilenameFormat, "header-format", "nice", "")
+	tempCmd.Flags().StringVar(&bundleFilenameAlign, "header-align", "left", "")
+	tempCmd.Flags().StringVar(&bundleFilenameBanner, "header-style", "none", "")
+	tempCmd.Flags().IntVar(&bundlePageWidth, "page-width", nanodoc.OUTPUT_WIDTH, "")
 	tempCmd.Flags().StringVar(&bundleFileNumbering, "file-numbering", "numerical", "")
 	tempCmd.Flags().StringSliceVar(&bundleAdditionalExt, "ext", []string{}, "")
 	tempCmd.Flags().StringSliceVar(&bundleIncludePatterns, "include", []string{}, "")
@@ -320,7 +344,10 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 		Theme:                bundleTheme,
 		ShowFilenames:          bundleShowFilenames,
 		SequenceStyle:        nanodoc.SequenceStyle(bundleFileNumbering),
-		FilenameStyle:          nanodoc.FilenameStyle(bundleFileStyle),
+		HeaderFormat:          nanodoc.HeaderFormat(bundleFilenameFormat),
+		HeaderAlignment:      bundleFilenameAlign,
+		HeaderStyle:          bundleFilenameBanner,
+		PageWidth:            bundlePageWidth,
 		AdditionalExtensions: bundleAdditionalExt,
 		IncludePatterns:      bundleIncludePatterns,
 		ExcludePatterns:      bundleExcludePatterns,
@@ -341,8 +368,17 @@ func mergeOptionsWithExplicitFlags(bundleOpts, cmdOpts nanodoc.FormattingOptions
 	if !explicitFlags["no-header"] {
 		result.ShowFilenames = bundleOpts.ShowFilenames
 	}
-	if !explicitFlags["filename-style"] {
-		result.FilenameStyle = bundleOpts.FilenameStyle
+	if !explicitFlags["header-format"] {
+		result.HeaderFormat = bundleOpts.HeaderFormat
+	}
+	if !explicitFlags["header-align"] {
+		result.HeaderAlignment = bundleOpts.HeaderAlignment
+	}
+	if !explicitFlags["header-style"] {
+		result.HeaderStyle = bundleOpts.HeaderStyle
+	}
+	if !explicitFlags["page-width"] {
+		result.PageWidth = bundleOpts.PageWidth
 	}
 	if !explicitFlags["sequence"] {
 		result.SequenceStyle = bundleOpts.SequenceStyle
@@ -427,16 +463,29 @@ func init() {
 
 	// File name flags
 	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
-	rootCmd.Flags().StringVar(&fileStyle, "file-style", "nice", FlagFileStyle)
-	_ = rootCmd.RegisterFlagCompletionFunc("file-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	rootCmd.Flags().StringVar(&filenameFormat, "header-format", "nice", FlagHeaderFormat)
+	_ = rootCmd.RegisterFlagCompletionFunc("header-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"nice", "simple", "path", "filename", "title"}, cobra.ShellCompDirectiveNoFileComp
 	})
+	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment (left, center, right)")
+	_ = rootCmd.RegisterFlagCompletionFunc("header-align", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"left", "center", "right"}, cobra.ShellCompDirectiveNoFileComp
+	})
+	rootCmd.Flags().StringVar(&filenameBanner, "header-style", "none", "Header style")
+	_ = rootCmd.RegisterFlagCompletionFunc("header-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		// Dynamically get banner styles from registry
+		return nanodoc.GetBannerStyleNames(), cobra.ShellCompDirectiveNoFileComp
+	})
+	rootCmd.Flags().IntVar(&pageWidth, "page-width", nanodoc.OUTPUT_WIDTH, "Page width for alignment")
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
 	_ = rootCmd.RegisterFlagCompletionFunc("file-numbering", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"numerical", "alphabetical", "roman"}, cobra.ShellCompDirectiveNoFileComp
 	})
 	_ = rootCmd.Flags().SetAnnotation("filenames", "group", []string{"Features"})
-	_ = rootCmd.Flags().SetAnnotation("file-style", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("header-format", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("header-align", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("header-style", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("page-width", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("file-numbering", "group", []string{"Features"})
 
 	// File filtering flags
@@ -458,4 +507,4 @@ func init() {
 	
 	// Initialize custom help system
 	initHelpSystem()
-} 
+}

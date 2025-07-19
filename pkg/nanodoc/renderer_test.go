@@ -179,8 +179,7 @@ func TestGenerateFilename(t *testing.T) {
 	tests := []struct {
 		name     string
 		filepath string
-		style    FilenameStyle
-		seqStyle SequenceStyle
+		opts     *FormattingOptions
 		seqNum   int
 		doc      *Document
 		want     string
@@ -188,46 +187,178 @@ func TestGenerateFilename(t *testing.T) {
 		{
 			name:     "nice style with sequence",
 			filepath: "/path/to/test_file.txt",
-			style:    FilenameStyleNice,
-			seqStyle: SequenceNumerical,
-			seqNum:   1,
-			doc:      &Document{},
-			want:     "1. Test File",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatNice,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "1. Test File",
 		},
 		{
 			name:     "filename style",
 			filepath: "/path/to/test_file.txt",
-			style:    FilenameStyleFilename,
-			seqStyle: SequenceNumerical,
-			seqNum:   1,
-			doc:      &Document{},
-			want:     "1. test_file.txt",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatFilename,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "1. test_file.txt",
 		},
 		{
 			name:     "path style",
 			filepath: "/path/to/test_file.txt",
-			style:    FilenameStylePath,
-			seqStyle: SequenceNumerical,
-			seqNum:   1,
-			doc:      &Document{},
-			want:     "1. /path/to/test_file.txt",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatPath,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "1. /path/to/test_file.txt",
 		},
 		{
 			name:     "camelCase file with TOC title",
 			filepath: "/path/to/myTestFile.txt",
-			style:    FilenameStyleNice,
-			seqStyle: SequenceRoman,
-			seqNum:   2,
-			doc:      doc,
-			want:     "ii. My Test File",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatNice,
+				SequenceStyle:   SequenceRoman,
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+			},
+			seqNum: 2,
+			doc:    doc,
+			want:   "ii. My Test File",
+		},
+		{
+			name:     "dashed style",
+			filepath: "/path/to/test_file.txt",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatNice,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "left",
+				HeaderStyle:     "dashed",
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "------------\n1. Test File\n------------",
+		},
+		{
+			name:     "right align with page width",
+			filepath: "/path/to/test_file.txt",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatNice,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "right",
+				HeaderStyle:     "none",
+				PageWidth:       50,
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "                                      1. Test File",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := generateFilename(tt.filepath, tt.style, tt.seqStyle, tt.seqNum, tt.doc)
+			got := generateFilename(tt.filepath, tt.opts, tt.seqNum, tt.doc)
 			if got != tt.want {
 				t.Errorf("generateFilename() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBannerStyles(t *testing.T) {
+	tests := []struct {
+		name            string
+		headerStyle     string
+		headerAlignment string
+		pageWidth       int
+		fileName        string
+		wantContains    []string
+	}{
+		{
+			name:            "dashed_style",
+			headerStyle:     "dashed",
+			headerAlignment: "left",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"-----------", "1. test.txt", "-----------"},
+		},
+		{
+			name:            "solid_style",
+			headerStyle:     "solid",
+			headerAlignment: "left",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"===========", "1. test.txt", "==========="},
+		},
+		{
+			name:            "boxed_style_left",
+			headerStyle:     "boxed",
+			headerAlignment: "left",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"########", "### 1. test.txt", "###"},
+		},
+		{
+			name:            "boxed_style_center",
+			headerStyle:     "boxed",
+			headerAlignment: "center",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"########", "###", "1. test.txt", "###"},
+		},
+		{
+			name:            "boxed_style_right",
+			headerStyle:     "boxed",
+			headerAlignment: "right",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"########", "###", "1. test.txt ###"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/test/" + tt.fileName,
+						Content:  "Test content",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					ShowFilenames:   true,
+					HeaderStyle:     tt.headerStyle,
+					HeaderAlignment: tt.headerAlignment,
+					PageWidth:       tt.pageWidth,
+					SequenceStyle:   SequenceNumerical,
+					HeaderFormat:    HeaderFormatFilename, // Use filename format for predictable output
+				},
+			}
+
+			ctx, err := NewFormattingContext(doc.FormattingOptions)
+			if err != nil {
+				t.Fatalf("NewFormattingContext() error = %v", err)
+			}
+
+			output, err := RenderDocument(doc, ctx)
+			if err != nil {
+				t.Fatalf("RenderDocument() error = %v", err)
+			}
+
+			for _, want := range tt.wantContains {
+				if !strings.Contains(output, want) {
+					t.Errorf("Output does not contain %q\nGot:\n%s", want, output)
+				}
 			}
 		})
 	}
@@ -257,7 +388,7 @@ More content`,
 	generateTOC(doc)
 
 	if len(doc.TOC) != 2 {
-		t.Errorf("Expected 2 TOC entries, got %d", len(doc.TOC))
+		t.Fatalf("Expected 2 TOC entries, got %d", len(doc.TOC))
 	}
 
 	if doc.TOC[0].Title != "Main Title" {
@@ -291,7 +422,7 @@ func TestRenderDocument(t *testing.T) {
 			},
 			ctx: &FormattingContext{
 				ShowFilenames:   true,
-				FilenameStyle:   FilenameStyleNice,
+				HeaderFormat:   HeaderFormatNice,
 				SequenceStyle: SequenceNumerical,
 				LineNumbers:   LineNumberNone,
 			},

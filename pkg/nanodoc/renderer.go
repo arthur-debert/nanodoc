@@ -22,7 +22,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 	var parts []string
 
 	// Generate TOC first, as it's used for filenames
-	if ctx.ShowTOC || ctx.FilenameStyle == FilenameStyleNice {
+	if ctx.ShowTOC || ctx.HeaderFormat == HeaderFormatNice {
 		slog.Debug("Generating table of contents for filenames/TOC")
 		generateTOC(doc)
 	}
@@ -59,7 +59,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 
 			// Generate filename
 			sequenceNumber++
-			filename := generateFilename(item.Filepath, ctx.FilenameStyle, ctx.SequenceStyle, sequenceNumber, doc)
+			filename := generateFilename(item.Filepath, &doc.FormattingOptions, sequenceNumber, doc)
 			parts = append(parts, filename)
 			parts = append(parts, "\n\n")
 		}
@@ -99,8 +99,7 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 	return result, nil
 }
 
-// generateFilename creates a filename for a file
-func generateFilename(filePath string, style FilenameStyle, seqStyle SequenceStyle, seqNum int, doc *Document) string {
+func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc *Document) string {
 	// Find the primary title for this file from the TOC
 	var title string
 	for _, entry := range doc.TOC {
@@ -110,21 +109,13 @@ func generateFilename(filePath string, style FilenameStyle, seqStyle SequenceSty
 		}
 	}
 
-	switch style {
-	case FilenameStyleFilename:
-		filename := filepath.Base(filePath)
-		seq := generateSequence(seqNum, seqStyle)
-		if seq != "" {
-			return fmt.Sprintf("%s. %s", seq, filename)
-		}
-		return filename
-	case FilenameStylePath:
-		seq := generateSequence(seqNum, seqStyle)
-		if seq != "" {
-			return fmt.Sprintf("%s. %s", seq, filePath)
-		}
-		return filePath
-	case FilenameStyleNice:
+	var baseName string
+	switch opts.HeaderFormat {
+	case HeaderFormatFilename:
+		baseName = filepath.Base(filePath)
+	case HeaderFormatPath:
+		baseName = filePath
+	case HeaderFormatNice:
 		fallthrough
 	default:
 		// Use title from TOC if available, otherwise generate from filename
@@ -137,14 +128,24 @@ func generateFilename(filePath string, style FilenameStyle, seqStyle SequenceSty
 			niceName = splitCamelCase(niceName)
 			niceName = toTitleCase(niceName)
 		}
-		
-		// Add sequence number
-		seq := generateSequence(seqNum, seqStyle)
-		if seq != "" {
-			return fmt.Sprintf("%s. %s", seq, niceName)
-		}
-		return niceName
+		baseName = niceName
 	}
+
+	// Add sequence number
+	seq := generateSequence(seqNum, opts.SequenceStyle)
+	if seq != "" {
+		baseName = fmt.Sprintf("%s. %s", seq, baseName)
+	}
+
+	// Get banner style from registry
+	style, exists := GetBannerStyle(opts.HeaderStyle)
+	if !exists {
+		// Fallback to none style if not found
+		style, _ = GetBannerStyle("none")
+	}
+	
+	// Apply the banner style
+	return style.Apply(baseName, opts)
 }
 
 // generateSequence generates a sequence number in the specified style

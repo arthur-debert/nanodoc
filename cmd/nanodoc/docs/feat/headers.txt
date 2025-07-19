@@ -1,0 +1,95 @@
+HEADERS AND NUMBERING
+
+Nanodoc can automatically generate headers for each file included in a bundle. The appearance of these headers is controlled by several settings: the header format, numbering style, alignment, and banner style.
+
+
+HEADER FORMATS
+
+There are three available header formats:
+
+    1. filename: Displays the simple filename (e.g., my_document.txt).
+    2. path: Displays the full resolved path to the file.
+    3. nice (Default): This style attempts to create a clean, human-readable title from the filename. The process is:
+        - If a Table of Contents is generated, the file's primary title from the TOC is used.
+        - Otherwise, it takes the filename, removes the extension, and cleans it up:
+            - Replaces underscores and hyphens with spaces.
+            - Splits camelCase words (e.g., myDocument becomes my Document).
+            - Converts the result to Title Case (e.g., My Document).
+
+
+NUMBERING STYLES
+
+The numbering style determines the marker placed before the header title.
+
+    1. numerical (Default): 1., 2., 3.
+    2. alphabetical: a., b., c.
+    3. roman: i., ii., iii.
+
+
+ALIGNMENT AND BANNER STYLES
+
+You can control the alignment and style of the headers.
+
+    - Alignment: left (default), center, right
+    - Banner Styles:
+        * none (default): No decoration, just the text
+        * dashed: Dashed lines above and below the header
+        * solid: Solid lines (=) above and below the header
+        * boxed: Full box around the header using hash (#) characters
+
+
+BANNER STYLE EXAMPLES
+
+Here are examples of different banner styles with a file named "test.txt":
+
+    None (default):
+        1. test.txt
+
+    Dashed:
+        -----------
+        1. test.txt
+        -----------
+
+    Solid:
+        ===========
+        1. test.txt
+        ===========
+
+    Boxed (with left alignment):
+        ################################################################################
+        ### 1. test.txt                                                              ###
+        ################################################################################
+
+    Boxed (with center alignment):
+        ################################################################################
+        ###                              1. test.txt                                 ###
+        ################################################################################
+
+
+OPTIONS
+
+    --filenames              Show headers between concatenated files (default: true)
+                            Use --filenames=false to hide headers completely
+    --file-numbering=TYPE    Set the file numbering style (numerical, alphabetical, roman)
+                            Default: numerical
+    --header-format=STYLE    Set the header display style (nice [default], filename, path)
+    --header-align=ALIGN     Set the header alignment (left, center, right)
+                            Default: left
+    --header-style=STYLE     Set the header style (none, dashed, solid, boxed)
+                            Default: none
+    --page-width=WIDTH       Set the page width for alignment
+                            Default: 80
+
+
+COMBINING OPTIONS
+
+You can combine header format, numbering, alignment, and banner styles:
+
+    # Nice format with roman numerals and centered solid banner
+    $ nanodoc --header-format=nice --file-numbering=roman --header-align=center --header-style=solid *.txt
+
+    # Path format with boxed banner, right-aligned
+    $ nanodoc --header-format=path --header-style=boxed --header-align=right docs/*.md
+
+    # Simple filenames with dashed banner
+    $ nanodoc --header-format=filename --header-style=dashed README.md CHANGELOG.md

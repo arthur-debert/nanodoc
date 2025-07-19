@@ -40,7 +40,7 @@ func TestCompletionOutput(t *testing.T) {
 			args: []string{"__complete", "nanodoc", "-"},
 			wantContains: []string{
 				"--theme",
-				"--file-style",
+				"--header-format",
 				"--file-numbering",
 				"--toc",
 				"--linenum",
@@ -56,8 +56,8 @@ func TestCompletionOutput(t *testing.T) {
 			},
 		},
 		{
-			name: "file-style value completion",
-			args: []string{"__complete", "nanodoc", "--file-style", ""},
+			name: "header-format value completion",
+			args: []string{"__complete", "nanodoc", "--header-format", ""},
 			wantContains: []string{
 				"nice",
 				"simple",

@@ -255,8 +255,8 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	if info.Options.SequenceStyle != "numerical" {
 		activeOptions = append(activeOptions, fmt.Sprintf("--file-numbering %s", info.Options.SequenceStyle))
 	}
-	if info.Options.FilenameStyle != "nice" {
-		activeOptions = append(activeOptions, fmt.Sprintf("--file-style %s", info.Options.FilenameStyle))
+	if info.Options.HeaderFormat != "nice" {
+		activeOptions = append(activeOptions, fmt.Sprintf("--header-format %s", info.Options.HeaderFormat))
 	}
 	
 	if len(activeOptions) > 0 {
