@@ -605,18 +605,139 @@ func TestParseBundleOptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// This test is now part of the CLI layer, so we can't test it directly here
-			// Instead, we should test the `parseBundleOptions` function in `cmd/nanodoc/root.go`
-			// Since we can't import `main`, we'll skip this test for now
-			t.Skip("Skipping test for parseBundleOptions as it's in the main package")
+			// Now we can test ParseBundleOptions directly
+			opts, err := ParseBundleOptions(tt.optionLines)
+			
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseBundleOptions() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			
+			if tt.wantErr {
+				return
+			}
+			
+			// Check specific fields
+			if opts.ShowTOC != tt.expectedOpts.ShowTOC {
+				t.Errorf("ShowTOC = %v, want %v", opts.ShowTOC, tt.expectedOpts.ShowTOC)
+			}
+			if opts.LineNumbers != tt.expectedOpts.LineNumbers {
+				t.Errorf("LineNumbers = %v, want %v", opts.LineNumbers, tt.expectedOpts.LineNumbers)
+			}
+			if opts.Theme != tt.expectedOpts.Theme {
+				t.Errorf("Theme = %v, want %v", opts.Theme, tt.expectedOpts.Theme)
+			}
+			if opts.ShowFilenames != tt.expectedOpts.ShowFilenames {
+				t.Errorf("ShowFilenames = %v, want %v", opts.ShowFilenames, tt.expectedOpts.ShowFilenames)
+			}
+			if opts.HeaderFormat != tt.expectedOpts.HeaderFormat {
+				t.Errorf("HeaderFormat = %v, want %v", opts.HeaderFormat, tt.expectedOpts.HeaderFormat)
+			}
+			if opts.SequenceStyle != tt.expectedOpts.SequenceStyle {
+				t.Errorf("SequenceStyle = %v, want %v", opts.SequenceStyle, tt.expectedOpts.SequenceStyle)
+			}
+			
+			// Check slices
+			if len(opts.AdditionalExtensions) != len(tt.expectedOpts.AdditionalExtensions) {
+				t.Errorf("AdditionalExtensions length = %v, want %v", len(opts.AdditionalExtensions), len(tt.expectedOpts.AdditionalExtensions))
+			}
+			if len(opts.IncludePatterns) != len(tt.expectedOpts.IncludePatterns) {
+				t.Errorf("IncludePatterns length = %v, want %v", len(opts.IncludePatterns), len(tt.expectedOpts.IncludePatterns))
+			}
+			if len(opts.ExcludePatterns) != len(tt.expectedOpts.ExcludePatterns) {
+				t.Errorf("ExcludePatterns length = %v, want %v", len(opts.ExcludePatterns), len(tt.expectedOpts.ExcludePatterns))
+			}
 		})
 	}
 }
 
 // Test that CLI options correctly override bundle options
 func TestMergeOptionsWithExplicitFlags(t *testing.T) {
-	// This test is now part of the CLI layer, so we can't test it directly here
-	// Instead, we should test the `mergeOptionsWithExplicitFlags` function in `cmd/nanodoc/root.go`
-	// Since we can't import `main`, we'll skip this test for now
-		t.Skip("Skipping test for mergeOptionsWithExplicitFlags as it's in the main package")
+	// Test the MergeOptionsWithExplicitFlags function
+	bundleOpts := FormattingOptions{
+		Theme:         "classic-dark",
+		LineNumbers:   LineNumberGlobal,
+		ShowFilenames: false,
+		HeaderFormat:  HeaderFormatPath,
+		ShowTOC:       true,
+	}
+	
+	cmdOpts := FormattingOptions{
+		Theme:         "classic-light",
+		LineNumbers:   LineNumberFile,
+		ShowFilenames: true,
+		HeaderFormat:  HeaderFormatNice,
+		ShowTOC:       false,
+	}
+	
+	tests := []struct {
+		name          string
+		explicitFlags map[string]bool
+		expected      FormattingOptions
+	}{
+		{
+			name:          "no_explicit_flags_uses_bundle",
+			explicitFlags: map[string]bool{},
+			expected: FormattingOptions{
+				Theme:         "classic-dark",  // from bundle
+				LineNumbers:   LineNumberGlobal, // from bundle
+				ShowFilenames: false,           // from bundle
+				HeaderFormat:  HeaderFormatPath, // from bundle
+				ShowTOC:       true,            // from bundle
+			},
+		},
+		{
+			name: "explicit_flags_override_bundle",
+			explicitFlags: map[string]bool{
+				"theme":         true,
+				"line-numbers":  true,
+			},
+			expected: FormattingOptions{
+				Theme:         "classic-light",  // from cmd (explicit)
+				LineNumbers:   LineNumberFile,   // from cmd (explicit)
+				ShowFilenames: false,           // from bundle
+				HeaderFormat:  HeaderFormatPath, // from bundle
+				ShowTOC:       true,            // from bundle
+			},
+		},
+		{
+			name: "all_explicit_uses_cmd",
+			explicitFlags: map[string]bool{
+				"theme":         true,
+				"line-numbers":  true,
+				"no-header":     true,
+				"header-format": true,
+				"toc":          true,
+			},
+			expected: FormattingOptions{
+				Theme:         "classic-light",  // from cmd
+				LineNumbers:   LineNumberFile,   // from cmd
+				ShowFilenames: true,            // from cmd
+				HeaderFormat:  HeaderFormatNice, // from cmd
+				ShowTOC:       false,           // from cmd
+			},
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := MergeOptionsWithExplicitFlags(bundleOpts, cmdOpts, tt.explicitFlags)
+			
+			if result.Theme != tt.expected.Theme {
+				t.Errorf("Theme = %v, want %v", result.Theme, tt.expected.Theme)
+			}
+			if result.LineNumbers != tt.expected.LineNumbers {
+				t.Errorf("LineNumbers = %v, want %v", result.LineNumbers, tt.expected.LineNumbers)
+			}
+			if result.ShowFilenames != tt.expected.ShowFilenames {
+				t.Errorf("ShowFilenames = %v, want %v", result.ShowFilenames, tt.expected.ShowFilenames)
+			}
+			if result.HeaderFormat != tt.expected.HeaderFormat {
+				t.Errorf("HeaderFormat = %v, want %v", result.HeaderFormat, tt.expected.HeaderFormat)
+			}
+			if result.ShowTOC != tt.expected.ShowTOC {
+				t.Errorf("ShowTOC = %v, want %v", result.ShowTOC, tt.expected.ShowTOC)
+			}
+		})
+	}
 }
