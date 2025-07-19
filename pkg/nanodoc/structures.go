@@ -84,6 +84,9 @@ type FormattingOptions struct {
 	// Header style
 	HeaderStyle string
 
+	// Page width for alignment
+	PageWidth int
+
 	// Additional file extensions to process
 	AdditionalExtensions []string
 

@@ -21,6 +21,7 @@ var (
 	headerFormat       string
 	headerAlign        string
 	headerStyle        string
+	pageWidth          int
 	additionalExt      []string
 	includePatterns    []string
 	excludePatterns    []string
@@ -91,6 +92,7 @@ var rootCmd = &cobra.Command{
 			HeaderFormat:   nanodoc.HeaderFormat(headerFormat),
 			HeaderAlignment: headerAlign,
 			HeaderStyle:     headerStyle,
+			PageWidth:       pageWidth,
 			AdditionalExtensions: additionalExt,
 			IncludePatterns: includePatterns,
 			ExcludePatterns: excludePatterns,
@@ -195,6 +197,9 @@ func trackExplicitFlags(cmd *cobra.Command) {
 	if cmd.Flags().Changed("header-style") {
 		explicitFlags["header-style"] = true
 	}
+	if cmd.Flags().Changed("page-width") {
+		explicitFlags["page-width"] = true
+	}
 	if cmd.Flags().Changed("file-numbering") {
 		explicitFlags["sequence"] = true
 	}
@@ -249,6 +254,7 @@ func saveBundleFile(path string, args []string, opts nanodoc.FormattingOptions, 
 	content.WriteString(fmt.Sprintf("--header-format=%s\n", string(opts.HeaderFormat)))
 	content.WriteString(fmt.Sprintf("--header-align=%s\n", opts.HeaderAlignment))
 	content.WriteString(fmt.Sprintf("--header-style=%s\n", opts.HeaderStyle))
+	content.WriteString(fmt.Sprintf("--page-width=%d\n", opts.PageWidth))
 
 	// File numbering
 	content.WriteString(fmt.Sprintf("--file-numbering=%s\n", string(opts.SequenceStyle)))
@@ -292,6 +298,7 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 	var bundleHeaderFormat string
 	var bundleHeaderAlign string
 	var bundleHeaderStyle string
+	var bundlePageWidth int
 	var bundleAdditionalExt []string
 	var bundleIncludePatterns []string
 	var bundleExcludePatterns []string
@@ -303,6 +310,7 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 	tempCmd.Flags().StringVar(&bundleHeaderFormat, "header-format", "nice", "")
 	tempCmd.Flags().StringVar(&bundleHeaderAlign, "header-align", "left", "")
 	tempCmd.Flags().StringVar(&bundleHeaderStyle, "header-style", "none", "")
+	tempCmd.Flags().IntVar(&bundlePageWidth, "page-width", nanodoc.OUTPUT_WIDTH, "")
 	tempCmd.Flags().StringVar(&bundleFileNumbering, "file-numbering", "numerical", "")
 	tempCmd.Flags().StringSliceVar(&bundleAdditionalExt, "ext", []string{}, "")
 	tempCmd.Flags().StringSliceVar(&bundleIncludePatterns, "include", []string{}, "")
@@ -339,6 +347,7 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 		HeaderFormat:          nanodoc.HeaderFormat(bundleHeaderFormat),
 		HeaderAlignment:      bundleHeaderAlign,
 		HeaderStyle:          bundleHeaderStyle,
+		PageWidth:            bundlePageWidth,
 		AdditionalExtensions: bundleAdditionalExt,
 		IncludePatterns:      bundleIncludePatterns,
 		ExcludePatterns:      bundleExcludePatterns,
@@ -367,6 +376,9 @@ func mergeOptionsWithExplicitFlags(bundleOpts, cmdOpts nanodoc.FormattingOptions
 	}
 	if !explicitFlags["header-style"] {
 		result.HeaderStyle = bundleOpts.HeaderStyle
+	}
+	if !explicitFlags["page-width"] {
+		result.PageWidth = bundleOpts.PageWidth
 	}
 	if !explicitFlags["sequence"] {
 		result.SequenceStyle = bundleOpts.SequenceStyle
@@ -463,6 +475,7 @@ func init() {
 	_ = rootCmd.RegisterFlagCompletionFunc("header-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"none", "dashed", "solid", "boxed"}, cobra.ShellCompDirectiveNoFileComp
 	})
+	rootCmd.Flags().IntVar(&pageWidth, "page-width", nanodoc.OUTPUT_WIDTH, "Page width for alignment")
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
 	_ = rootCmd.RegisterFlagCompletionFunc("file-numbering", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"numerical", "alphabetical", "roman"}, cobra.ShellCompDirectiveNoFileComp
@@ -471,6 +484,7 @@ func init() {
 	_ = rootCmd.Flags().SetAnnotation("header-format", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("header-align", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("header-style", "group", []string{"Formatting"})
+	_ = rootCmd.Flags().SetAnnotation("page-width", "group", []string{"Formatting"})
 	_ = rootCmd.Flags().SetAnnotation("file-numbering", "group", []string{"Features"})
 
 	// File filtering flags

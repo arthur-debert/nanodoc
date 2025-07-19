@@ -249,6 +249,20 @@ func TestGenerateFilename(t *testing.T) {
 			doc:    &Document{},
 			want:   "------------\n1. Test File\n------------",
 		},
+		{
+			name:     "right align with page width",
+			filepath: "/path/to/test_file.txt",
+			opts: &FormattingOptions{
+				HeaderFormat:    HeaderFormatNice,
+				SequenceStyle:   SequenceNumerical,
+				HeaderAlignment: "right",
+				HeaderStyle:     "none",
+				PageWidth:       50,
+			},
+			seqNum: 1,
+			doc:    &Document{},
+			want:   "                                      1. Test File",
+		},
 	}
 
 	for _, tt := range tests {
@@ -408,7 +422,7 @@ func TestGenerateTOC(t *testing.T) {
 	generateTOC(doc)
 
 	if len(doc.TOC) != 2 {
-			t.Fatalf("Expected 2 TOC entries, got %d", len(doc.TOC))
+		t.Fatalf("Expected 2 TOC entries, got %d", len(doc.TOC))
 	}
 
 	expectedTitles := []string{
