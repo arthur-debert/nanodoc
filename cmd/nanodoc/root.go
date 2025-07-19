@@ -71,31 +71,22 @@ var rootCmd = &cobra.Command{
 		explicitFlags = nanodoc.TrackExplicitFlags(cmd)
 
 		// 1. Set up Formatting Options first
-		lineNumberMode := nanodoc.LineNumberNone
-		switch lineNum {
-		case "file":
-			lineNumberMode = nanodoc.LineNumberFile
-		case "global":
-			lineNumberMode = nanodoc.LineNumberGlobal
-		case "":
-			// Default is none
-		default:
-			return fmt.Errorf("invalid --linenum value: %s (must be 'file' or 'global')", lineNum)
-		}
-
-		opts := nanodoc.FormattingOptions{
-			LineNumbers:   lineNumberMode,
-			ShowTOC:       toc,
-			Theme:         theme,
-			ShowFilenames:   showFilenames,
-			SequenceStyle: nanodoc.SequenceStyle(fileNumbering),
-			HeaderFormat:   nanodoc.HeaderFormat(filenameFormat),
-			HeaderAlignment: filenameAlign,
-			HeaderStyle:     filenameBanner,
-			PageWidth:       pageWidth,
-			AdditionalExtensions: additionalExt,
-			IncludePatterns: includePatterns,
-			ExcludePatterns: excludePatterns,
+		opts, err := nanodoc.BuildFormattingOptions(
+			lineNum,
+			toc,
+			theme,
+			showFilenames,
+			fileNumbering,
+			filenameFormat,
+			filenameAlign,
+			filenameBanner,
+			pageWidth,
+			additionalExt,
+			includePatterns,
+			excludePatterns,
+		)
+		if err != nil {
+			return err
 		}
 
 		// 2. Resolve Paths with pattern options

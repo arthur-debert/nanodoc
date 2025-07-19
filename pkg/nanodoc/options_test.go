@@ -87,3 +87,196 @@ func TestTrackExplicitFlags(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildFormattingOptions(t *testing.T) {
+	tests := []struct {
+		name            string
+		lineNum         string
+		toc             bool
+		theme           string
+		showFilenames   bool
+		fileNumbering   string
+		filenameFormat  string
+		filenameAlign   string
+		filenameBanner  string
+		pageWidth       int
+		additionalExt   []string
+		includePatterns []string
+		excludePatterns []string
+		wantOpts        FormattingOptions
+		wantErr         bool
+	}{
+		{
+			name:           "default_options",
+			lineNum:        "",
+			toc:            false,
+			theme:          "classic",
+			showFilenames:  true,
+			fileNumbering:  "numerical",
+			filenameFormat: "nice",
+			filenameAlign:  "left",
+			filenameBanner: "none",
+			pageWidth:      80,
+			wantOpts: FormattingOptions{
+				LineNumbers:     LineNumberNone,
+				ShowTOC:         false,
+				Theme:           "classic",
+				ShowFilenames:   true,
+				SequenceStyle:   "numerical",
+				HeaderFormat:    "nice",
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+				PageWidth:       80,
+			},
+			wantErr: false,
+		},
+		{
+			name:           "file_line_numbers",
+			lineNum:        "file",
+			toc:            true,
+			theme:          "dark",
+			showFilenames:  false,
+			fileNumbering:  "alphabetical",
+			filenameFormat: "path",
+			filenameAlign:  "center",
+			filenameBanner: "dashed",
+			pageWidth:      120,
+			wantOpts: FormattingOptions{
+				LineNumbers:     LineNumberFile,
+				ShowTOC:         true,
+				Theme:           "dark",
+				ShowFilenames:   false,
+				SequenceStyle:   "alphabetical",
+				HeaderFormat:    "path",
+				HeaderAlignment: "center",
+				HeaderStyle:     "dashed",
+				PageWidth:       120,
+			},
+			wantErr: false,
+		},
+		{
+			name:           "global_line_numbers",
+			lineNum:        "global",
+			toc:            false,
+			theme:          "classic",
+			showFilenames:  true,
+			fileNumbering:  "roman",
+			filenameFormat: "filename",
+			filenameAlign:  "right",
+			filenameBanner: "boxed",
+			pageWidth:      100,
+			wantOpts: FormattingOptions{
+				LineNumbers:     LineNumberGlobal,
+				ShowTOC:         false,
+				Theme:           "classic",
+				ShowFilenames:   true,
+				SequenceStyle:   "roman",
+				HeaderFormat:    "filename",
+				HeaderAlignment: "right",
+				HeaderStyle:     "boxed",
+				PageWidth:       100,
+			},
+			wantErr: false,
+		},
+		{
+			name:           "with_patterns",
+			lineNum:        "",
+			toc:            false,
+			theme:          "classic",
+			showFilenames:  true,
+			fileNumbering:  "numerical",
+			filenameFormat: "nice",
+			filenameAlign:  "left",
+			filenameBanner: "none",
+			pageWidth:      80,
+			additionalExt:  []string{".txt", ".log"},
+			includePatterns: []string{"*.go", "*.md"},
+			excludePatterns: []string{"*_test.go", "vendor/*"},
+			wantOpts: FormattingOptions{
+				LineNumbers:          LineNumberNone,
+				ShowTOC:              false,
+				Theme:                "classic",
+				ShowFilenames:        true,
+				SequenceStyle:        "numerical",
+				HeaderFormat:         "nice",
+				HeaderAlignment:      "left",
+				HeaderStyle:          "none",
+				PageWidth:            80,
+				AdditionalExtensions: []string{".txt", ".log"},
+				IncludePatterns:      []string{"*.go", "*.md"},
+				ExcludePatterns:      []string{"*_test.go", "vendor/*"},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "invalid_line_num",
+			lineNum: "invalid",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts, err := BuildFormattingOptions(
+				tt.lineNum,
+				tt.toc,
+				tt.theme,
+				tt.showFilenames,
+				tt.fileNumbering,
+				tt.filenameFormat,
+				tt.filenameAlign,
+				tt.filenameBanner,
+				tt.pageWidth,
+				tt.additionalExt,
+				tt.includePatterns,
+				tt.excludePatterns,
+			)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("BuildFormattingOptions() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				// Compare the options
+				if opts.LineNumbers != tt.wantOpts.LineNumbers {
+					t.Errorf("LineNumbers = %v, want %v", opts.LineNumbers, tt.wantOpts.LineNumbers)
+				}
+				if opts.ShowTOC != tt.wantOpts.ShowTOC {
+					t.Errorf("ShowTOC = %v, want %v", opts.ShowTOC, tt.wantOpts.ShowTOC)
+				}
+				if opts.Theme != tt.wantOpts.Theme {
+					t.Errorf("Theme = %v, want %v", opts.Theme, tt.wantOpts.Theme)
+				}
+				if opts.ShowFilenames != tt.wantOpts.ShowFilenames {
+					t.Errorf("ShowFilenames = %v, want %v", opts.ShowFilenames, tt.wantOpts.ShowFilenames)
+				}
+				if opts.SequenceStyle != tt.wantOpts.SequenceStyle {
+					t.Errorf("SequenceStyle = %v, want %v", opts.SequenceStyle, tt.wantOpts.SequenceStyle)
+				}
+				if opts.HeaderFormat != tt.wantOpts.HeaderFormat {
+					t.Errorf("HeaderFormat = %v, want %v", opts.HeaderFormat, tt.wantOpts.HeaderFormat)
+				}
+				if opts.HeaderAlignment != tt.wantOpts.HeaderAlignment {
+					t.Errorf("HeaderAlignment = %v, want %v", opts.HeaderAlignment, tt.wantOpts.HeaderAlignment)
+				}
+				if opts.HeaderStyle != tt.wantOpts.HeaderStyle {
+					t.Errorf("HeaderStyle = %v, want %v", opts.HeaderStyle, tt.wantOpts.HeaderStyle)
+				}
+				if opts.PageWidth != tt.wantOpts.PageWidth {
+					t.Errorf("PageWidth = %v, want %v", opts.PageWidth, tt.wantOpts.PageWidth)
+				}
+				// Compare slices
+				if len(opts.AdditionalExtensions) != len(tt.wantOpts.AdditionalExtensions) {
+					t.Errorf("AdditionalExtensions length = %v, want %v", len(opts.AdditionalExtensions), len(tt.wantOpts.AdditionalExtensions))
+				}
+				if len(opts.IncludePatterns) != len(tt.wantOpts.IncludePatterns) {
+					t.Errorf("IncludePatterns length = %v, want %v", len(opts.IncludePatterns), len(tt.wantOpts.IncludePatterns))
+				}
+				if len(opts.ExcludePatterns) != len(tt.wantOpts.ExcludePatterns) {
+					t.Errorf("ExcludePatterns length = %v, want %v", len(opts.ExcludePatterns), len(tt.wantOpts.ExcludePatterns))
+				}
+			}
+		})
+	}
+}
