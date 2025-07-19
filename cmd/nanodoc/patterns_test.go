@@ -86,7 +86,7 @@ func TestRootCmdWithPatterns(t *testing.T) {
 		},
 		{
 			name: "patterns with additional extensions",
-			args: []string{tempDir, "--txt-ext", "go", "--include", "**/api/**"},
+			args: []string{tempDir, "--ext", "go", "--include", "**/api/**"},
 			wantContains: []string{
 				"Users API",
 				"Auth API",

@@ -2,14 +2,10 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/arthur-debert/nanodoc/pkg/nanodoc"
-	"github.com/spf13/cobra"
 )
 
 // setupTest creates temporary files and returns a cleanup function.
@@ -36,13 +32,30 @@ func setupTest(t *testing.T) (string, func()) {
 
 func executeCommand(args ...string) (string, error) {
 	var out bytes.Buffer
-	// Create a new root command for each test to prevent flag pollution
-	cmd, _ := newRootCmd()
-	cmd.SetOut(&out)
-	cmd.SetErr(&out)
-	cmd.SetArgs(args)
+	// Reset flags before each test
+	resetFlags()
+	
+	// Reset all flag values to ensure clean state
+	rootCmd.ResetFlags()
+	// Re-initialize flags after reset
+	rootCmd.Flags().StringVarP(&lineNum, "linenum", "l", "", FlagLineNum)
+	rootCmd.Flags().BoolVar(&toc, "toc", false, FlagTOC)
+	rootCmd.Flags().StringVar(&theme, "theme", "classic", FlagTheme)
+	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
+	rootCmd.Flags().StringVar(&fileStyle, "file-style", "nice", FlagFileStyle)
+	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
+	rootCmd.Flags().StringSliceVar(&additionalExt, "ext", []string{}, FlagExt)
+	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
+	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, FlagExclude)
+	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
+	rootCmd.Flags().BoolP("version", "v", false, FlagVersion)
+	
+	// Use the actual root command
+	rootCmd.SetOut(&out)
+	rootCmd.SetErr(&out)
+	rootCmd.SetArgs(args)
 
-	err := cmd.Execute()
+	err := rootCmd.Execute()
 	return out.String(), err
 }
 
@@ -68,13 +81,13 @@ func TestRootCmd(t *testing.T) {
 		},
 		{
 			name:       "with line numbers",
-			args:       []string{"-n", file1},
+			args:       []string{"-l", "file", file1},
 			wantOutput: []string{"1 | hello", "2 | world"},
 			wantErr:    false,
 		},
 		{
 			name:       "with global line numbers",
-			args:       []string{"-N", file1, file2},
+			args:       []string{"-l", "global", file1, file2},
 			wantOutput: []string{"1. File1", "1 | hello", "2 | world", "2. Title", "3 | # Title", "5 | content"},
 			wantErr:    false,
 		},
@@ -85,8 +98,8 @@ func TestRootCmd(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name:          "with no header",
-			args:          []string{"--no-header", file1},
+			name:          "without filenames",
+			args:          []string{"--filenames=false", file1},
 			wantOutput:    []string{"hello", "world"},
 			dontWantOutput:[]string{"1. File1"},
 			wantErr:       false,
@@ -98,9 +111,22 @@ func TestRootCmd(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name:    "no arguments",
-			args:    []string{},
-			wantErr: true,
+			name:       "no arguments",
+			args:       []string{},
+			wantOutput: []string{"Missing paths to bundle: $ nanodoc <path...>"},
+			wantErr:    true,
+		},
+		{
+			name:       "help flag",
+			args:       []string{"--help"},
+			wantOutput: []string{"a minimal document bundler"},
+			wantErr:    false,
+		},
+		{
+			name:       "help command",
+			args:       []string{"help"},
+			wantOutput: []string{"a minimal document bundler"},
+			wantErr:    false,
 		},
 		{
 			name:    "non-existent file",
@@ -180,22 +206,22 @@ func TestRootCmdBundleOptions(t *testing.T) {
 		},
 		{
 			name: "cli_overrides_bundle",
-			args: []string{"--header-style", "filename", bundleFile},
+			args: []string{"--file-style", "filename", bundleFile},
 			wantOutput: []string{
 				"Table of Contents",  // --toc from bundle (not overridden)
-				"1 | line1",          // --line-numbers from bundle (not overridden)
-				"test.txt",           // --header-style filename overrides bundle's path
+				"1 | line1",          // --linenum file from bundle (not overridden)
+				"test.txt",           // --file-style filename overrides bundle's path
 			},
 			dontWantOutput: []string{
 				tempDir,              // Should not show full path
 			},
 		},
 		{
-			name: "cli_no_header_overrides_bundle",
-			args: []string{"--no-header", bundleFile},
+			name: "cli_no_filenames_overrides_bundle",
+			args: []string{"--filenames=false", bundleFile},
 			wantOutput: []string{
 				"Table of Contents",  // --toc from bundle (not overridden)
-				"1 | line1",          // --line-numbers from bundle (not overridden)
+				"1 | line1",          // --linenum file from bundle (not overridden)
 			},
 			dontWantOutput: []string{
 				"test.txt",           // No header should be shown
@@ -231,117 +257,15 @@ func TestRootCmdBundleOptions(t *testing.T) {
 
 // resetFlags resets all persistent flags to their default values.
 func resetFlags() {
-	lineNumbers = false
-	globalLineNumbers = false
+	lineNum = ""
 	toc = false
 	theme = "classic"
-	noHeader = false
-	sequence = "numerical"
-	headerStyle = "nice"
+	showFilenames = true
+	fileNumbering = "numerical"
+	fileStyle = "nice"
 	additionalExt = []string{}
-}
-
-func newRootCmd() (*cobra.Command, *nanodoc.FormattingOptions) {
-	// Reset all flags
-	resetFlags()
-
-	var opts nanodoc.FormattingOptions
-	cmd := &cobra.Command{
-		Use:   "nanodoc [paths...]",
-		Args: cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// Track explicitly set flags
-			explicitFlags := make(map[string]bool)
-			if cmd.Flags().Changed("toc") {
-				explicitFlags["toc"] = true
-			}
-			if cmd.Flags().Changed("theme") {
-				explicitFlags["theme"] = true
-			}
-			if cmd.Flags().Changed("line-numbers") || cmd.Flags().Changed("global-line-numbers") {
-				explicitFlags["line-numbers"] = true
-			}
-			if cmd.Flags().Changed("no-header") {
-				explicitFlags["no-header"] = true
-			}
-			if cmd.Flags().Changed("header-style") {
-				explicitFlags["header-style"] = true
-			}
-			if cmd.Flags().Changed("sequence") {
-				explicitFlags["sequence"] = true
-			}
-			if cmd.Flags().Changed("txt-ext") {
-				explicitFlags["txt-ext"] = true
-			}
-			if cmd.Flags().Changed("include") {
-				explicitFlags["include"] = true
-			}
-			if cmd.Flags().Changed("exclude") {
-				explicitFlags["exclude"] = true
-			}
-
-			// Resolve paths with pattern options
-			pathOpts := &nanodoc.FormattingOptions{
-				AdditionalExtensions: additionalExt,
-				IncludePatterns: includePatterns,
-				ExcludePatterns: excludePatterns,
-			}
-			pathInfos, err := nanodoc.ResolvePathsWithOptions(args, pathOpts)
-			if err != nil {
-				return fmt.Errorf("Error resolving paths: %w", err)
-			}
-			
-			lineNumberMode := nanodoc.LineNumberNone
-			if globalLineNumbers {
-				lineNumberMode = nanodoc.LineNumberGlobal
-			} else if lineNumbers {
-				lineNumberMode = nanodoc.LineNumberFile
-			}
-
-			opts = nanodoc.FormattingOptions{
-				LineNumbers:   lineNumberMode,
-				ShowTOC:       toc,
-				Theme:         theme,
-				ShowHeaders:   !noHeader,
-				SequenceStyle: nanodoc.SequenceStyle(sequence),
-				HeaderStyle:   nanodoc.HeaderStyle(headerStyle),
-				AdditionalExtensions: additionalExt,
-				IncludePatterns: includePatterns,
-				ExcludePatterns: excludePatterns,
-			}
-
-			doc, err := nanodoc.BuildDocumentWithExplicitFlags(pathInfos, opts, explicitFlags)
-			if err != nil {
-				return fmt.Errorf("Error building document: %w", err)
-			}
-
-			ctx, err := nanodoc.NewFormattingContext(doc.FormattingOptions)
-			if err != nil {
-				return fmt.Errorf("Error creating formatting context: %w", err)
-			}
-
-			output, err := nanodoc.RenderDocument(doc, ctx)
-			if err != nil {
-				return fmt.Errorf("Error rendering document: %w", err)
-			}
-
-			_, _ = fmt.Fprint(cmd.OutOrStdout(), output)
-			return nil
-		},
-	}
-
-	// Add flags
-	cmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, "Enable per-file line numbering")
-	cmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, "Enable global line numbering")
-	cmd.MarkFlagsMutuallyExclusive("line-numbers", "global-line-numbers")
-	cmd.Flags().BoolVar(&toc, "toc", false, "Generate a table of contents")
-	cmd.Flags().StringVar(&theme, "theme", "classic", "Set the theme for formatting")
-	cmd.Flags().BoolVar(&noHeader, "no-header", false, "Suppress file headers")
-	cmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style")
-	cmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style")
-	cmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions")
-	cmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching these patterns")
-	cmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching these patterns")
-
-	return cmd, &opts
+	includePatterns = []string{}
+	excludePatterns = []string{}
+	dryRun = false
+	explicitFlags = make(map[string]bool)
 }
