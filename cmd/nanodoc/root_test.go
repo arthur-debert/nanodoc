@@ -2,14 +2,10 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/arthur-debert/nanodoc/pkg/nanodoc"
-	"github.com/spf13/cobra"
 )
 
 // setupTest creates temporary files and returns a cleanup function.
@@ -275,109 +271,4 @@ func resetFlags() {
 	excludePatterns = []string{}
 	dryRun = false
 	explicitFlags = make(map[string]bool)
-}
-
-func newRootCmd() (*cobra.Command, *nanodoc.FormattingOptions) {
-	// Reset all flags
-	resetFlags()
-
-	var opts nanodoc.FormattingOptions
-	cmd := &cobra.Command{
-		Use:   "nanodoc [paths...]",
-		Args: cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// Track explicitly set flags
-			explicitFlags := make(map[string]bool)
-			if cmd.Flags().Changed("toc") {
-				explicitFlags["toc"] = true
-			}
-			if cmd.Flags().Changed("theme") {
-				explicitFlags["theme"] = true
-			}
-			if cmd.Flags().Changed("line-numbers") || cmd.Flags().Changed("global-line-numbers") {
-				explicitFlags["line-numbers"] = true
-			}
-			if cmd.Flags().Changed("no-header") {
-				explicitFlags["no-header"] = true
-			}
-			if cmd.Flags().Changed("header-style") {
-				explicitFlags["header-style"] = true
-			}
-			if cmd.Flags().Changed("sequence") {
-				explicitFlags["sequence"] = true
-			}
-			if cmd.Flags().Changed("txt-ext") {
-				explicitFlags["txt-ext"] = true
-			}
-			if cmd.Flags().Changed("include") {
-				explicitFlags["include"] = true
-			}
-			if cmd.Flags().Changed("exclude") {
-				explicitFlags["exclude"] = true
-			}
-
-			// Resolve paths with pattern options
-			pathOpts := &nanodoc.FormattingOptions{
-				AdditionalExtensions: additionalExt,
-				IncludePatterns: includePatterns,
-				ExcludePatterns: excludePatterns,
-			}
-			pathInfos, err := nanodoc.ResolvePathsWithOptions(args, pathOpts)
-			if err != nil {
-				return fmt.Errorf("Error resolving paths: %w", err)
-			}
-			
-			lineNumberMode := nanodoc.LineNumberNone
-			if globalLineNumbers {
-				lineNumberMode = nanodoc.LineNumberGlobal
-			} else if lineNumbers {
-				lineNumberMode = nanodoc.LineNumberFile
-			}
-
-			opts = nanodoc.FormattingOptions{
-				LineNumbers:   lineNumberMode,
-				ShowTOC:       toc,
-				Theme:         theme,
-				ShowHeaders:   !noHeader,
-				SequenceStyle: nanodoc.SequenceStyle(sequence),
-				HeaderStyle:   nanodoc.HeaderStyle(headerStyle),
-				AdditionalExtensions: additionalExt,
-				IncludePatterns: includePatterns,
-				ExcludePatterns: excludePatterns,
-			}
-
-			doc, err := nanodoc.BuildDocumentWithExplicitFlags(pathInfos, opts, explicitFlags)
-			if err != nil {
-				return fmt.Errorf("Error building document: %w", err)
-			}
-
-			ctx, err := nanodoc.NewFormattingContext(doc.FormattingOptions)
-			if err != nil {
-				return fmt.Errorf("Error creating formatting context: %w", err)
-			}
-
-			output, err := nanodoc.RenderDocument(doc, ctx)
-			if err != nil {
-				return fmt.Errorf("Error rendering document: %w", err)
-			}
-
-			_, _ = fmt.Fprint(cmd.OutOrStdout(), output)
-			return nil
-		},
-	}
-
-	// Add flags
-	cmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, "Enable per-file line numbering")
-	cmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, "Enable global line numbering")
-	cmd.MarkFlagsMutuallyExclusive("line-numbers", "global-line-numbers")
-	cmd.Flags().BoolVar(&toc, "toc", false, "Generate a table of contents")
-	cmd.Flags().StringVar(&theme, "theme", "classic", "Set the theme for formatting")
-	cmd.Flags().BoolVar(&noHeader, "no-header", false, "Suppress file headers")
-	cmd.Flags().StringVar(&headerStyle, "header-style", "nice", "Set the header style")
-	cmd.Flags().StringVar(&sequence, "sequence", "numerical", "Set the sequence style")
-	cmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, "Additional file extensions")
-	cmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, "Include only files matching these patterns")
-	cmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, "Exclude files matching these patterns")
-
-	return cmd, &opts
 }

@@ -17,7 +17,7 @@ func TestCompletionOutput(t *testing.T) {
 	if err := buildCmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}
-	defer os.Remove("/tmp/nanodoc-test")
+	defer func() { _ = os.Remove("/tmp/nanodoc-test") }()
 
 	tests := []struct {
 		name            string

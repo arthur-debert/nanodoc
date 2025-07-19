@@ -56,8 +56,8 @@ var rootCmd = &cobra.Command{
 		
 		// Check args only if not printing version
 		if len(args) < 1 {
-			fmt.Fprintln(cmd.ErrOrStderr(), "Missing paths to bundle: $ nanodoc <path...>")
-			fmt.Fprintln(cmd.ErrOrStderr())
+			_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "Missing paths to bundle: $ nanodoc <path...>")
+			_, _ = fmt.Fprintln(cmd.ErrOrStderr())
 			cmd.SilenceUsage = false
 			return fmt.Errorf("")
 		}
