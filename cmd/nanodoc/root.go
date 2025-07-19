@@ -41,6 +41,8 @@ var rootCmd = &cobra.Command{
 	Long:    rootLongHelp,
 	Example: rootExamples,
 	Args:    cobra.ArbitraryArgs,
+	SilenceUsage: true,
+	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Check version flag first
 		if versionFlag, _ := cmd.Flags().GetBool("version"); versionFlag {
@@ -50,8 +52,10 @@ var rootCmd = &cobra.Command{
 		
 		// Check args only if not printing version
 		if len(args) < 1 {
-			_ = cmd.Help()
-			return nil
+			fmt.Fprintln(cmd.ErrOrStderr(), "Missing paths to bundle: $ nanodoc <path...>")
+			fmt.Fprintln(cmd.ErrOrStderr())
+			cmd.SilenceUsage = false
+			return fmt.Errorf("")
 		}
 		// Track explicitly set flags
 		trackExplicitFlags(cmd)

@@ -36,13 +36,15 @@ func setupTest(t *testing.T) (string, func()) {
 
 func executeCommand(args ...string) (string, error) {
 	var out bytes.Buffer
-	// Create a new root command for each test to prevent flag pollution
-	cmd, _ := newRootCmd()
-	cmd.SetOut(&out)
-	cmd.SetErr(&out)
-	cmd.SetArgs(args)
+	// Reset flags before each test
+	resetFlags()
+	
+	// Use the actual root command
+	rootCmd.SetOut(&out)
+	rootCmd.SetErr(&out)
+	rootCmd.SetArgs(args)
 
-	err := cmd.Execute()
+	err := rootCmd.Execute()
 	return out.String(), err
 }
 
@@ -98,9 +100,22 @@ func TestRootCmd(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name:    "no arguments",
-			args:    []string{},
-			wantErr: true,
+			name:       "no arguments",
+			args:       []string{},
+			wantOutput: []string{"Missing paths to bundle: $ nanodoc <path...>"},
+			wantErr:    true,
+		},
+		{
+			name:       "help flag",
+			args:       []string{"--help"},
+			wantOutput: []string{"a minimal document bundler"},
+			wantErr:    false,
+		},
+		{
+			name:       "help command",
+			args:       []string{"help"},
+			wantOutput: []string{"a minimal document bundler"},
+			wantErr:    false,
 		},
 		{
 			name:    "non-existent file",
