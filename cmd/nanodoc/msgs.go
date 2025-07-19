@@ -43,6 +43,10 @@ const (
 	FlagExclude           = "Exclude files matching patterns (help content)"
 	FlagDryRun            = "Preview files to process without bundling"
 	FlagVersion           = "Print the version number"
+	FlagHeaderAlign       = "Header alignment"
+	FlagHeaderStyle       = "Header style"
+	FlagPageWidth         = "Page width"
+	FlagSaveToBundle      = "Save the current invocation as a bundle file"
 )
 
 // Output messages

@@ -308,18 +308,18 @@ func init() {
 	_ = rootCmd.RegisterFlagCompletionFunc("header-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"nice", "simple", "path", "filename", "title"}, cobra.ShellCompDirectiveNoFileComp
 	})
-	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment")
+	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", FlagHeaderAlign)
 	_ = rootCmd.RegisterFlagCompletionFunc("header-align", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"left", "center", "right"}, cobra.ShellCompDirectiveNoFileComp
 	})
-	rootCmd.Flags().StringVar(&filenameBanner, "header-style", "none", "Header style")
+	rootCmd.Flags().StringVar(&filenameBanner, "header-style", "none", FlagHeaderStyle)
 	_ = rootCmd.RegisterFlagCompletionFunc("header-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		// Dynamically get banner styles from registry
 		return nanodoc.GetBannerStyleNames(), cobra.ShellCompDirectiveNoFileComp
 	})
 	// Auto-detect terminal width as default for page width
 	defaultPageWidth := nanodoc.GetTerminalWidth()
-	rootCmd.Flags().IntVar(&pageWidth, "page-width", defaultPageWidth, "Page width")
+	rootCmd.Flags().IntVar(&pageWidth, "page-width", defaultPageWidth, FlagPageWidth)
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
 	_ = rootCmd.RegisterFlagCompletionFunc("file-numbering", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"numerical", "alphabetical", "roman"}, cobra.ShellCompDirectiveNoFileComp
@@ -341,7 +341,7 @@ func init() {
 	
 	// Other flags
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
-	rootCmd.Flags().StringVar(&saveToBundlePath, "save-to-bundle", "", "Save the current invocation as a bundle file")
+	rootCmd.Flags().StringVar(&saveToBundlePath, "save-to-bundle", "", FlagSaveToBundle)
 	rootCmd.Flags().BoolP("version", "v", false, FlagVersion)
 	_ = rootCmd.Flags().SetAnnotation("dry-run", "group", []string{"Misc"})
 	_ = rootCmd.Flags().SetAnnotation("save-to-bundle", "group", []string{"Features"})
