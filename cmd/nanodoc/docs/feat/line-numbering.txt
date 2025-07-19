@@ -1,14 +1,14 @@
 LINE NUMBERING MODES
 
-Nanodoc provides two distinct modes for adding line numbers to the output.
+Nanodoc provides two distinct modes for adding line numbers to the output using a single unified flag.
 
 
 MODES
 
-    1. Per-File Numbering (-n):
+    1. Per-File Numbering:
        In this mode, line numbering restarts at 1 for each new file that is added to the bundle. This is useful when you want to see line counts relative to each individual file.
 
-    2. Global Numbering (-N):
+    2. Global Numbering:
        In this mode, line numbering is continuous across all files in the bundle. It starts at 1 for the first line of the first file and increments sequentially until the very last line of the last file. This is useful for getting a total line count or for referencing lines in the final combined document.
 
 
@@ -61,5 +61,11 @@ Global Numbering Output:
 
 OPTIONS
 
-    -n, --line-numbers         Per-file numbering: Each file starts from 1
-    -N, --global-line-numbers  Global numbering: Continues across all files
+    -l, --linenum <mode>  Enable line numbering with specified mode:
+                          • file   - Per-file numbering: Each file starts from 1
+                          • global - Global numbering: Continues across all files
+    
+    Examples:
+        nanodoc file1.txt file2.txt --linenum file      # Per-file numbering
+        nanodoc file1.txt file2.txt --linenum global    # Global numbering
+        nanodoc file1.txt file2.txt -l file             # Short form
