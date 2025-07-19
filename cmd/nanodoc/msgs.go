@@ -37,7 +37,7 @@ const (
 	FlagTheme             = "Theme (help themes)"
 	FlagFilenames         = "Show filenames"
 	FlagHeaderFormat      = "Header style (help filenames)"
-	FlagFileNumbering     = "File numbering style (help filenames)"
+	FlagFileNumbering     = "File numbering"
 	FlagExt               = "Additional file extensions to treat as text"
 	FlagInclude           = "Include files matching patterns (help content)"
 	FlagExclude           = "Exclude files matching patterns (help content)"
