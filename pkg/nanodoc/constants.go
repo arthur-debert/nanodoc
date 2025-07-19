@@ -18,16 +18,16 @@ const (
 	LineNumberGlobal
 )
 
-// HeaderStyle represents different header styles
-type HeaderStyle string
+// FilenameStyle represents different filename styles
+type FilenameStyle string
 
 const (
-	// HeaderStyleNice - formatted headers with decorations
-	HeaderStyleNice HeaderStyle = "nice"
-	// HeaderStyleFilename - just the filename
-	HeaderStyleFilename HeaderStyle = "filename"
-	// HeaderStylePath - full file path
-	HeaderStylePath HeaderStyle = "path"
+	// FilenameStyleNice - formatted filenames with decorations
+	FilenameStyleNice FilenameStyle = "nice"
+	// FilenameStyleFilename - just the filename
+	FilenameStyleFilename FilenameStyle = "filename"
+	// FilenameStylePath - full file path
+	FilenameStylePath FilenameStyle = "path"
 )
 
 // SequenceStyle represents different sequence numbering styles

@@ -84,9 +84,9 @@ var rootCmd = &cobra.Command{
 			LineNumbers:   lineNumberMode,
 			ShowTOC:       toc,
 			Theme:         theme,
-			ShowHeaders:   showFilenames,
+			ShowFilenames:   showFilenames,
 			SequenceStyle: nanodoc.SequenceStyle(fileNumbering),
-			HeaderStyle:   nanodoc.HeaderStyle(fileStyle),
+			FilenameStyle:   nanodoc.FilenameStyle(fileStyle),
 			AdditionalExtensions: additionalExt,
 			IncludePatterns: includePatterns,
 			ExcludePatterns: excludePatterns,
@@ -183,7 +183,7 @@ func trackExplicitFlags(cmd *cobra.Command) {
 		explicitFlags["no-header"] = true
 	}
 	if cmd.Flags().Changed("file-style") {
-		explicitFlags["header-style"] = true
+		explicitFlags["filename-style"] = true
 	}
 	if cmd.Flags().Changed("file-numbering") {
 		explicitFlags["sequence"] = true
@@ -230,13 +230,13 @@ func saveBundleFile(path string, args []string, opts nanodoc.FormattingOptions, 
 	// Theme
 	content.WriteString(fmt.Sprintf("--theme=%s\n", opts.Theme))
 
-	// File headers
-	if !opts.ShowHeaders {
+	// File filenames
+	if !opts.ShowFilenames {
 		content.WriteString("--filenames=false\n")
 	}
 
 	// File style
-	content.WriteString(fmt.Sprintf("--file-style=%s\n", string(opts.HeaderStyle)))
+	content.WriteString(fmt.Sprintf("--file-style=%s\n", string(opts.FilenameStyle)))
 
 	// File numbering
 	content.WriteString(fmt.Sprintf("--file-numbering=%s\n", string(opts.SequenceStyle)))
@@ -318,9 +318,9 @@ func parseBundleOptions(optionLines []string) (nanodoc.FormattingOptions, error)
 		LineNumbers:          lineNumberMode,
 		ShowTOC:              bundleToc,
 		Theme:                bundleTheme,
-		ShowHeaders:          bundleShowFilenames,
+		ShowFilenames:          bundleShowFilenames,
 		SequenceStyle:        nanodoc.SequenceStyle(bundleFileNumbering),
-		HeaderStyle:          nanodoc.HeaderStyle(bundleFileStyle),
+		FilenameStyle:          nanodoc.FilenameStyle(bundleFileStyle),
 		AdditionalExtensions: bundleAdditionalExt,
 		IncludePatterns:      bundleIncludePatterns,
 		ExcludePatterns:      bundleExcludePatterns,
@@ -339,10 +339,10 @@ func mergeOptionsWithExplicitFlags(bundleOpts, cmdOpts nanodoc.FormattingOptions
 		result.LineNumbers = bundleOpts.LineNumbers
 	}
 	if !explicitFlags["no-header"] {
-		result.ShowHeaders = bundleOpts.ShowHeaders
+		result.ShowFilenames = bundleOpts.ShowFilenames
 	}
-	if !explicitFlags["header-style"] {
-		result.HeaderStyle = bundleOpts.HeaderStyle
+	if !explicitFlags["filename-style"] {
+		result.FilenameStyle = bundleOpts.FilenameStyle
 	}
 	if !explicitFlags["sequence"] {
 		result.SequenceStyle = bundleOpts.SequenceStyle

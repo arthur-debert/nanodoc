@@ -11,4 +11,4 @@
   nanodoc "main.go:L10-20,L35"
 
   # Generate a bundle with a table of contents and global line numbers
-  nanodoc --toc -N pkg/
+  nanodoc --toc --linenum=global pkg/

@@ -66,13 +66,13 @@ type FormattingOptions struct {
 	// Line numbering mode
 	LineNumbers LineNumberMode
 
-	// Whether to show headers
-	ShowHeaders bool
+	// Whether to show filenames
+	ShowFilenames bool
 
-	// Header style
-	HeaderStyle HeaderStyle
+	// Filename style
+	FilenameStyle FilenameStyle
 
-	// Header sequence type
+	// Filename sequence type
 	SequenceStyle SequenceStyle
 
 	// Whether to show table of contents
@@ -128,8 +128,8 @@ func NewDocument() *Document {
 		TOC:          make([]TOCEntry, 0),
 		FormattingOptions: FormattingOptions{
 			Theme:         ThemeClassic,
-			ShowHeaders:   true,
-			HeaderStyle:   HeaderStyleNice,
+			ShowFilenames:   true,
+			FilenameStyle:   FilenameStyleNice,
 			SequenceStyle: SequenceNumerical,
 			LineNumbers:   LineNumberNone,
 		},

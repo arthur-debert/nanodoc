@@ -186,12 +186,12 @@ func TestNewDocument(t *testing.T) {
 		t.Errorf("NewDocument() TOC length = %d, want 0", len(doc.TOC))
 	}
 
-	if !doc.FormattingOptions.ShowHeaders {
-		t.Error("NewDocument() ShowHeaders = false, want true")
+	if !doc.FormattingOptions.ShowFilenames {
+		t.Error("NewDocument() ShowFilenames = false, want true")
 	}
 
-	if doc.FormattingOptions.HeaderStyle != HeaderStyleNice {
-		t.Errorf("NewDocument() HeaderStyle = %s, want %s", doc.FormattingOptions.HeaderStyle, HeaderStyleNice)
+	if doc.FormattingOptions.FilenameStyle != FilenameStyleNice {
+		t.Errorf("NewDocument() FilenameStyle = %s, want %s", doc.FormattingOptions.FilenameStyle, FilenameStyleNice)
 	}
 }
 
@@ -225,8 +225,8 @@ func TestFormattingOptions(t *testing.T) {
 	opts := FormattingOptions{
 		Theme:                ThemeClassic,
 		LineNumbers:          LineNumberFile,
-		ShowHeaders:          true,
-		HeaderStyle:          HeaderStylePath,
+		ShowFilenames:          true,
+		FilenameStyle:          FilenameStylePath,
 		SequenceStyle:        SequenceNumerical,
 		ShowTOC:              false,
 		AdditionalExtensions: []string{".go", ".py"},
@@ -236,16 +236,16 @@ func TestFormattingOptions(t *testing.T) {
 		t.Errorf("FormattingOptions.LineNumbers = %v, want %v", opts.LineNumbers, LineNumberFile)
 	}
 
-	if !opts.ShowHeaders {
-		t.Error("FormattingOptions.ShowHeaders = false, want true")
+	if !opts.ShowFilenames {
+		t.Error("FormattingOptions.ShowFilenames = false, want true")
 	}
 
 	if opts.SequenceStyle != SequenceNumerical {
 		t.Errorf("FormattingOptions.SequenceStyle = %s, want %s", opts.SequenceStyle, SequenceNumerical)
 	}
 
-	if opts.HeaderStyle != HeaderStylePath {
-		t.Errorf("FormattingOptions.HeaderStyle = %s, want %s", opts.HeaderStyle, HeaderStylePath)
+	if opts.FilenameStyle != FilenameStylePath {
+		t.Errorf("FormattingOptions.FilenameStyle = %s, want %s", opts.FilenameStyle, FilenameStylePath)
 	}
 
 	if len(opts.AdditionalExtensions) != 2 {

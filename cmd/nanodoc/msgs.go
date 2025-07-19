@@ -36,8 +36,8 @@ const (
 	FlagTOC               = "Generate a table of contents (see: nanodoc topics toc)"
 	FlagTheme             = "Set the theme for formatting (see: nanodoc topics themes)"
 	FlagFilenames         = "Show filenames between concatenated files"
-	FlagFileStyle         = "Set the filename display style (see: nanodoc topics headers)"
-	FlagFileNumbering     = "Set the file numbering style (see: nanodoc topics headers)"
+	FlagFileStyle         = "Set the filename display style (see: nanodoc topics filenames)"
+	FlagFileNumbering     = "Set the file numbering style (see: nanodoc topics filenames)"
 	FlagExt               = "Additional file extensions to treat as text"
 	FlagInclude           = "Include only files matching patterns (see: nanodoc topics content)"
 	FlagExclude           = "Exclude files matching patterns (see: nanodoc topics content)"
@@ -74,7 +74,7 @@ var TopicDescriptions = map[string]string{
 	"circular-dependencies":  "Understanding and resolving circular dependency issues",
 	"content":                "File selection, patterns, and line ranges",
 	"design":                 "Architecture and design principles of nanodoc",
-	"headers":                "Customize file headers and separators with formatting options",
+	"filenames":                "Customize file filenames and separators with formatting options",
 	"line-numbering":         "Add line numbers to your bundled documents with various modes",
 	"themes":                 "Available themes and styling options",
 	"toc":                    "Generate table of contents for your documents with navigation aids",

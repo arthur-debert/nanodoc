@@ -50,5 +50,5 @@ The TOC will be placed at the beginning of the output and shows:
 
 TIP: Combine with global line numbering for easier navigation:
     -- 
-        nanodoc --toc -N file1.txt file2.txt
+        nanodoc --toc --linenum=global file1.txt file2.txt
     --
