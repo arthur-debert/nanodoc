@@ -34,7 +34,7 @@ const (
 const (
 	FlagLineNum           = "Line numbers: file|global (help line-numbering)"
 	FlagTOC               = "Generate a table of contents (help toc)"
-	FlagTheme             = "Formatting theme (help themes)"
+	FlagTheme             = "Theme (help themes)"
 	FlagFilenames         = "Show filenames"
 	FlagHeaderFormat      = "Header style (help filenames)"
 	FlagFileNumbering     = "File numbering style (help filenames)"
