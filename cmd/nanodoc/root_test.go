@@ -48,6 +48,7 @@ func executeCommand(args ...string) (string, error) {
 	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
 	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, FlagExclude)
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
+	rootCmd.Flags().StringVar(&saveToBundlePath, "save-to-bundle", "", "Save the current invocation as a bundle file")
 	rootCmd.Flags().BoolP("version", "v", false, FlagVersion)
 	
 	// Use the actual root command
@@ -178,8 +179,8 @@ func TestRootCmdBundleOptions(t *testing.T) {
 		"# Bundle with options",
 		"--toc",
 		"--theme classic-dark",
-		"--header-style path",
-		"--line-numbers",
+		"--file-style path",
+		"--linenum file",
 		"",
 		"test.txt",
 	}
@@ -198,10 +199,10 @@ func TestRootCmdBundleOptions(t *testing.T) {
 			args: []string{bundleFile},
 			wantOutput: []string{
 				"Table of Contents",  // --toc from bundle
-				"1 | line1",          // --line-numbers from bundle
+				"1 | line1",          // --linenum file from bundle
 				"2 | line2",          // line numbers continue
 				"3 | line3",
-				tempDir,              // --header-style path shows full path
+				tempDir,              // --file-style path shows full path
 			},
 		},
 		{
@@ -267,5 +268,6 @@ func resetFlags() {
 	includePatterns = []string{}
 	excludePatterns = []string{}
 	dryRun = false
+	saveToBundlePath = ""
 	explicitFlags = make(map[string]bool)
 }

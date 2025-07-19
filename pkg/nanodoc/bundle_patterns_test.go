@@ -48,81 +48,14 @@ func TestBundleWithPatterns(t *testing.T) {
 		t.Fatalf("ProcessBundleFileWithOptions() error = %v", err)
 	}
 	
-	// Check options were parsed
-	if len(result.Options.IncludePatterns) != 1 || result.Options.IncludePatterns[0] != "**/api/*.md" {
-		t.Errorf("Expected include pattern '**/api/*.md', got %v", result.Options.IncludePatterns)
+	// Check option lines were collected
+	expectedOptions := []string{"--include **/api/*.md", "--exclude **/*test*"}
+	if len(result.OptionLines) != len(expectedOptions) {
+		t.Errorf("Expected %d option lines, got %d", len(expectedOptions), len(result.OptionLines))
 	}
-	
-	if len(result.Options.ExcludePatterns) != 1 || result.Options.ExcludePatterns[0] != "**/*test*" {
-		t.Errorf("Expected exclude pattern '**/*test*', got %v", result.Options.ExcludePatterns)
-	}
-	
-	// Test merging with command-line options
-	cmdOpts := FormattingOptions{
-		Theme: "dark",
-		ExcludePatterns: []string{"**/README.md"},
-	}
-	
-	mergedOpts := MergeFormattingOptions(result.Options, cmdOpts)
-	
-	// Check that patterns were merged
-	if len(mergedOpts.IncludePatterns) != 1 {
-		t.Errorf("Expected 1 include pattern, got %d", len(mergedOpts.IncludePatterns))
-	}
-	
-	// Command-line excludes should be added to bundle excludes
-	if len(mergedOpts.ExcludePatterns) != 2 {
-		t.Errorf("Expected 2 exclude patterns, got %d: %v", len(mergedOpts.ExcludePatterns), mergedOpts.ExcludePatterns)
-	}
-}
-
-func TestParseOptionWithPatterns(t *testing.T) {
-	tests := []struct {
-		name       string
-		optionLine string
-		wantInclude []string
-		wantExclude []string
-		wantErr    bool
-	}{
-		{
-			name:       "include pattern",
-			optionLine: "--include **/api/*.md",
-			wantInclude: []string{"**/api/*.md"},
-		},
-		{
-			name:       "exclude pattern",
-			optionLine: "--exclude **/test/**",
-			wantExclude: []string{"**/test/**"},
-		},
-		{
-			name:       "include without value",
-			optionLine: "--include",
-			wantErr:    true,
-		},
-		{
-			name:       "exclude without value",
-			optionLine: "--exclude",
-			wantErr:    true,
-		},
-	}
-	
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var options BundleOptions
-			err := parseOption(tt.optionLine, &options)
-			
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseOption() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			
-			if len(options.IncludePatterns) != len(tt.wantInclude) {
-				t.Errorf("Expected %d include patterns, got %d", len(tt.wantInclude), len(options.IncludePatterns))
-			}
-			
-			if len(options.ExcludePatterns) != len(tt.wantExclude) {
-				t.Errorf("Expected %d exclude patterns, got %d", len(tt.wantExclude), len(options.ExcludePatterns))
-			}
-		})
+	for i, expected := range expectedOptions {
+		if i < len(result.OptionLines) && result.OptionLines[i] != expected {
+			t.Errorf("Expected option line %d to be %q, got %q", i, expected, result.OptionLines[i])
+		}
 	}
 }

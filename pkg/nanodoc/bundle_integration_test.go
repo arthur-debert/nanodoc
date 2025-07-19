@@ -47,11 +47,11 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 		"# Options are specified using the same flags as the command line.",
 		"",
 		"--toc",
-		"--global-line-numbers",
-		"--header-style nice",
-		"--sequence roman",
+		"--linenum global",
+		"--file-style nice",
+		"--file-numbering roman",
 		"--theme classic-dark",
-		"--txt-ext go",
+		"--ext go",
 		"",
 		"# --- Content ---",
 		"# Files, directories, and glob patterns are listed below.",
@@ -74,21 +74,22 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 			},
 		}
 
-		// Default CLI options (should be overridden by bundle options)
-		defaultOptions := FormattingOptions{
-			Theme:         "classic",
-			LineNumbers:   LineNumberNone,
+		// Options that would be the result of parsing and merging bundle options in CLI
+		// (In real usage, the CLI layer would parse bundle options and merge them)
+		mergedOptions := FormattingOptions{
+			Theme:         "classic-dark",
+			LineNumbers:   LineNumberGlobal,
 			ShowHeaders:   true,
 			HeaderStyle:   HeaderStyleNice,
-			SequenceStyle: SequenceNumerical,
-			ShowTOC:       false,
-			AdditionalExtensions: []string{},
+			SequenceStyle: SequenceRoman,
+			ShowTOC:       true,
+			AdditionalExtensions: []string{"go"},
 		}
 
-		// Empty explicit flags (means no CLI flags were set)
+		// Empty explicit flags (not used in new architecture)
 		explicitFlags := make(map[string]bool)
 
-		doc, err := BuildDocumentWithExplicitFlags(pathInfos, defaultOptions, explicitFlags)
+		doc, err := BuildDocumentWithExplicitFlags(pathInfos, mergedOptions, explicitFlags)
 		if err != nil {
 			t.Fatalf("BuildDocumentWithExplicitFlags() error = %v", err)
 		}
@@ -122,7 +123,7 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 			t.Error("Expected 'go' extension to be in AdditionalExtensions")
 		}
 
-		// Check that all files were processed (including .go file due to --txt-ext)
+		// Check that all files were processed (including .go file due to --ext)
 		if len(doc.ContentItems) != 3 {
 			t.Errorf("Expected 3 content items, got %d", len(doc.ContentItems))
 		}
@@ -138,27 +139,22 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 			},
 		}
 
-		// CLI options that should override bundle options
-		cliOptions := FormattingOptions{
-			Theme:         "classic-light",
-			LineNumbers:   LineNumberFile,
+		// Options that would be the result of CLI flags overriding bundle options
+		// (In real usage, the CLI layer would handle the merging based on explicit flags)
+		mergedOptions := FormattingOptions{
+			Theme:         "classic-light",  // CLI override
+			LineNumbers:   LineNumberFile,   // CLI override
 			ShowHeaders:   true,
-			HeaderStyle:   HeaderStyleFilename,
-			SequenceStyle: SequenceNumerical,
-			ShowTOC:       false,
-			AdditionalExtensions: []string{},
+			HeaderStyle:   HeaderStyleFilename,  // CLI override
+			SequenceStyle: SequenceNumerical,    // CLI override
+			ShowTOC:       false,                // CLI override
+			AdditionalExtensions: []string{"go"}, // From bundle (not overridden)
 		}
 
-		// Explicit flags indicating which options were set via CLI
-		explicitFlags := map[string]bool{
-			"theme":        true,
-			"line-numbers": true,
-			"header-style": true,
-			"sequence":     true,
-			"toc":          true,
-		}
+		// Explicit flags (not used in new architecture)
+		explicitFlags := map[string]bool{}
 
-		doc, err := BuildDocumentWithExplicitFlags(pathInfos, cliOptions, explicitFlags)
+		doc, err := BuildDocumentWithExplicitFlags(pathInfos, mergedOptions, explicitFlags)
 		if err != nil {
 			t.Fatalf("BuildDocumentWithExplicitFlags() error = %v", err)
 		}
@@ -203,19 +199,20 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 			},
 		}
 
-		defaultOptions := FormattingOptions{
-			Theme:         "classic",
-			LineNumbers:   LineNumberNone,
+		// Options that would be the result of parsing bundle options in CLI
+		mergedOptions := FormattingOptions{
+			Theme:         "classic-dark",
+			LineNumbers:   LineNumberGlobal,
 			ShowHeaders:   true,
 			HeaderStyle:   HeaderStyleNice,
-			SequenceStyle: SequenceNumerical,
-			ShowTOC:       false,
-			AdditionalExtensions: []string{},
+			SequenceStyle: SequenceRoman,
+			ShowTOC:       true,
+			AdditionalExtensions: []string{"go"},
 		}
 
 		explicitFlags := make(map[string]bool)
 
-		doc, err := BuildDocumentWithExplicitFlags(pathInfos, defaultOptions, explicitFlags)
+		doc, err := BuildDocumentWithExplicitFlags(pathInfos, mergedOptions, explicitFlags)
 		if err != nil {
 			t.Fatalf("BuildDocumentWithExplicitFlags() error = %v", err)
 		}
@@ -242,7 +239,7 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 			t.Error("Expected roman sequence style in headers")
 		}
 		if !strings.Contains(output, "package main") {
-			t.Error("Expected .go file content to be included due to --txt-ext")
+			t.Error("Expected .go file content to be included due to --ext")
 		}
 	})
 }
@@ -279,15 +276,19 @@ func TestBundleOptionsEdgeCases(t *testing.T) {
 			t.Fatalf("ProcessBundleFileWithOptions() error = %v", err)
 		}
 
-		// Should have no paths but options should be parsed
+		// Should have no paths but option lines should be collected
 		if len(result.Paths) != 0 {
 			t.Errorf("Expected 0 paths, got %d", len(result.Paths))
 		}
-		if result.Options.ShowTOC == nil || !*result.Options.ShowTOC {
-			t.Error("Expected ShowTOC to be true")
+		// Check that option lines were collected
+		expectedOptions := []string{"--toc", "--theme classic-dark"}
+		if len(result.OptionLines) != len(expectedOptions) {
+			t.Errorf("Expected %d option lines, got %d", len(expectedOptions), len(result.OptionLines))
 		}
-		if result.Options.Theme == nil || *result.Options.Theme != "classic-dark" {
-			t.Error("Expected theme to be 'classic-dark'")
+		for i, expected := range expectedOptions {
+			if i < len(result.OptionLines) && result.OptionLines[i] != expected {
+				t.Errorf("Expected option line %d to be %q, got %q", i, expected, result.OptionLines[i])
+			}
 		}
 	})
 
@@ -305,9 +306,19 @@ func TestBundleOptionsEdgeCases(t *testing.T) {
 		}
 
 		bp := NewBundleProcessor()
-		_, err := bp.ProcessBundleFileWithOptions(bundleFile)
-		if err == nil {
-			t.Error("Expected error for invalid options")
+		result, err := bp.ProcessBundleFileWithOptions(bundleFile)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		// We should collect both option lines (invalid ones too)
+		expectedOptions := []string{"--invalid-option", "--theme"}
+		if len(result.OptionLines) != len(expectedOptions) {
+			t.Errorf("Expected %d option lines, got %d", len(expectedOptions), len(result.OptionLines))
+		}
+		for i, expected := range expectedOptions {
+			if i < len(result.OptionLines) && result.OptionLines[i] != expected {
+				t.Errorf("Expected option line %d to be %q, got %q", i, expected, result.OptionLines[i])
+			}
 		}
 	})
 
@@ -316,9 +327,9 @@ func TestBundleOptionsEdgeCases(t *testing.T) {
 		bundleFile := filepath.Join(tempDir, "multiple-ext.bundle.txt")
 		bundleContent := []string{
 			"# Multiple txt-ext options",
-			"--txt-ext go",
-			"--txt-ext py",
-			"--txt-ext js",
+			"--ext go",
+			"--ext py",
+			"--ext js",
 			"file1.txt",
 		}
 		if err := os.WriteFile(bundleFile, []byte(strings.Join(bundleContent, "\n")), 0644); err != nil {
@@ -331,21 +342,14 @@ func TestBundleOptionsEdgeCases(t *testing.T) {
 			t.Fatalf("ProcessBundleFileWithOptions() error = %v", err)
 		}
 
-		// Should have all three extensions
-		expected := []string{"go", "py", "js"}
-		if len(result.Options.AdditionalExtensions) != len(expected) {
-			t.Errorf("Expected %d extensions, got %d", len(expected), len(result.Options.AdditionalExtensions))
+		// Should have all three extension option lines
+		expectedOptions := []string{"--ext go", "--ext py", "--ext js"}
+		if len(result.OptionLines) != len(expectedOptions) {
+			t.Errorf("Expected %d option lines, got %d", len(expectedOptions), len(result.OptionLines))
 		}
-		for _, ext := range expected {
-			found := false
-			for _, actual := range result.Options.AdditionalExtensions {
-				if actual == ext {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("Expected extension '%s' to be present", ext)
+		for i, expected := range expectedOptions {
+			if i < len(result.OptionLines) && result.OptionLines[i] != expected {
+				t.Errorf("Expected option line %d to be %q, got %q", i, expected, result.OptionLines[i])
 			}
 		}
 	})
@@ -398,9 +402,9 @@ func TestBundleOptionsDocumentationExample(t *testing.T) {
 		"# Options are specified using the same flags as the command line.",
 		"",
 		"--toc",
-		"--global-line-numbers",
-		"--header-style nice",
-		"--sequence roman",
+		"--linenum global",
+		"--file-style nice",
+		"--file-numbering roman",
 		"--theme classic-dark",
 		"",
 		"# --- Content ---",
@@ -421,21 +425,21 @@ func TestBundleOptionsDocumentationExample(t *testing.T) {
 		t.Fatalf("ProcessBundleFileWithOptions() error = %v", err)
 	}
 
-	// Check that all options were parsed correctly
-	if result.Options.ShowTOC == nil || !*result.Options.ShowTOC {
-		t.Error("Expected ShowTOC to be true")
+	// Check that all option lines were collected (in order they appear in bundle)
+	expectedOptions := []string{
+		"--toc",
+		"--linenum global",
+		"--file-style nice",
+		"--file-numbering roman",
+		"--theme classic-dark",
 	}
-	if result.Options.LineNumbers == nil || *result.Options.LineNumbers != LineNumberGlobal {
-		t.Error("Expected LineNumberGlobal")
+	if len(result.OptionLines) != len(expectedOptions) {
+		t.Errorf("Expected %d option lines, got %d", len(expectedOptions), len(result.OptionLines))
 	}
-	if result.Options.HeaderStyle == nil || *result.Options.HeaderStyle != HeaderStyleNice {
-		t.Error("Expected HeaderStyleNice")
-	}
-	if result.Options.SequenceStyle == nil || *result.Options.SequenceStyle != SequenceRoman {
-		t.Error("Expected SequenceRoman")
-	}
-	if result.Options.Theme == nil || *result.Options.Theme != "classic-dark" {
-		t.Error("Expected theme 'classic-dark'")
+	for i, expected := range expectedOptions {
+		if i < len(result.OptionLines) && result.OptionLines[i] != expected {
+			t.Errorf("Expected option line %d to be %q, got %q", i, expected, result.OptionLines[i])
+		}
 	}
 
 	// Check that paths were processed

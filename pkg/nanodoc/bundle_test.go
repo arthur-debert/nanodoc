@@ -392,10 +392,10 @@ func TestBundleOptions(t *testing.T) {
 		"# Bundle with options",
 		"--toc",
 		"--theme classic-dark",
-		"--header-style filename",
-		"--sequence roman",
-		"--global-line-numbers",
-		"--txt-ext log",
+		"--file-style filename",
+		"--file-numbering roman",
+		"--linenum global",
+		"--ext log",
 		"",
 		"# Files to include",
 		"file1.txt",
@@ -412,135 +412,30 @@ func TestBundleOptions(t *testing.T) {
 		t.Fatalf("ProcessBundleFileWithOptions() error = %v", err)
 	}
 
-	// Check that options were parsed correctly
-	if result.Options.ShowTOC == nil || !*result.Options.ShowTOC {
-		t.Error("Expected ShowTOC to be true")
+	// Check that option lines were collected correctly
+	expectedOptions := []string{
+		"--toc",
+		"--theme classic-dark",
+		"--file-style filename",
+		"--file-numbering roman",
+		"--linenum global",
+		"--ext log",
 	}
-	if result.Options.Theme == nil || *result.Options.Theme != "classic-dark" {
-		t.Error("Expected Theme to be 'classic-dark'")
+	if len(result.OptionLines) != len(expectedOptions) {
+		t.Errorf("Expected %d option lines, got %d", len(expectedOptions), len(result.OptionLines))
 	}
-	if result.Options.HeaderStyle == nil || *result.Options.HeaderStyle != HeaderStyleFilename {
-		t.Error("Expected HeaderStyle to be 'filename'")
-	}
-	if result.Options.SequenceStyle == nil || *result.Options.SequenceStyle != SequenceRoman {
-		t.Error("Expected SequenceStyle to be 'roman'")
-	}
-	if result.Options.LineNumbers == nil || *result.Options.LineNumbers != LineNumberGlobal {
-		t.Error("Expected LineNumbers to be LineNumberGlobal")
-	}
-	if len(result.Options.AdditionalExtensions) != 1 || result.Options.AdditionalExtensions[0] != "log" {
-		t.Error("Expected AdditionalExtensions to contain 'log'")
+	for i, expected := range expectedOptions {
+		if i < len(result.OptionLines) && result.OptionLines[i] != expected {
+			t.Errorf("Expected option line %d to be %q, got %q", i, expected, result.OptionLines[i])
+		}
 	}
 
 	// Check that file paths were parsed correctly
 	if len(result.Paths) != 2 {
 		t.Errorf("Expected 2 paths, got %d", len(result.Paths))
 	}
-
-	// Test merging options with command-line defaults
-	cmdOptions := FormattingOptions{
-		Theme:         "classic",
-		ShowTOC:       false,
-		HeaderStyle:   HeaderStyleNice,
-		SequenceStyle: SequenceNumerical,
-		LineNumbers:   LineNumberNone,
-		ShowHeaders:   true,
-		AdditionalExtensions: []string{},
-	}
-
-	// Test merging with no explicit flags (bundle options should take precedence)
-	explicitFlags := map[string]bool{}
-	merged := MergeFormattingOptionsWithDefaults(result.Options, cmdOptions, explicitFlags)
-	
-	if merged.Theme != "classic-dark" {
-		t.Errorf("Expected merged theme to be 'classic-dark', got %s", merged.Theme)
-	}
-	if !merged.ShowTOC {
-		t.Error("Expected merged ShowTOC to be true")
-	}
-	if merged.HeaderStyle != HeaderStyleFilename {
-		t.Errorf("Expected merged HeaderStyle to be 'filename', got %s", merged.HeaderStyle)
-	}
-	if merged.SequenceStyle != SequenceRoman {
-		t.Errorf("Expected merged SequenceStyle to be 'roman', got %s", merged.SequenceStyle)
-	}
-	if merged.LineNumbers != LineNumberGlobal {
-		t.Errorf("Expected merged LineNumbers to be LineNumberGlobal, got %v", merged.LineNumbers)
-	}
-
-	// Test command-line flags override bundle options
-	explicitFlags["theme"] = true
-	explicitFlags["toc"] = true
-	merged = MergeFormattingOptionsWithDefaults(result.Options, cmdOptions, explicitFlags)
-	
-	if merged.Theme != "classic" {
-		t.Errorf("Expected merged theme to be 'classic' (CLI override), got %s", merged.Theme)
-	}
-	if merged.ShowTOC != false {
-		t.Error("Expected merged ShowTOC to be false (CLI override)")
-	}
-	// Header style should still come from bundle since it wasn't explicitly set
-	if merged.HeaderStyle != HeaderStyleFilename {
-		t.Errorf("Expected merged HeaderStyle to be 'filename', got %s", merged.HeaderStyle)
-	}
 }
 
-func TestBundleOptionsValidation(t *testing.T) {
-	tests := []struct {
-		name    string
-		option  string
-		wantErr bool
-		errMsg  string
-	}{
-		{
-			name:    "valid header style",
-			option:  "--header-style filename",
-			wantErr: false,
-		},
-		{
-			name:    "invalid header style",
-			option:  "--header-style invalid",
-			wantErr: true,
-			errMsg:  "invalid header style: invalid",
-		},
-		{
-			name:    "valid sequence style",
-			option:  "--sequence roman",
-			wantErr: false,
-		},
-		{
-			name:    "invalid sequence style",
-			option:  "--sequence invalid",
-			wantErr: true,
-			errMsg:  "invalid sequence style: invalid",
-		},
-		{
-			name:    "missing theme value",
-			option:  "--theme",
-			wantErr: true,
-			errMsg:  "--theme requires a value",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var options BundleOptions
-			err := parseOption(tt.option, &options)
-			
-			if tt.wantErr {
-				if err == nil {
-					t.Error("Expected error but got none")
-				} else if !strings.Contains(err.Error(), tt.errMsg) {
-					t.Errorf("Expected error message to contain '%s', got '%s'", tt.errMsg, err.Error())
-				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-				}
-			}
-		})
-	}
-}
 
 func TestProcessLiveBundle(t *testing.T) {
 	tests := []struct {
@@ -748,217 +643,6 @@ func TestProcessLiveBundleCircularReference(t *testing.T) {
 	}
 }
 
-func TestParseOption(t *testing.T) {
-	tests := []struct {
-		name          string
-		optionLine    string
-		wantError     bool
-		expectedField string
-		expectedValue interface{}
-	}{
-		{
-			name:          "toc flag",
-			optionLine:    "--toc",
-			wantError:     false,
-			expectedField: "ShowTOC",
-			expectedValue: true,
-		},
-		{
-			name:          "no-header flag",
-			optionLine:    "--no-header",
-			wantError:     false,
-			expectedField: "ShowHeaders",
-			expectedValue: false,
-		},
-		{
-			name:          "line-numbers flag",
-			optionLine:    "--line-numbers",
-			wantError:     false,
-			expectedField: "LineNumbers",
-			expectedValue: LineNumberFile,
-		},
-		{
-			name:          "line-numbers short flag",
-			optionLine:    "-n",
-			wantError:     false,
-			expectedField: "LineNumbers",
-			expectedValue: LineNumberFile,
-		},
-		{
-			name:          "global-line-numbers flag",
-			optionLine:    "--global-line-numbers",
-			wantError:     false,
-			expectedField: "LineNumbers",
-			expectedValue: LineNumberGlobal,
-		},
-		{
-			name:          "global-line-numbers short flag",
-			optionLine:    "-N",
-			wantError:     false,
-			expectedField: "LineNumbers",
-			expectedValue: LineNumberGlobal,
-		},
-		{
-			name:          "theme with value",
-			optionLine:    "--theme classic-dark",
-			wantError:     false,
-			expectedField: "Theme",
-			expectedValue: "classic-dark",
-		},
-		{
-			name:          "header-style with value",
-			optionLine:    "--header-style path",
-			wantError:     false,
-			expectedField: "HeaderStyle",
-			expectedValue: HeaderStylePath,
-		},
-		{
-			name:          "sequence with value",
-			optionLine:    "--sequence roman",
-			wantError:     false,
-			expectedField: "SequenceStyle",
-			expectedValue: SequenceRoman,
-		},
-		{
-			name:          "txt-ext with value",
-			optionLine:    "--txt-ext go",
-			wantError:     false,
-			expectedField: "AdditionalExtensions",
-			expectedValue: []string{"go"},
-		},
-		{
-			name:       "theme without value",
-			optionLine: "--theme",
-			wantError:  true,
-		},
-		{
-			name:       "header-style without value",
-			optionLine: "--header-style",
-			wantError:  true,
-		},
-		{
-			name:       "sequence without value",
-			optionLine: "--sequence",
-			wantError:  true,
-		},
-		{
-			name:       "txt-ext without value",
-			optionLine: "--txt-ext",
-			wantError:  true,
-		},
-		{
-			name:       "unknown flag",
-			optionLine: "--unknown-flag",
-			wantError:  true,
-		},
-		{
-			name:       "empty option line",
-			optionLine: "",
-			wantError:  true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			options := BundleOptions{}
-			err := parseOption(tt.optionLine, &options)
-			
-			if (err != nil) != tt.wantError {
-				t.Errorf("parseOption() error = %v, wantError %v", err, tt.wantError)
-				return
-			}
-
-			if !tt.wantError {
-				// Check that the correct field was set
-				switch tt.expectedField {
-				case "ShowTOC":
-					if options.ShowTOC == nil || *options.ShowTOC != tt.expectedValue.(bool) {
-						t.Errorf("ShowTOC = %v, want %v", options.ShowTOC, tt.expectedValue)
-					}
-				case "ShowHeaders":
-					if options.ShowHeaders == nil || *options.ShowHeaders != tt.expectedValue.(bool) {
-						t.Errorf("ShowHeaders = %v, want %v", options.ShowHeaders, tt.expectedValue)
-					}
-				case "LineNumbers":
-					if options.LineNumbers == nil || *options.LineNumbers != tt.expectedValue.(LineNumberMode) {
-						t.Errorf("LineNumbers = %v, want %v", options.LineNumbers, tt.expectedValue)
-					}
-				case "Theme":
-					if options.Theme == nil || *options.Theme != tt.expectedValue.(string) {
-						t.Errorf("Theme = %v, want %v", options.Theme, tt.expectedValue)
-					}
-				case "HeaderStyle":
-					if options.HeaderStyle == nil || *options.HeaderStyle != tt.expectedValue.(HeaderStyle) {
-						t.Errorf("HeaderStyle = %v, want %v", options.HeaderStyle, tt.expectedValue)
-					}
-				case "SequenceStyle":
-					if options.SequenceStyle == nil || *options.SequenceStyle != tt.expectedValue.(SequenceStyle) {
-						t.Errorf("SequenceStyle = %v, want %v", options.SequenceStyle, tt.expectedValue)
-					}
-				case "AdditionalExtensions":
-					expected := tt.expectedValue.([]string)
-					if len(options.AdditionalExtensions) != len(expected) {
-						t.Errorf("AdditionalExtensions length = %d, want %d", len(options.AdditionalExtensions), len(expected))
-					} else {
-						for i, ext := range expected {
-							if options.AdditionalExtensions[i] != ext {
-								t.Errorf("AdditionalExtensions[%d] = %s, want %s", i, options.AdditionalExtensions[i], ext)
-							}
-						}
-					}
-				}
-			}
-		})
-	}
-}
-
-func TestMergeFormattingOptions(t *testing.T) {
-	// Test bundle options merging with command-line options
-	bundleOpts := BundleOptions{
-		Theme:         &[]string{"classic-dark"}[0],
-		LineNumbers:   &[]LineNumberMode{LineNumberGlobal}[0],
-		ShowTOC:       &[]bool{true}[0],
-		HeaderStyle:   &[]HeaderStyle{HeaderStylePath}[0],
-		SequenceStyle: &[]SequenceStyle{SequenceRoman}[0],
-		AdditionalExtensions: []string{"go", "py"},
-	}
-
-	// Test with default command-line options (should use bundle options)
-	cmdOpts := FormattingOptions{
-		Theme:         "classic",
-		LineNumbers:   LineNumberNone,
-		ShowTOC:       false,
-		HeaderStyle:   HeaderStyleNice,
-		SequenceStyle: SequenceNumerical,
-		ShowHeaders:   true,
-		AdditionalExtensions: []string{"js"},
-	}
-
-	merged := MergeFormattingOptions(bundleOpts, cmdOpts)
-
-	// When command-line options are at default values, bundle options should be used
-	if merged.Theme != "classic-dark" {
-		t.Errorf("Expected Theme to be 'classic-dark' (from bundle), got %s", merged.Theme)
-	}
-	if merged.LineNumbers != LineNumberGlobal {
-		t.Errorf("Expected LineNumbers to be LineNumberGlobal (from bundle), got %v", merged.LineNumbers)
-	}
-	if merged.ShowTOC != true {
-		t.Errorf("Expected ShowTOC to be true (from bundle), got %v", merged.ShowTOC)
-	}
-	if merged.HeaderStyle != HeaderStylePath {
-		t.Errorf("Expected HeaderStyle to be HeaderStylePath (from bundle), got %v", merged.HeaderStyle)
-	}
-	if merged.SequenceStyle != SequenceRoman {
-		t.Errorf("Expected SequenceStyle to be SequenceRoman (from bundle), got %v", merged.SequenceStyle)
-	}
-	
-	// Additional extensions should be merged
-	expectedExtensions := []string{"js", "go", "py"}
-	if len(merged.AdditionalExtensions) != len(expectedExtensions) {
-		t.Errorf("Expected %d additional extensions, got %d", len(expectedExtensions), len(merged.AdditionalExtensions))
-	}
-}
 
 func TestProcessBundleFileWithOptions(t *testing.T) {
 	// Create temp directory
@@ -992,12 +676,12 @@ func TestProcessBundleFileWithOptions(t *testing.T) {
 		"",
 		"# --- Options ---",
 		"--toc",
-		"--global-line-numbers",
-		"--header-style nice",
-		"--sequence roman",
+		"--linenum global",
+		"--file-style nice",
+		"--file-numbering roman",
 		"--theme classic-dark",
-		"--txt-ext go",
-		"--txt-ext py",
+		"--ext go",
+		"--ext py",
 		"",
 		"# --- Content ---",
 		"file1.txt",
@@ -1019,29 +703,22 @@ func TestProcessBundleFileWithOptions(t *testing.T) {
 		t.Errorf("Expected 2 paths, got %d", len(result.Paths))
 	}
 
-	// Check options
-	if result.Options.ShowTOC == nil || !*result.Options.ShowTOC {
-		t.Error("Expected ShowTOC to be true")
+	// Check option lines
+	expectedOptions := []string{
+		"--toc",
+		"--linenum global",
+		"--file-style nice",
+		"--file-numbering roman",
+		"--theme classic-dark",
+		"--ext go",
+		"--ext py",
 	}
-	if result.Options.LineNumbers == nil || *result.Options.LineNumbers != LineNumberGlobal {
-		t.Error("Expected LineNumbers to be LineNumberGlobal")
+	if len(result.OptionLines) != len(expectedOptions) {
+		t.Errorf("Expected %d option lines, got %d", len(expectedOptions), len(result.OptionLines))
 	}
-	if result.Options.HeaderStyle == nil || *result.Options.HeaderStyle != HeaderStyleNice {
-		t.Error("Expected HeaderStyle to be HeaderStyleNice")
-	}
-	if result.Options.SequenceStyle == nil || *result.Options.SequenceStyle != SequenceRoman {
-		t.Error("Expected SequenceStyle to be SequenceRoman")
-	}
-	if result.Options.Theme == nil || *result.Options.Theme != "classic-dark" {
-		t.Error("Expected Theme to be 'classic-dark'")
-	}
-	if len(result.Options.AdditionalExtensions) != 2 {
-		t.Errorf("Expected 2 additional extensions, got %d", len(result.Options.AdditionalExtensions))
-	}
-	expectedExtensions := []string{"go", "py"}
-	for i, ext := range expectedExtensions {
-		if result.Options.AdditionalExtensions[i] != ext {
-			t.Errorf("AdditionalExtensions[%d] = %s, want %s", i, result.Options.AdditionalExtensions[i], ext)
+	for i, expected := range expectedOptions {
+		if i < len(result.OptionLines) && result.OptionLines[i] != expected {
+			t.Errorf("Expected option line %d to be %q, got %q", i, expected, result.OptionLines[i])
 		}
 	}
 }
@@ -1070,7 +747,7 @@ func TestBundleOptionsIntegration(t *testing.T) {
 		"# Test bundle with options",
 		"--toc",
 		"--theme classic-dark",
-		"--line-numbers",
+		"--linenum file",
 		"",
 		"file1.txt",
 	}
@@ -1084,56 +761,25 @@ func TestBundleOptionsIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Test that bundle options are extracted and merged
-	cmdOpts := FormattingOptions{
-		Theme:         "classic",
-		ShowTOC:       false,
-		LineNumbers:   LineNumberNone,
-		ShowHeaders:   true,
-		HeaderStyle:   HeaderStyleNice,
-		SequenceStyle: SequenceNumerical,
-	}
-
-	mergedOpts, err := ExtractAndMergeBundleOptions(pathInfos, cmdOpts)
+	// Test that bundle option lines are extracted
+	optionLines, err := ExtractBundleOptionLines(pathInfos)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Verify merged options
-	if mergedOpts.Theme != "classic-dark" {
-		t.Error("Expected theme to be 'classic-dark' from bundle")
+	// Verify option lines were extracted
+	expectedOptions := []string{
+		"--toc",
+		"--theme classic-dark",
+		"--linenum file",
 	}
-	if mergedOpts.ShowTOC != true {
-		t.Error("Expected ShowTOC to be true from bundle")
+	if len(optionLines) != len(expectedOptions) {
+		t.Errorf("Expected %d option lines, got %d", len(expectedOptions), len(optionLines))
 	}
-	if mergedOpts.LineNumbers != LineNumberFile {
-		t.Error("Expected LineNumbers to be LineNumberFile from bundle")
-	}
-
-	// Test that command-line options override bundle options when not at defaults
-	cmdOptsWithOverride := FormattingOptions{
-		Theme:         "classic-light",  // Not default, should override
-		ShowTOC:       false,           // This is default, so bundle option should be used
-		LineNumbers:   LineNumberGlobal, // Not default, should override
-		ShowHeaders:   true,            // This is default, so bundle option should be used
-		HeaderStyle:   HeaderStyleNice, // This is default, so bundle option should be used
-		SequenceStyle: SequenceNumerical, // This is default, so bundle option should be used
-	}
-
-	mergedOptsWithOverride, err := ExtractAndMergeBundleOptions(pathInfos, cmdOptsWithOverride)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Verify command-line options override bundle options when not at defaults
-	if mergedOptsWithOverride.Theme != "classic-light" {
-		t.Error("Expected theme to be 'classic-light' from command line (not default)")
-	}
-	if mergedOptsWithOverride.ShowTOC != true {
-		t.Error("Expected ShowTOC to be true from bundle (command line at default)")
-	}
-	if mergedOptsWithOverride.LineNumbers != LineNumberGlobal {
-		t.Error("Expected LineNumbers to be LineNumberGlobal from command line (not default)")
+	for i, expected := range expectedOptions {
+		if i < len(optionLines) && optionLines[i] != expected {
+			t.Errorf("Expected option line %d to be %q, got %q", i, expected, optionLines[i])
+		}
 	}
 }
 
@@ -1176,9 +822,9 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		"# Options are specified using the same flags as the command line.",
 		"",
 		"--toc",
-		"--global-line-numbers",
-		"--header-style nice",
-		"--sequence roman",
+		"--linenum global",
+		"--file-style nice",
+		"--file-numbering roman",
 		"--theme classic-dark",
 		"",
 		"# --- Content ---",
@@ -1198,23 +844,24 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Default CLI options (as they would be when no flags are specified)
-	defaultCLIOpts := FormattingOptions{
-		Theme:         "classic",
-		ShowTOC:       false,
-		LineNumbers:   LineNumberNone,
+	// Options that would result from parsing bundle options in CLI
+	// (In real usage, the CLI layer would parse and merge these)
+	mergedOpts := FormattingOptions{
+		Theme:         "classic-dark",
+		ShowTOC:       true,
+		LineNumbers:   LineNumberGlobal,
 		ShowHeaders:   true,
 		HeaderStyle:   HeaderStyleNice,
-		SequenceStyle: SequenceNumerical,
+		SequenceStyle: SequenceRoman,
 	}
 
-	// Build document with bundle options
-	doc, err := BuildDocument(pathInfos, defaultCLIOpts)
+	// Build document with merged options
+	doc, err := BuildDocument(pathInfos, mergedOpts)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Verify that bundle options were applied
+	// Verify that merged options were applied
 	if doc.FormattingOptions.Theme != "classic-dark" {
 		t.Errorf("Expected theme 'classic-dark' from bundle, got %s", doc.FormattingOptions.Theme)
 	}
@@ -1231,22 +878,23 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		t.Error("Expected SequenceStyle to be SequenceRoman from bundle")
 	}
 
-	// Test 2: CLI options override bundle options
-	overrideCLIOpts := FormattingOptions{
-		Theme:         "classic-light", // Should override bundle
-		ShowTOC:       false,           // Default, so bundle should win
-		LineNumbers:   LineNumberFile,  // Should override bundle
-		ShowHeaders:   true,            // Default, so bundle should win
-		HeaderStyle:   HeaderStyleFilename, // Should override bundle
-		SequenceStyle: SequenceNumerical, // Default, so bundle should win
+	// Test 2: Simulate CLI options overriding bundle options
+	// (In real usage, the CLI layer would handle merging based on explicit flags)
+	overrideMergedOpts := FormattingOptions{
+		Theme:         "classic-light",     // CLI override
+		ShowTOC:       true,                // From bundle (CLI was default)
+		LineNumbers:   LineNumberFile,      // CLI override
+		ShowHeaders:   true,
+		HeaderStyle:   HeaderStyleFilename, // CLI override
+		SequenceStyle: SequenceRoman,       // From bundle (CLI was default)
 	}
 
-	doc2, err := BuildDocument(pathInfos, overrideCLIOpts)
+	doc2, err := BuildDocument(pathInfos, overrideMergedOpts)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Verify CLI overrides
+	// Verify merged options
 	if doc2.FormattingOptions.Theme != "classic-light" {
 		t.Errorf("Expected theme 'classic-light' from CLI override, got %s", doc2.FormattingOptions.Theme)
 	}
@@ -1284,10 +932,10 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		t.Error("Expected output to contain 'Table of Contents' due to --toc option")
 	}
 	if !strings.Contains(output, "i. Intro") {
-		t.Error("Expected output to contain 'i. Intro' due to --sequence roman option")
+		t.Error("Expected output to contain 'i. Intro' due to --file-numbering roman option")
 	}
 	if !strings.Contains(output, "1 |") {
-		t.Error("Expected output to contain line numbers due to --global-line-numbers option")
+		t.Error("Expected output to contain line numbers due to --linenum global option")
 	}
 }
 
@@ -1315,8 +963,8 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		"# Bundle with options",
 		"--toc",
 		"--theme classic-dark",
-		"--header-style path",
-		"--line-numbers",
+		"--file-style path",
+		"--linenum file",
 		"",
 		"file1.txt",
 	}
@@ -1330,24 +978,25 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Test 1: Bundle options should be used when CLI flags are not explicitly set
-	cmdOpts := FormattingOptions{
-		Theme:         "classic",      // default value
-		ShowTOC:       false,          // default value
-		LineNumbers:   LineNumberNone, // default value
-		HeaderStyle:   HeaderStyleNice, // default value
-		ShowHeaders:   true,           // default value
-		SequenceStyle: SequenceNumerical, // default value
+	// Test 1: Options that would result from bundle options when no CLI flags are set
+	// (In real usage, the CLI layer would parse bundle options and use them)
+	mergedOpts := FormattingOptions{
+		Theme:         "classic-dark",  // from bundle
+		ShowTOC:       true,            // from bundle
+		LineNumbers:   LineNumberFile,  // from bundle
+		HeaderStyle:   HeaderStylePath, // from bundle
+		ShowHeaders:   true,
+		SequenceStyle: SequenceNumerical,
 	}
 	
-	explicitFlags := map[string]bool{} // No flags explicitly set
+	explicitFlags := map[string]bool{} // Not used in new architecture
 	
-	doc, err := BuildDocumentWithExplicitFlags(pathInfos, cmdOpts, explicitFlags)
+	doc, err := BuildDocumentWithExplicitFlags(pathInfos, mergedOpts, explicitFlags)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Bundle options should be used
+	// Verify options were applied
 	if doc.FormattingOptions.Theme != "classic-dark" {
 		t.Errorf("Expected theme 'classic-dark' from bundle, got %s", doc.FormattingOptions.Theme)
 	}
@@ -1361,29 +1010,26 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		t.Errorf("Expected HeaderStyle path from bundle, got %v", doc.FormattingOptions.HeaderStyle)
 	}
 
-	// Test 2: CLI options should override bundle options when explicitly set
-	cmdOptsWithOverride := FormattingOptions{
-		Theme:         "classic-light",    // explicitly set, should override bundle
-		ShowTOC:       false,              // default value, bundle should be used
-		LineNumbers:   LineNumberGlobal,   // explicitly set, should override bundle
-		HeaderStyle:   HeaderStyleFilename, // explicitly set, should override bundle
-		ShowHeaders:   true,               // default value, bundle should be used
-		SequenceStyle: SequenceNumerical,  // default value, bundle should be used
+	// Test 2: Options that would result from CLI overriding some bundle options
+	// (In real usage, the CLI layer would merge based on explicit flags)
+	mergedOptsWithOverride := FormattingOptions{
+		Theme:         "classic-light",     // CLI override
+		ShowTOC:       true,                // from bundle (not overridden)
+		LineNumbers:   LineNumberGlobal,    // CLI override
+		HeaderStyle:   HeaderStyleFilename, // CLI override
+		ShowHeaders:   true,
+		SequenceStyle: SequenceNumerical,
 	}
 	
-	explicitFlags = map[string]bool{
-		"theme":        true,  // explicitly set
-		"line-numbers": true,  // explicitly set
-		"header-style": true,  // explicitly set
-		// toc, no-header, sequence not set - should use bundle values
-	}
+	// Explicit flags not used in new architecture
+	explicitFlags = map[string]bool{}
 	
-	docWithOverride, err := BuildDocumentWithExplicitFlags(pathInfos, cmdOptsWithOverride, explicitFlags)
+	docWithOverride, err := BuildDocumentWithExplicitFlags(pathInfos, mergedOptsWithOverride, explicitFlags)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// CLI options should override bundle options when explicitly set
+	// Verify merged options
 	if docWithOverride.FormattingOptions.Theme != "classic-light" {
 		t.Errorf("Expected theme 'classic-light' from CLI override, got %s", docWithOverride.FormattingOptions.Theme)
 	}
@@ -1394,7 +1040,7 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		t.Errorf("Expected HeaderStyle filename from CLI override, got %v", docWithOverride.FormattingOptions.HeaderStyle)
 	}
 	
-	// Bundle options should be used for non-explicitly set flags
+	// Options from bundle (not overridden)
 	if docWithOverride.FormattingOptions.ShowTOC != true {
 		t.Errorf("Expected ShowTOC true from bundle (not overridden), got %t", docWithOverride.FormattingOptions.ShowTOC)
 	}

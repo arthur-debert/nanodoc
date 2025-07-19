@@ -2,170 +2,20 @@ package nanodoc
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// BundleOptions holds the formatting options parsed from a bundle file
-type BundleOptions struct {
-	// Theme name to use
-	Theme *string
 
-	// Line numbering mode
-	LineNumbers *LineNumberMode
-
-	// Whether to show headers
-	ShowHeaders *bool
-
-	// Header style
-	HeaderStyle *HeaderStyle
-
-	// Header sequence type
-	SequenceStyle *SequenceStyle
-
-	// Whether to show table of contents
-	ShowTOC *bool
-
-	// Additional file extensions to process
-	AdditionalExtensions []string
-	
-	// Include patterns for file filtering
-	IncludePatterns []string
-	
-	// Exclude patterns for file filtering
-	ExcludePatterns []string
-}
-
-// BundleResult holds both the options and file paths parsed from a bundle file
+// BundleResult holds both the raw option lines and file paths from a bundle file
 type BundleResult struct {
 	// File paths from the bundle
 	Paths []string
-	// Options parsed from the bundle
-	Options BundleOptions
+	// Raw option lines from the bundle (unparsed)
+	OptionLines []string
 }
 
-// mergeAdditionalExtensions merges additional file extensions from bundle options
-func mergeAdditionalExtensions(cmdExtensions, bundleExtensions []string) []string {
-	if len(bundleExtensions) == 0 {
-		return cmdExtensions
-	}
-	
-	extensionMap := make(map[string]bool)
-	result := make([]string, len(cmdExtensions))
-	copy(result, cmdExtensions)
-	
-	for _, ext := range cmdExtensions {
-		extensionMap[ext] = true
-	}
-	
-	for _, ext := range bundleExtensions {
-		if !extensionMap[ext] {
-			result = append(result, ext)
-		}
-	}
-	
-	return result
-}
-
-// mergePatterns merges pattern lists from command-line and bundle options
-func mergePatterns(cmdPatterns, bundlePatterns []string) []string {
-	if len(bundlePatterns) == 0 {
-		return cmdPatterns
-	}
-	
-	patternMap := make(map[string]bool)
-	result := make([]string, len(cmdPatterns))
-	copy(result, cmdPatterns)
-	
-	for _, pattern := range cmdPatterns {
-		patternMap[pattern] = true
-	}
-	
-	for _, pattern := range bundlePatterns {
-		if !patternMap[pattern] {
-			result = append(result, pattern)
-		}
-	}
-	
-	return result
-}
-
-// applyBundleOption is a helper that applies a bundle option to the result if conditions are met
-func applyBundleOption[T any](bundleValue *T, resultValue *T, shouldApply bool) {
-	if bundleValue != nil && shouldApply {
-		*resultValue = *bundleValue
-	}
-}
-
-// MergeFormattingOptions merges bundle options with command-line options
-// Command-line options override bundle options when they're not at default values
-func MergeFormattingOptions(bundleOpts BundleOptions, cmdOpts FormattingOptions) FormattingOptions {
-	result := cmdOpts // Start with command-line options
-	
-	// Only use bundle options if command-line options are at default values
-	applyBundleOption(bundleOpts.Theme, &result.Theme, cmdOpts.Theme == "classic")
-	applyBundleOption(bundleOpts.LineNumbers, &result.LineNumbers, cmdOpts.LineNumbers == LineNumberNone)
-	applyBundleOption(bundleOpts.ShowHeaders, &result.ShowHeaders, cmdOpts.ShowHeaders)
-	applyBundleOption(bundleOpts.HeaderStyle, &result.HeaderStyle, cmdOpts.HeaderStyle == HeaderStyleNice)
-	applyBundleOption(bundleOpts.SequenceStyle, &result.SequenceStyle, cmdOpts.SequenceStyle == SequenceNumerical)
-	applyBundleOption(bundleOpts.ShowTOC, &result.ShowTOC, !cmdOpts.ShowTOC)
-	
-	// Merge additional extensions
-	result.AdditionalExtensions = mergeAdditionalExtensions(
-		cmdOpts.AdditionalExtensions,
-		bundleOpts.AdditionalExtensions,
-	)
-	
-	// Merge include patterns
-	result.IncludePatterns = mergePatterns(
-		cmdOpts.IncludePatterns,
-		bundleOpts.IncludePatterns,
-	)
-	
-	// Merge exclude patterns
-	result.ExcludePatterns = mergePatterns(
-		cmdOpts.ExcludePatterns,
-		bundleOpts.ExcludePatterns,
-	)
-	
-	return result
-}
-
-// MergeFormattingOptionsWithDefaults merges bundle options with command-line options
-// This function uses explicit flags to determine which options were set by the user
-func MergeFormattingOptionsWithDefaults(bundleOpts BundleOptions, cmdOpts FormattingOptions, explicitFlags map[string]bool) FormattingOptions {
-	result := cmdOpts // Start with command-line options
-	
-	// Only use bundle options if command-line options were not explicitly set
-	applyBundleOption(bundleOpts.Theme, &result.Theme, !explicitFlags["theme"])
-	applyBundleOption(bundleOpts.LineNumbers, &result.LineNumbers, !explicitFlags["line-numbers"])
-	applyBundleOption(bundleOpts.ShowHeaders, &result.ShowHeaders, !explicitFlags["no-header"])
-	applyBundleOption(bundleOpts.HeaderStyle, &result.HeaderStyle, !explicitFlags["header-style"])
-	applyBundleOption(bundleOpts.SequenceStyle, &result.SequenceStyle, !explicitFlags["sequence"])
-	applyBundleOption(bundleOpts.ShowTOC, &result.ShowTOC, !explicitFlags["toc"])
-	
-	// Merge additional extensions
-	result.AdditionalExtensions = mergeAdditionalExtensions(
-		cmdOpts.AdditionalExtensions,
-		bundleOpts.AdditionalExtensions,
-	)
-	
-	// Merge include patterns
-	result.IncludePatterns = mergePatterns(
-		cmdOpts.IncludePatterns,
-		bundleOpts.IncludePatterns,
-	)
-	
-	// Merge exclude patterns
-	result.ExcludePatterns = mergePatterns(
-		cmdOpts.ExcludePatterns,
-		bundleOpts.ExcludePatterns,
-	)
-	
-	return result
-}
 
 // BundleProcessor handles bundle file processing and circular dependency detection
 type BundleProcessor struct {
@@ -226,12 +76,10 @@ func (bp *BundleProcessor) ProcessBundleFileWithOptions(bundlePath string) (*Bun
 	}()
 
 	var paths []string
-	var options BundleOptions
+	var optionLines []string
 	scanner := bufio.NewScanner(file)
-	lineNum := 0
 
 	for scanner.Scan() {
-		lineNum++
 		line := strings.TrimSpace(scanner.Text())
 
 		// Skip empty lines and comments
@@ -241,12 +89,7 @@ func (bp *BundleProcessor) ProcessBundleFileWithOptions(bundlePath string) (*Bun
 
 		// Check if this line is a command-line option
 		if strings.HasPrefix(line, "-") {
-			if err := parseOption(line, &options); err != nil {
-				return nil, &FileError{
-					Path: bundlePath,
-					Err:  fmt.Errorf("error parsing option on line %d: %w", lineNum, err),
-				}
-			}
+			optionLines = append(optionLines, line)
 			continue
 		}
 
@@ -265,112 +108,11 @@ func (bp *BundleProcessor) ProcessBundleFileWithOptions(bundlePath string) (*Bun
 	}
 
 	return &BundleResult{
-		Paths:   paths,
-		Options: options,
+		Paths:       paths,
+		OptionLines: optionLines,
 	}, nil
 }
 
-// parseOption parses a single command-line option and updates the BundleOptions struct
-func parseOption(optionLine string, options *BundleOptions) error {
-	// Split the option line into parts
-	parts := strings.Fields(optionLine)
-	if len(parts) == 0 {
-		return fmt.Errorf("empty option line")
-	}
-
-	flag := parts[0]
-	
-	// Helper variables for cleaner pointer allocation
-	trueVal := true
-	falseVal := false
-	lineNumberFile := LineNumberFile
-	lineNumberGlobal := LineNumberGlobal
-	
-	switch flag {
-	case "--toc":
-		options.ShowTOC = &trueVal
-		
-	case "--no-header":
-		options.ShowHeaders = &falseVal
-		
-	case "--line-numbers", "-n":
-		options.LineNumbers = &lineNumberFile
-		
-	case "--global-line-numbers", "-N":
-		options.LineNumbers = &lineNumberGlobal
-		
-	case "--theme":
-		if len(parts) < 2 {
-			availableThemes, _ := GetAvailableThemes()
-			return fmt.Errorf("--theme requires a value. Available themes: %s (see: nanodoc topics themes)", strings.Join(availableThemes, ", "))
-		}
-		// Validate theme exists
-		themeName := parts[1]
-		availableThemes, err := GetAvailableThemes()
-		if err == nil {
-			themeFound := false
-			for _, available := range availableThemes {
-				if available == themeName {
-					themeFound = true
-					break
-				}
-			}
-			if !themeFound {
-				return fmt.Errorf("invalid theme: %s. Available themes: %s (see: nanodoc topics themes)", themeName, strings.Join(availableThemes, ", "))
-			}
-		}
-		options.Theme = &themeName
-		
-	case "--header-style":
-		if len(parts) < 2 {
-			return fmt.Errorf("--header-style requires a value. Available styles: nice, filename, path (see: nanodoc topics headers)")
-		}
-		style := HeaderStyle(parts[1])
-		// Validate header style
-		switch style {
-		case HeaderStyleNice, HeaderStyleFilename, HeaderStylePath:
-			options.HeaderStyle = &style
-		default:
-			return fmt.Errorf("invalid header style: %s. Available styles: nice, filename, path", parts[1])
-		}
-		
-	case "--sequence":
-		if len(parts) < 2 {
-			return fmt.Errorf("--sequence requires a value. Available styles: numerical, letter, roman")
-		}
-		sequence := SequenceStyle(parts[1])
-		// Validate sequence style
-		switch sequence {
-		case SequenceNumerical, SequenceLetter, SequenceRoman:
-			options.SequenceStyle = &sequence
-		default:
-			return fmt.Errorf("invalid sequence style: %s. Available styles: numerical, letter, roman", parts[1])
-		}
-		
-	case "--txt-ext":
-		if len(parts) < 2 {
-			return fmt.Errorf("--txt-ext requires a value")
-		}
-		options.AdditionalExtensions = append(options.AdditionalExtensions, parts[1])
-		
-	case "--include":
-		if len(parts) < 2 {
-			return fmt.Errorf("--include requires a value")
-		}
-		options.IncludePatterns = append(options.IncludePatterns, parts[1])
-		
-	case "--exclude":
-		if len(parts) < 2 {
-			return fmt.Errorf("--exclude requires a value")
-		}
-		options.ExcludePatterns = append(options.ExcludePatterns, parts[1])
-		
-	default:
-		return fmt.Errorf("unknown option: %s", flag)
-	}
-	
-	return nil
-}
 
 // ProcessPaths takes a list of paths and expands any bundle files recursively
 func (bp *BundleProcessor) ProcessPaths(paths []string) ([]string, error) {
@@ -401,26 +143,17 @@ func (bp *BundleProcessor) ProcessPaths(paths []string) ([]string, error) {
 	return expandedPaths, nil
 }
 
-// BuildDocument creates a Document from resolved paths with bundle support
+// BuildDocument creates a Document from resolved paths
+// Note: Bundle option processing has been moved to the CLI layer
 func BuildDocument(pathInfos []PathInfo, options FormattingOptions) (*Document, error) {
-	// First, extract bundle options and merge with command-line options
-	mergedOptions, err := ExtractAndMergeBundleOptions(pathInfos, options)
-	if err != nil {
-		return nil, err
-	}
-	
-	return BuildDocumentWithOptions(pathInfos, mergedOptions)
+	return BuildDocumentWithOptions(pathInfos, options)
 }
 
-// BuildDocumentWithExplicitFlags creates a Document from resolved paths with bundle support and explicit flag tracking
+// BuildDocumentWithExplicitFlags creates a Document from resolved paths
+// Note: Bundle option processing has been moved to the CLI layer
 func BuildDocumentWithExplicitFlags(pathInfos []PathInfo, options FormattingOptions, explicitFlags map[string]bool) (*Document, error) {
-	// First, extract bundle options and merge with command-line options using explicit flags
-	mergedOptions, err := ExtractAndMergeBundleOptionsWithDefaults(pathInfos, options, explicitFlags)
-	if err != nil {
-		return nil, err
-	}
-	
-	return BuildDocumentWithOptions(pathInfos, mergedOptions)
+	// The explicit flags are now handled in the CLI layer
+	return BuildDocumentWithOptions(pathInfos, options)
 }
 
 // BuildDocumentWithOptions creates a Document from resolved paths with already-merged options
@@ -481,83 +214,28 @@ func BuildDocumentWithOptions(pathInfos []PathInfo, options FormattingOptions) (
 	return doc, nil
 }
 
-// ExtractAndMergeBundleOptions extracts options from bundle files and merges them with command-line options
-func ExtractAndMergeBundleOptions(pathInfos []PathInfo, cmdOptions FormattingOptions) (FormattingOptions, error) {
+// ExtractBundleOptionLines extracts raw option lines from all bundle files
+func ExtractBundleOptionLines(pathInfos []PathInfo) ([]string, error) {
 	bp := NewBundleProcessor()
-	var bundleOptions BundleOptions
+	var allOptionLines []string
 
-	// Extract options from all bundle files
+	// Extract option lines from all bundle files
 	for _, info := range pathInfos {
 		if info.Type == "bundle" {
 			result, err := bp.ProcessBundleFileWithOptions(info.Absolute)
 			if err != nil {
-				return cmdOptions, err
+				return nil, err
 			}
 			
-			// Merge bundle options (first bundle file wins for conflicting options)
-			bundleOptions = mergeBundleOptions(bundleOptions, result.Options)
+			// Collect all option lines
+			allOptionLines = append(allOptionLines, result.OptionLines...)
 		}
 	}
 
-	// Merge bundle options with command-line options
-	return MergeFormattingOptions(bundleOptions, cmdOptions), nil
+	return allOptionLines, nil
 }
 
-// ExtractAndMergeBundleOptionsWithDefaults extracts options from bundle files and merges them with command-line options using explicit flags
-func ExtractAndMergeBundleOptionsWithDefaults(pathInfos []PathInfo, cmdOptions FormattingOptions, explicitFlags map[string]bool) (FormattingOptions, error) {
-	bp := NewBundleProcessor()
-	var bundleOptions BundleOptions
 
-	// Extract options from all bundle files
-	for _, info := range pathInfos {
-		if info.Type == "bundle" {
-			result, err := bp.ProcessBundleFileWithOptions(info.Absolute)
-			if err != nil {
-				return cmdOptions, err
-			}
-			
-			// Merge bundle options (first bundle file wins for conflicting options)
-			bundleOptions = mergeBundleOptions(bundleOptions, result.Options)
-		}
-	}
-
-	// Merge bundle options with command-line options using explicit flags
-	return MergeFormattingOptionsWithDefaults(bundleOptions, cmdOptions, explicitFlags), nil
-}
-
-// mergeBundleOptions merges two BundleOptions structures
-// The first one takes precedence for conflicting options
-func mergeBundleOptions(first, second BundleOptions) BundleOptions {
-	result := first
-	
-	if result.Theme == nil && second.Theme != nil {
-		result.Theme = second.Theme
-	}
-	if result.LineNumbers == nil && second.LineNumbers != nil {
-		result.LineNumbers = second.LineNumbers
-	}
-	if result.ShowHeaders == nil && second.ShowHeaders != nil {
-		result.ShowHeaders = second.ShowHeaders
-	}
-	if result.HeaderStyle == nil && second.HeaderStyle != nil {
-		result.HeaderStyle = second.HeaderStyle
-	}
-	if result.SequenceStyle == nil && second.SequenceStyle != nil {
-		result.SequenceStyle = second.SequenceStyle
-	}
-	if result.ShowTOC == nil && second.ShowTOC != nil {
-		result.ShowTOC = second.ShowTOC
-	}
-	
-	// For additional extensions, merge them
-	result.AdditionalExtensions = append(result.AdditionalExtensions, second.AdditionalExtensions...)
-	
-	// For include/exclude patterns, merge them
-	result.IncludePatterns = append(result.IncludePatterns, second.IncludePatterns...)
-	result.ExcludePatterns = append(result.ExcludePatterns, second.ExcludePatterns...)
-	
-	return result
-}
 
 // ProcessLiveBundles iterates through document content and processes inline bundles.
 func ProcessLiveBundles(doc *Document) error {
@@ -581,10 +259,11 @@ func ProcessLiveBundles(doc *Document) error {
 func shouldSkipLiveBundleProcessing(filepath string) bool {
 	// Skip common documentation files that might contain [[file:]] examples
 	filename := strings.ToLower(filepath)
-	return strings.Contains(filename, "readme") || 
-		   strings.Contains(filename, "changelog") || 
-		   strings.Contains(filename, "troubleshooting") ||
-		   strings.HasSuffix(filename, ".md") // Skip all markdown files for now
+	return strings.Contains(filename, "readme") ||
+		strings.Contains(filename, "changelog") ||
+		strings.Contains(filename, "troubleshooting") ||
+		strings.Contains(filename, "contributing") ||
+		strings.Contains(filename, "license")
 }
 
 // ProcessLiveBundle handles inline bundle processing

@@ -123,7 +123,7 @@ func TestResolveDirectoryWithAdditionalExtensionsNoOptions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Test with --txt-ext txxt option
+	// Test with --ext txxt option
 	options := &FormattingOptions{
 		AdditionalExtensions: []string{"txxt"},
 	}
@@ -153,6 +153,6 @@ func TestResolveDirectoryWithAdditionalExtensionsNoOptions(t *testing.T) {
 	}
 
 	if !foundTxxt {
-		t.Error("Expected to find .txxt file when using --txt-ext txxt, but didn't")
+		t.Error("Expected to find .txxt file when using --ext txxt, but didn't")
 	}
 }
