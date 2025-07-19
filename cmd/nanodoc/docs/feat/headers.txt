@@ -78,7 +78,7 @@ OPTIONS
     --header-style=STYLE     Set the header style (none, dashed, solid, boxed)
                             Default: none
     --page-width=WIDTH       Set the page width for alignment
-                            Default: 80
+                            Default: auto-detected from terminal (fallback: 80)
 
 
 COMBINING OPTIONS
