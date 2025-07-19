@@ -79,8 +79,8 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 		mergedOptions := FormattingOptions{
 			Theme:         "classic-dark",
 			LineNumbers:   LineNumberGlobal,
-			ShowHeaders:   true,
-			HeaderStyle:   HeaderStyleNice,
+			ShowFilenames:   true,
+			FilenameStyle:   FilenameStyleNice,
 			SequenceStyle: SequenceRoman,
 			ShowTOC:       true,
 			AdditionalExtensions: []string{"go"},
@@ -107,8 +107,8 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 		if !doc.FormattingOptions.ShowTOC {
 			t.Error("Expected ShowTOC to be true")
 		}
-		if doc.FormattingOptions.HeaderStyle != HeaderStyleNice {
-			t.Errorf("Expected HeaderStyleNice, got %v", doc.FormattingOptions.HeaderStyle)
+		if doc.FormattingOptions.FilenameStyle != FilenameStyleNice {
+			t.Errorf("Expected FilenameStyleNice, got %v", doc.FormattingOptions.FilenameStyle)
 		}
 		
 		// Check that txt-ext was applied
@@ -144,8 +144,8 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 		mergedOptions := FormattingOptions{
 			Theme:         "classic-light",  // CLI override
 			LineNumbers:   LineNumberFile,   // CLI override
-			ShowHeaders:   true,
-			HeaderStyle:   HeaderStyleFilename,  // CLI override
+			ShowFilenames:   true,
+			FilenameStyle:   FilenameStyleFilename,  // CLI override
 			SequenceStyle: SequenceNumerical,    // CLI override
 			ShowTOC:       false,                // CLI override
 			AdditionalExtensions: []string{"go"}, // From bundle (not overridden)
@@ -166,8 +166,8 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 		if doc.FormattingOptions.LineNumbers != LineNumberFile {
 			t.Errorf("Expected CLI LineNumberFile, got %v", doc.FormattingOptions.LineNumbers)
 		}
-		if doc.FormattingOptions.HeaderStyle != HeaderStyleFilename {
-			t.Errorf("Expected CLI HeaderStyleFilename, got %v", doc.FormattingOptions.HeaderStyle)
+		if doc.FormattingOptions.FilenameStyle != FilenameStyleFilename {
+			t.Errorf("Expected CLI FilenameStyleFilename, got %v", doc.FormattingOptions.FilenameStyle)
 		}
 		if doc.FormattingOptions.SequenceStyle != SequenceNumerical {
 			t.Errorf("Expected CLI SequenceNumerical, got %v", doc.FormattingOptions.SequenceStyle)
@@ -203,8 +203,8 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 		mergedOptions := FormattingOptions{
 			Theme:         "classic-dark",
 			LineNumbers:   LineNumberGlobal,
-			ShowHeaders:   true,
-			HeaderStyle:   HeaderStyleNice,
+			ShowFilenames:   true,
+			FilenameStyle:   FilenameStyleNice,
 			SequenceStyle: SequenceRoman,
 			ShowTOC:       true,
 			AdditionalExtensions: []string{"go"},
@@ -236,7 +236,7 @@ func TestBundleOptionsCompleteIntegration(t *testing.T) {
 			t.Error("Expected global line numbers to be present in output")
 		}
 		if !strings.Contains(output, "i. File1") {
-			t.Error("Expected roman sequence style in headers")
+			t.Error("Expected roman sequence style in filenames")
 		}
 		if !strings.Contains(output, "package main") {
 			t.Error("Expected .go file content to be included due to --ext")

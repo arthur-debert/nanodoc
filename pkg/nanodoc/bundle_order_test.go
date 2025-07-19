@@ -68,7 +68,7 @@ func TestBundlePreservesFileOrder(t *testing.T) {
 		},
 	}
 
-	doc, err := BuildDocument(pathInfos, FormattingOptions{ShowHeaders: false})
+	doc, err := BuildDocument(pathInfos, FormattingOptions{ShowFilenames: false})
 	if err != nil {
 		t.Fatalf("BuildDocument() error = %v", err)
 	}
@@ -143,7 +143,7 @@ func TestBundleWithMixedSourcesPreservesOrder(t *testing.T) {
 		},
 	}
 
-	doc, err := BuildDocument(pathInfos, FormattingOptions{ShowHeaders: false})
+	doc, err := BuildDocument(pathInfos, FormattingOptions{ShowFilenames: false})
 	if err != nil {
 		t.Fatalf("BuildDocument() error = %v", err)
 	}

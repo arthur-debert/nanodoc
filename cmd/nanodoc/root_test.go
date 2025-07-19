@@ -225,7 +225,7 @@ func TestRootCmdBundleOptions(t *testing.T) {
 				"1 | line1",          // --linenum file from bundle (not overridden)
 			},
 			dontWantOutput: []string{
-				"test.txt",           // No header should be shown
+				"test.txt",           // No filename should be shown
 			},
 		},
 	}

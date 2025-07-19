@@ -169,7 +169,7 @@ func TestAddLineNumbers(t *testing.T) {
 	}
 }
 
-func TestGenerateFileHeader(t *testing.T) {
+func TestGenerateFilename(t *testing.T) {
 	doc := &Document{
 		TOC: []TOCEntry{
 			{Path: "/path/to/myTestFile.txt", Title: "My Test File"},
@@ -179,7 +179,7 @@ func TestGenerateFileHeader(t *testing.T) {
 	tests := []struct {
 		name     string
 		filepath string
-		style    HeaderStyle
+		style    FilenameStyle
 		seqStyle SequenceStyle
 		seqNum   int
 		doc      *Document
@@ -188,7 +188,7 @@ func TestGenerateFileHeader(t *testing.T) {
 		{
 			name:     "nice style with sequence",
 			filepath: "/path/to/test_file.txt",
-			style:    HeaderStyleNice,
+			style:    FilenameStyleNice,
 			seqStyle: SequenceNumerical,
 			seqNum:   1,
 			doc:      &Document{},
@@ -197,7 +197,7 @@ func TestGenerateFileHeader(t *testing.T) {
 		{
 			name:     "filename style",
 			filepath: "/path/to/test_file.txt",
-			style:    HeaderStyleFilename,
+			style:    FilenameStyleFilename,
 			seqStyle: SequenceNumerical,
 			seqNum:   1,
 			doc:      &Document{},
@@ -206,7 +206,7 @@ func TestGenerateFileHeader(t *testing.T) {
 		{
 			name:     "path style",
 			filepath: "/path/to/test_file.txt",
-			style:    HeaderStylePath,
+			style:    FilenameStylePath,
 			seqStyle: SequenceNumerical,
 			seqNum:   1,
 			doc:      &Document{},
@@ -215,7 +215,7 @@ func TestGenerateFileHeader(t *testing.T) {
 		{
 			name:     "camelCase file with TOC title",
 			filepath: "/path/to/myTestFile.txt",
-			style:    HeaderStyleNice,
+			style:    FilenameStyleNice,
 			seqStyle: SequenceRoman,
 			seqNum:   2,
 			doc:      doc,
@@ -225,9 +225,9 @@ func TestGenerateFileHeader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := generateFileHeader(tt.filepath, tt.style, tt.seqStyle, tt.seqNum, tt.doc)
+			got := generateFilename(tt.filepath, tt.style, tt.seqStyle, tt.seqNum, tt.doc)
 			if got != tt.want {
-				t.Errorf("generateFileHeader() = %v, want %v", got, tt.want)
+				t.Errorf("generateFilename() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -276,7 +276,7 @@ func TestRenderDocument(t *testing.T) {
 		want []string // List of strings that should appear in output
 	}{
 		{
-			name: "basic rendering with headers",
+			name: "basic rendering with filenames",
 			doc: &Document{
 				ContentItems: []FileContent{
 					{
@@ -290,8 +290,8 @@ func TestRenderDocument(t *testing.T) {
 				},
 			},
 			ctx: &FormattingContext{
-				ShowHeaders:   true,
-				HeaderStyle:   HeaderStyleNice,
+				ShowFilenames:   true,
+				FilenameStyle:   FilenameStyleNice,
 				SequenceStyle: SequenceNumerical,
 				LineNumbers:   LineNumberNone,
 			},
@@ -312,7 +312,7 @@ func TestRenderDocument(t *testing.T) {
 				},
 			},
 			ctx: &FormattingContext{
-				ShowHeaders: false,
+				ShowFilenames: false,
 				LineNumbers: LineNumberFile,
 			},
 			want: []string{
@@ -335,7 +335,7 @@ func TestRenderDocument(t *testing.T) {
 				},
 			},
 			ctx: &FormattingContext{
-				ShowHeaders: true,
+				ShowFilenames: true,
 				ShowTOC:     true,
 			},
 			want: []string{

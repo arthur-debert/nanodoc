@@ -153,9 +153,9 @@ func GenerateDryRunInfo(pathInfos []PathInfo, opts FormattingOptions) (*DryRunIn
 	// Count total files
 	info.TotalFiles = len(info.Files)
 	
-	// Add lines for headers if enabled
-	if opts.ShowHeaders {
-		// Each file gets a header line
+	// Add lines for filenames if enabled
+	if opts.ShowFilenames {
+		// Each file gets a filename line
 		info.TotalLines += info.TotalFiles
 	}
 	
@@ -249,14 +249,14 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	if info.Options.Theme != "classic" {
 		activeOptions = append(activeOptions, fmt.Sprintf("--theme %s", info.Options.Theme))
 	}
-	if !info.Options.ShowHeaders {
+	if !info.Options.ShowFilenames {
 		activeOptions = append(activeOptions, "--filenames=false")
 	}
 	if info.Options.SequenceStyle != "numerical" {
 		activeOptions = append(activeOptions, fmt.Sprintf("--file-numbering %s", info.Options.SequenceStyle))
 	}
-	if info.Options.HeaderStyle != "nice" {
-		activeOptions = append(activeOptions, fmt.Sprintf("--file-style %s", info.Options.HeaderStyle))
+	if info.Options.FilenameStyle != "nice" {
+		activeOptions = append(activeOptions, fmt.Sprintf("--file-style %s", info.Options.FilenameStyle))
 	}
 	
 	if len(activeOptions) > 0 {

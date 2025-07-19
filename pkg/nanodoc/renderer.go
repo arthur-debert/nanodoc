@@ -21,9 +21,9 @@ type RendererOptions struct {
 func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 	var parts []string
 
-	// Generate TOC first, as it's used for headers
-	if ctx.ShowTOC || ctx.HeaderStyle == HeaderStyleNice {
-		slog.Debug("Generating table of contents for headers/TOC")
+	// Generate TOC first, as it's used for filenames
+	if ctx.ShowTOC || ctx.FilenameStyle == FilenameStyleNice {
+		slog.Debug("Generating table of contents for filenames/TOC")
 		generateTOC(doc)
 	}
 
@@ -51,16 +51,16 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 		isNotInlined := item.OriginalSource == ""
 		differentSource := item.Filepath != prevOriginalSource
 
-		if isNotInlined && differentSource && ctx.ShowHeaders {
+		if isNotInlined && differentSource && ctx.ShowFilenames {
 			// Add separator if not first item
 			if len(parts) > 0 && !strings.HasSuffix(parts[len(parts)-1], "\n\n") {
 				parts = append(parts, "\n")
 			}
 
-			// Generate header
+			// Generate filename
 			sequenceNumber++
-			header := generateFileHeader(item.Filepath, ctx.HeaderStyle, ctx.SequenceStyle, sequenceNumber, doc)
-			parts = append(parts, header)
+			filename := generateFilename(item.Filepath, ctx.FilenameStyle, ctx.SequenceStyle, sequenceNumber, doc)
+			parts = append(parts, filename)
 			parts = append(parts, "\n\n")
 		}
 
@@ -99,8 +99,8 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 	return result, nil
 }
 
-// generateFileHeader creates a header for a file
-func generateFileHeader(filePath string, style HeaderStyle, seqStyle SequenceStyle, seqNum int, doc *Document) string {
+// generateFilename creates a filename for a file
+func generateFilename(filePath string, style FilenameStyle, seqStyle SequenceStyle, seqNum int, doc *Document) string {
 	// Find the primary title for this file from the TOC
 	var title string
 	for _, entry := range doc.TOC {
@@ -111,20 +111,20 @@ func generateFileHeader(filePath string, style HeaderStyle, seqStyle SequenceSty
 	}
 
 	switch style {
-	case HeaderStyleFilename:
+	case FilenameStyleFilename:
 		filename := filepath.Base(filePath)
 		seq := generateSequence(seqNum, seqStyle)
 		if seq != "" {
 			return fmt.Sprintf("%s. %s", seq, filename)
 		}
 		return filename
-	case HeaderStylePath:
+	case FilenameStylePath:
 		seq := generateSequence(seqNum, seqStyle)
 		if seq != "" {
 			return fmt.Sprintf("%s. %s", seq, filePath)
 		}
 		return filePath
-	case HeaderStyleNice:
+	case FilenameStyleNice:
 		fallthrough
 	default:
 		// Use title from TOC if available, otherwise generate from filename

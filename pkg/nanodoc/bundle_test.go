@@ -277,8 +277,8 @@ func TestBuildDocument(t *testing.T) {
 	}
 
 	options := FormattingOptions{
-		ShowHeaders:   true,
-		HeaderStyle:   HeaderStyleNice,
+		ShowFilenames:   true,
+		FilenameStyle:   FilenameStyleNice,
 		LineNumbers:   LineNumberNone,
 		SequenceStyle: SequenceNumerical,
 	}
@@ -294,11 +294,11 @@ func TestBuildDocument(t *testing.T) {
 	}
 
 	// Check formatting options were applied
-	if doc.FormattingOptions.ShowHeaders != options.ShowHeaders {
-		t.Errorf("FormattingOptions.ShowHeaders not set correctly")
+	if doc.FormattingOptions.ShowFilenames != options.ShowFilenames {
+		t.Errorf("FormattingOptions.ShowFilenames not set correctly")
 	}
-	if doc.FormattingOptions.HeaderStyle != options.HeaderStyle {
-		t.Errorf("FormattingOptions.HeaderStyle not set correctly")
+	if doc.FormattingOptions.FilenameStyle != options.FilenameStyle {
+		t.Errorf("FormattingOptions.FilenameStyle not set correctly")
 	}
 }
 
@@ -850,8 +850,8 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		Theme:         "classic-dark",
 		ShowTOC:       true,
 		LineNumbers:   LineNumberGlobal,
-		ShowHeaders:   true,
-		HeaderStyle:   HeaderStyleNice,
+		ShowFilenames:   true,
+		FilenameStyle:   FilenameStyleNice,
 		SequenceStyle: SequenceRoman,
 	}
 
@@ -871,8 +871,8 @@ func TestEndToEndBundleOptions(t *testing.T) {
 	if doc.FormattingOptions.LineNumbers != LineNumberGlobal {
 		t.Error("Expected LineNumbers to be LineNumberGlobal from bundle")
 	}
-	if doc.FormattingOptions.HeaderStyle != HeaderStyleNice {
-		t.Error("Expected HeaderStyle to be HeaderStyleNice from bundle")
+	if doc.FormattingOptions.FilenameStyle != FilenameStyleNice {
+		t.Error("Expected FilenameStyle to be FilenameStyleNice from bundle")
 	}
 	if doc.FormattingOptions.SequenceStyle != SequenceRoman {
 		t.Error("Expected SequenceStyle to be SequenceRoman from bundle")
@@ -884,8 +884,8 @@ func TestEndToEndBundleOptions(t *testing.T) {
 		Theme:         "classic-light",     // CLI override
 		ShowTOC:       true,                // From bundle (CLI was default)
 		LineNumbers:   LineNumberFile,      // CLI override
-		ShowHeaders:   true,
-		HeaderStyle:   HeaderStyleFilename, // CLI override
+		ShowFilenames:   true,
+		FilenameStyle:   FilenameStyleFilename, // CLI override
 		SequenceStyle: SequenceRoman,       // From bundle (CLI was default)
 	}
 
@@ -904,8 +904,8 @@ func TestEndToEndBundleOptions(t *testing.T) {
 	if doc2.FormattingOptions.LineNumbers != LineNumberFile {
 		t.Error("Expected LineNumbers to be LineNumberFile from CLI override")
 	}
-	if doc2.FormattingOptions.HeaderStyle != HeaderStyleFilename {
-		t.Error("Expected HeaderStyle to be HeaderStyleFilename from CLI override")
+	if doc2.FormattingOptions.FilenameStyle != FilenameStyleFilename {
+		t.Error("Expected FilenameStyle to be FilenameStyleFilename from CLI override")
 	}
 	if doc2.FormattingOptions.SequenceStyle != SequenceRoman {
 		t.Error("Expected SequenceStyle to be SequenceRoman from bundle (CLI was default)")
@@ -984,8 +984,8 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		Theme:         "classic-dark",  // from bundle
 		ShowTOC:       true,            // from bundle
 		LineNumbers:   LineNumberFile,  // from bundle
-		HeaderStyle:   HeaderStylePath, // from bundle
-		ShowHeaders:   true,
+		FilenameStyle:   FilenameStylePath, // from bundle
+		ShowFilenames:   true,
 		SequenceStyle: SequenceNumerical,
 	}
 	
@@ -1006,8 +1006,8 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 	if doc.FormattingOptions.LineNumbers != LineNumberFile {
 		t.Errorf("Expected LineNumbers LineNumberFile from bundle, got %v", doc.FormattingOptions.LineNumbers)
 	}
-	if doc.FormattingOptions.HeaderStyle != HeaderStylePath {
-		t.Errorf("Expected HeaderStyle path from bundle, got %v", doc.FormattingOptions.HeaderStyle)
+	if doc.FormattingOptions.FilenameStyle != FilenameStylePath {
+		t.Errorf("Expected FilenameStyle path from bundle, got %v", doc.FormattingOptions.FilenameStyle)
 	}
 
 	// Test 2: Options that would result from CLI overriding some bundle options
@@ -1016,8 +1016,8 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 		Theme:         "classic-light",     // CLI override
 		ShowTOC:       true,                // from bundle (not overridden)
 		LineNumbers:   LineNumberGlobal,    // CLI override
-		HeaderStyle:   HeaderStyleFilename, // CLI override
-		ShowHeaders:   true,
+		FilenameStyle:   FilenameStyleFilename, // CLI override
+		ShowFilenames:   true,
 		SequenceStyle: SequenceNumerical,
 	}
 	
@@ -1036,8 +1036,8 @@ func TestBuildDocumentWithExplicitFlags(t *testing.T) {
 	if docWithOverride.FormattingOptions.LineNumbers != LineNumberGlobal {
 		t.Errorf("Expected LineNumbers LineNumberGlobal from CLI override, got %v", docWithOverride.FormattingOptions.LineNumbers)
 	}
-	if docWithOverride.FormattingOptions.HeaderStyle != HeaderStyleFilename {
-		t.Errorf("Expected HeaderStyle filename from CLI override, got %v", docWithOverride.FormattingOptions.HeaderStyle)
+	if docWithOverride.FormattingOptions.FilenameStyle != FilenameStyleFilename {
+		t.Errorf("Expected FilenameStyle filename from CLI override, got %v", docWithOverride.FormattingOptions.FilenameStyle)
 	}
 	
 	// Options from bundle (not overridden)

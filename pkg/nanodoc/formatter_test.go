@@ -153,8 +153,8 @@ func TestNewFormattingContext(t *testing.T) {
 			options: FormattingOptions{
 				Theme:         "classic",
 				LineNumbers:   LineNumberNone,
-				ShowHeaders:   true,
-				HeaderStyle:   HeaderStyleNice,
+				ShowFilenames:   true,
+				FilenameStyle:   FilenameStyleNice,
 				SequenceStyle: SequenceNumerical,
 				ShowTOC:       false,
 			},
@@ -165,7 +165,7 @@ func TestNewFormattingContext(t *testing.T) {
 			options: FormattingOptions{
 				Theme:       "classic-dark",
 				LineNumbers: LineNumberFile,
-				ShowHeaders: true,
+				ShowFilenames: true,
 			},
 			wantErr: false,
 		},
@@ -200,8 +200,8 @@ func TestNewFormattingContext(t *testing.T) {
 				if ctx.LineNumbers != tt.options.LineNumbers {
 					t.Errorf("LineNumbers = %v, want %v", ctx.LineNumbers, tt.options.LineNumbers)
 				}
-				if ctx.ShowHeaders != tt.options.ShowHeaders {
-					t.Errorf("ShowHeaders = %v, want %v", ctx.ShowHeaders, tt.options.ShowHeaders)
+				if ctx.ShowFilenames != tt.options.ShowFilenames {
+					t.Errorf("ShowFilenames = %v, want %v", ctx.ShowFilenames, tt.options.ShowFilenames)
 				}
 				if ctx.ShowTOC != tt.options.ShowTOC {
 					t.Errorf("ShowTOC = %v, want %v", ctx.ShowTOC, tt.options.ShowTOC)

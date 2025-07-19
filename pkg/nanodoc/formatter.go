@@ -21,8 +21,8 @@ type Theme struct {
 type FormattingContext struct {
 	Theme         *Theme
 	LineNumbers   LineNumberMode
-	ShowHeaders   bool
-	HeaderStyle   HeaderStyle
+	ShowFilenames   bool
+	FilenameStyle   FilenameStyle
 	SequenceStyle SequenceStyle
 	ShowTOC       bool
 }
@@ -135,8 +135,8 @@ func NewFormattingContext(options FormattingOptions) (*FormattingContext, error)
 	return &FormattingContext{
 		Theme:         theme,
 		LineNumbers:   options.LineNumbers,
-		ShowHeaders:   options.ShowHeaders,
-		HeaderStyle:   options.HeaderStyle,
+		ShowFilenames:   options.ShowFilenames,
+		FilenameStyle:   options.FilenameStyle,
 		SequenceStyle: options.SequenceStyle,
 		ShowTOC:       options.ShowTOC,
 	}, nil

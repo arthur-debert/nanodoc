@@ -1,6 +1,6 @@
-FILE HEADERS AND NUMBERING
+FILE FILENAMES AND NUMBERING
 
-Nanodoc can automatically generate headers for each file included in a bundle. The appearance of these headers is controlled by two main settings: the file style and the file numbering style.
+Nanodoc can automatically generate filenames for each file included in a bundle. The appearance of these filenames is controlled by two main settings: the file style and the file numbering style.
 
 
 FILE STYLES
@@ -19,7 +19,7 @@ There are three available file styles:
 
 FILE NUMBERING STYLES
 
-The file numbering style determines the marker placed before the header title.
+The file numbering style determines the marker placed before the filename title.
 
     1. numerical (Default): 1., 2., 3.
     2. alphabetical: a., b., c.
@@ -28,7 +28,7 @@ The file numbering style determines the marker placed before the header title.
 
 EXAMPLE
 
-Given a file named my_first_document.md, using the default nice header style and numerical sequence would produce the following header:
+Given a file named my_first_document.md, using the default nice filename style and numerical sequence would produce the following filename:
 
     -- 
         1. My First Document
@@ -38,7 +38,7 @@ Given a file named my_first_document.md, using the default nice header style and
 OPTIONS
 
     --filenames             Show filenames between concatenated files (default: true)
-                           Use --filenames=false to hide headers completely
+                           Use --filenames=false to hide filenames completely
     --file-numbering=TYPE   Set the file numbering style (numerical, alphabetical, roman)
                            Default: numerical
     --file-style=STYLE      Set the filename display style (nice [default], filename, path)
