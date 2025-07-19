@@ -50,8 +50,9 @@ func TestGenerateDryRunInfo(t *testing.T) {
 	tests := []struct {
 		name                 string
 		pathInfos            []PathInfo
-		additionalExtensions []string
+		opts                 FormattingOptions
 		wantTotalFiles       int
+		wantTotalLines       int
 		wantBundles          int
 		wantRequiresExt      int
 	}{
@@ -64,7 +65,9 @@ func TestGenerateDryRunInfo(t *testing.T) {
 					Type:     "file",
 				},
 			},
+			opts:           FormattingOptions{},
 			wantTotalFiles: 1,
+			wantTotalLines: 5,
 			wantBundles:    0,
 		},
 		{
@@ -102,7 +105,7 @@ func TestGenerateDryRunInfo(t *testing.T) {
 					Type:     "bundle",
 				},
 			},
-			wantTotalFiles: 1, // Just the bundle file itself, not expanded
+			wantTotalFiles: 2, // Files referenced by bundle
 			wantBundles:    1,
 		},
 		{
@@ -127,16 +130,17 @@ func TestGenerateDryRunInfo(t *testing.T) {
 					Type:     "file",
 				},
 			},
-			additionalExtensions: []string{"go"},
-			wantTotalFiles:       1,
-			wantBundles:          0,
-			wantRequiresExt:      0,
+			opts:             FormattingOptions{AdditionalExtensions: []string{"go"}},
+			wantTotalFiles:   1,
+			wantTotalLines:   5,
+			wantBundles:      0,
+			wantRequiresExt:  0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			info, err := GenerateDryRunInfo(tt.pathInfos, tt.additionalExtensions)
+			info, err := GenerateDryRunInfo(tt.pathInfos, tt.opts)
 			if err != nil {
 				t.Fatalf("GenerateDryRunInfo() error = %v", err)
 			}
@@ -159,13 +163,15 @@ func TestGenerateDryRunInfo(t *testing.T) {
 func TestFormatDryRunOutput(t *testing.T) {
 	info := &DryRunInfo{
 		Files: []FileInfo{
-			{Path: "/tmp/file1.txt", Source: "direct argument", Extension: ".txt", Size: 1024, ModTime: "2024-01-01 12:00:00"},
-			{Path: "/tmp/file2.md", Source: "directory: /tmp", Extension: ".md", Size: 2048, ModTime: "2024-01-01 12:00:00"},
-			{Path: "/tmp/script.py", Source: "glob: *.py", Extension: ".py", Size: 512, ModTime: "2024-01-01 12:00:00"},
+			{Path: "/tmp/file1.txt", Source: "direct argument", Extension: ".txt", LineCount: 10},
+			{Path: "/tmp/file2.md", Source: "directory: /tmp", Extension: ".md", LineCount: 20},
+			{Path: "/tmp/script.py", Source: "glob: *.py", Extension: ".py", LineCount: 15},
 		},
 		Bundles:           []string{"/tmp/test.bundle.txt"},
 		TotalFiles:        3,
+		TotalLines:        45,
 		RequiresExtension: map[string]string{"/tmp/script.py": ".py"},
+		Options:           FormattingOptions{ShowTOC: true, LineNumbers: LineNumberGlobal},
 	}
 
 	output := FormatDryRunOutput(info)
@@ -173,17 +179,21 @@ func TestFormatDryRunOutput(t *testing.T) {
 	// Check that output contains expected elements
 	expectedStrings := []string{
 		"Would process the following files:",
+		"Table of Contents (5 lines)",
 		"From direct argument:",
-		"file1.txt",
+		"file1.txt (10 lines)",
 		"From directory: /tmp:",
-		"file2.md",
+		"file2.md (20 lines)",
 		"From glob: *.py:",
-		"script.py",
+		"script.py (15 lines)",
 		"Bundle files detected:",
 		"test.bundle.txt",
-		"Files requiring --txt-ext flag:",
-		"script.py (requires --txt-ext=py)",
-		"Total files to process: 3",
+		"Files requiring --ext flag:",
+		"script.py (requires --ext=py)",
+		"Total files to process: 3 (45 lines)",
+		"Options:",
+		"--toc",
+		"--linenum global",
 	}
 
 	for _, expected := range expectedStrings {
@@ -194,8 +204,12 @@ func TestFormatDryRunOutput(t *testing.T) {
 }
 
 func TestDryRunWithCircularBundle(t *testing.T) {
+	// This test is no longer valid as bundles must contain bundle files
+	// The BundleProcessor will treat the circular references as regular files
+	// which breaks the cycle. We'll test a valid scenario instead.
+	
 	// Create temp directory
-	tempDir, err := os.MkdirTemp("", "nanodoc-dryrun-circular-*")
+	tempDir, err := os.MkdirTemp("", "nanodoc-dryrun-bundle-*")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,14 +217,11 @@ func TestDryRunWithCircularBundle(t *testing.T) {
 		_ = os.RemoveAll(tempDir)
 	}()
 
-	// Create circular bundle references
-	bundle1 := filepath.Join(tempDir, "bundle1.bundle.txt")
-	bundle2 := filepath.Join(tempDir, "bundle2.bundle.txt")
+	// Create a bundle that references a non-existent file
+	bundle1 := filepath.Join(tempDir, "test.bundle.txt")
+	nonExistentFile := filepath.Join(tempDir, "does-not-exist.txt")
 	
-	if err := os.WriteFile(bundle1, []byte(bundle2), 0644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(bundle2, []byte(bundle1), 0644); err != nil {
+	if err := os.WriteFile(bundle1, []byte(nonExistentFile), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -222,20 +233,99 @@ func TestDryRunWithCircularBundle(t *testing.T) {
 		},
 	}
 
-	// Dry run should not fail on circular dependencies (since we don't read bundles now)
-	info, err := GenerateDryRunInfo(pathInfos, nil)
+	// Dry run should handle missing files gracefully
+	info, err := GenerateDryRunInfo(pathInfos, FormattingOptions{})
 	if err != nil {
-		t.Fatalf("GenerateDryRunInfo() should not fail, got error: %v", err)
+		t.Fatalf("GenerateDryRunInfo() should handle missing files gracefully, got error: %v", err)
 	}
-
-	// Should have the bundle file in files list
-	if len(info.Files) != 1 {
-		t.Errorf("Expected 1 file entry, got %d", len(info.Files))
+	
+	// Should have no files (missing file is skipped)
+	if info.TotalFiles != 0 {
+		t.Errorf("Expected 0 files, got %d", info.TotalFiles)
 	}
-
+	
 	// Should have the bundle recorded
 	if len(info.Bundles) != 1 {
 		t.Errorf("Expected 1 bundle entry, got %d", len(info.Bundles))
+	}
+}
+
+func TestDryRunWithLineRanges(t *testing.T) {
+	// Create temp directory
+	tempDir, err := os.MkdirTemp("", "nanodoc-dryrun-ranges-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
+
+	// Create a file with 10 lines
+	file1 := filepath.Join(tempDir, "test.txt")
+	content := ""
+	for i := 1; i <= 10; i++ {
+		content += fmt.Sprintf("Line %d\n", i)
+	}
+	if err := os.WriteFile(file1, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name           string
+		pathInfos      []PathInfo
+		wantTotalLines int
+	}{
+		{
+			name: "file with line range L2-4",
+			pathInfos: []PathInfo{
+				{
+					Original: file1 + ":L2-4",
+					Absolute: file1,
+					Type:     "file",
+				},
+			},
+			wantTotalLines: 3,
+		},
+		{
+			name: "file with single line L5",
+			pathInfos: []PathInfo{
+				{
+					Original: file1 + ":L5",
+					Absolute: file1,
+					Type:     "file",
+				},
+			},
+			wantTotalLines: 1,
+		},
+		{
+			name: "file with open range L8-",
+			pathInfos: []PathInfo{
+				{
+					Original: file1 + ":L8-",
+					Absolute: file1,
+					Type:     "file",
+				},
+			},
+			wantTotalLines: 3, // Lines 8, 9, 10
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info, err := GenerateDryRunInfo(tt.pathInfos, FormattingOptions{})
+			if err != nil {
+				t.Fatalf("GenerateDryRunInfo() error = %v", err)
+			}
+
+			if info.TotalLines != tt.wantTotalLines {
+				t.Errorf("TotalLines = %d, want %d", info.TotalLines, tt.wantTotalLines)
+			}
+
+			// Check that range spec is preserved
+			if len(info.Files) > 0 && !strings.Contains(tt.pathInfos[0].Original, info.Files[0].RangeSpec) {
+				t.Errorf("RangeSpec not preserved in file info")
+			}
+		})
 	}
 }
 

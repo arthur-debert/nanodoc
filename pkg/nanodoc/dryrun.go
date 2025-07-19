@@ -1,6 +1,7 @@
 package nanodoc
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,8 +17,12 @@ type DryRunInfo struct {
 	Bundles []string
 	// Total count of files
 	TotalFiles int
+	// Total line count across all files
+	TotalLines int
 	// Files requiring additional extensions
 	RequiresExtension map[string]string
+	// Active formatting options
+	Options FormattingOptions
 }
 
 // FileInfo contains dry run information about a file
@@ -25,16 +30,17 @@ type FileInfo struct {
 	Path      string
 	Source    string // Where it came from (directory, bundle, etc.)
 	Extension string
-	Size      int64  // File size in bytes
-	ModTime   string // Modification time
+	LineCount int    // Number of lines that will be processed
+	RangeSpec string // Range specification if any (e.g., "L10-20")
 }
 
 // GenerateDryRunInfo analyzes what files would be processed without actually processing them
-func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*DryRunInfo, error) {
+func GenerateDryRunInfo(pathInfos []PathInfo, opts FormattingOptions) (*DryRunInfo, error) {
 	info := &DryRunInfo{
 		Files:             make([]FileInfo, 0),
 		Bundles:           make([]string, 0),
 		RequiresExtension: make(map[string]string),
+		Options:           opts,
 	}
 
 	// Process each path
@@ -42,20 +48,26 @@ func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*D
 		switch pathInfo.Type {
 		case "file":
 			ext := filepath.Ext(pathInfo.Absolute)
+			// Extract range spec from original path
+			_, rangeSpec := parsePathWithRange(pathInfo.Original)
+			
 			fileInfo := FileInfo{
 				Path:      pathInfo.Absolute,
 				Source:    "direct argument",
 				Extension: ext,
+				RangeSpec: rangeSpec,
 			}
 			
-			// Get file metadata
-			if stat, err := os.Stat(pathInfo.Absolute); err == nil {
-				fileInfo.Size = stat.Size()
-				fileInfo.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+			// Count lines in the file
+			lineCount, err := countFileLines(pathInfo.Original)
+			if err != nil {
+				return nil, err
 			}
+			fileInfo.LineCount = lineCount
+			info.TotalLines += lineCount
 			
 			// Check if file needs additional extension
-			if !isTextFileWithExtensions(pathInfo.Absolute, additionalExtensions) {
+			if !isTextFileWithExtensions(pathInfo.Absolute, opts.AdditionalExtensions) {
 				info.RequiresExtension[pathInfo.Absolute] = ext
 			}
 			
@@ -69,11 +81,13 @@ func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*D
 					Extension: filepath.Ext(file),
 				}
 				
-				// Get file metadata
-				if stat, err := os.Stat(file); err == nil {
-					fileInfo.Size = stat.Size()
-					fileInfo.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+				// Count lines in the file
+				lineCount, err := countFileLines(file)
+				if err != nil {
+					return nil, err
 				}
+				fileInfo.LineCount = lineCount
+				info.TotalLines += lineCount
 				
 				info.Files = append(info.Files, fileInfo)
 			}
@@ -86,32 +100,49 @@ func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*D
 					Extension: filepath.Ext(file),
 				}
 				
-				// Get file metadata
-				if stat, err := os.Stat(file); err == nil {
-					fileInfo.Size = stat.Size()
-					fileInfo.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+				// Count lines in the file
+				lineCount, err := countFileLines(file)
+				if err != nil {
+					return nil, err
 				}
+				fileInfo.LineCount = lineCount
+				info.TotalLines += lineCount
 				
 				info.Files = append(info.Files, fileInfo)
 			}
 			
 		case "bundle":
 			info.Bundles = append(info.Bundles, pathInfo.Absolute)
-			// For dry run, we don't read bundle contents to avoid file I/O
-			// Just add the bundle itself as a file entry
-			fileInfo := FileInfo{
-				Path:      pathInfo.Absolute,
-				Source:    "bundle file",
-				Extension: filepath.Ext(pathInfo.Absolute),
+			// For dry run, we need to process bundle contents to count lines
+			bp := NewBundleProcessor()
+			bundlePaths, err := bp.ProcessBundleFile(pathInfo.Absolute)
+			if err != nil {
+				return nil, err
 			}
 			
-			// Get file metadata
-			if stat, err := os.Stat(pathInfo.Absolute); err == nil {
-				fileInfo.Size = stat.Size()
-				fileInfo.ModTime = stat.ModTime().Format("2006-01-02 15:04:05")
+			// Count lines in each file referenced by the bundle
+			for _, bundlePath := range bundlePaths {
+				fileInfo := FileInfo{
+					Path:      bundlePath,
+					Source:    fmt.Sprintf("bundle: %s", filepath.Base(pathInfo.Absolute)),
+					Extension: filepath.Ext(bundlePath),
+				}
+				
+				// Extract range spec from bundle path
+				_, rangeSpec := parsePathWithRange(bundlePath)
+				fileInfo.RangeSpec = rangeSpec
+				
+				// Count lines in the file
+				lineCount, err := countFileLines(bundlePath)
+				if err != nil {
+					// Skip files that can't be read
+					continue
+				}
+				fileInfo.LineCount = lineCount
+				info.TotalLines += lineCount
+				
+				info.Files = append(info.Files, fileInfo)
 			}
-			
-			info.Files = append(info.Files, fileInfo)
 		}
 	}
 	
@@ -122,6 +153,18 @@ func GenerateDryRunInfo(pathInfos []PathInfo, additionalExtensions []string) (*D
 	// Count total files
 	info.TotalFiles = len(info.Files)
 	
+	// Add lines for headers if enabled
+	if opts.ShowHeaders {
+		// Each file gets a header line
+		info.TotalLines += info.TotalFiles
+	}
+	
+	// Add lines for TOC if enabled
+	if opts.ShowTOC {
+		// Estimate TOC lines: title + separator + one line per file
+		info.TotalLines += 2 + info.TotalFiles
+	}
+	
 	return info, nil
 }
 
@@ -130,6 +173,12 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	var output strings.Builder
 	
 	output.WriteString("Would process the following files:\n")
+	
+	// Show TOC line count if enabled
+	if info.Options.ShowTOC {
+		tocLines := 2 + info.TotalFiles // title + separator + entries
+		output.WriteString(fmt.Sprintf("\nTable of Contents (%d lines)\n", tocLines))
+	}
 	
 	// Group files by source
 	filesBySource := make(map[string][]FileInfo)
@@ -157,9 +206,10 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 		
 		for _, file := range files {
 			relPath := filepath.Base(file.Path)
-			// Format size in human-readable format
-			sizeStr := formatFileSize(file.Size)
-			output.WriteString(fmt.Sprintf("%d. %s (%s, %s)\n", fileNum, relPath, sizeStr, file.ModTime))
+			if file.RangeSpec != "" {
+				relPath = fmt.Sprintf("%s:%s", relPath, file.RangeSpec)
+			}
+			output.WriteString(fmt.Sprintf("%d. %s (%d lines)\n", fileNum, relPath, file.LineCount))
 			fileNum++
 		}
 	}
@@ -174,15 +224,47 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	
 	// Show files requiring extensions
 	if len(info.RequiresExtension) > 0 {
-		output.WriteString("\nFiles requiring --txt-ext flag:\n")
+		output.WriteString("\nFiles requiring --ext flag:\n")
 		for file, ext := range info.RequiresExtension {
-			output.WriteString(fmt.Sprintf("  - %s (requires --txt-ext=%s)\n", 
+			output.WriteString(fmt.Sprintf("  - %s (requires --ext=%s)\n", 
 				filepath.Base(file), strings.TrimPrefix(ext, ".")))
 		}
 	}
 	
 	// Summary
-	output.WriteString(fmt.Sprintf("\nTotal files to process: %d\n", info.TotalFiles))
+	output.WriteString(fmt.Sprintf("\nTotal files to process: %d (%d lines)\n", info.TotalFiles, info.TotalLines))
+	
+	// Show active options
+	var activeOptions []string
+	if info.Options.ShowTOC {
+		activeOptions = append(activeOptions, "--toc")
+	}
+	if info.Options.LineNumbers != LineNumberNone {
+		lineNumMode := "file"
+		if info.Options.LineNumbers == LineNumberGlobal {
+			lineNumMode = "global"
+		}
+		activeOptions = append(activeOptions, fmt.Sprintf("--linenum %s", lineNumMode))
+	}
+	if info.Options.Theme != "classic" {
+		activeOptions = append(activeOptions, fmt.Sprintf("--theme %s", info.Options.Theme))
+	}
+	if !info.Options.ShowHeaders {
+		activeOptions = append(activeOptions, "--filenames=false")
+	}
+	if info.Options.SequenceStyle != "numerical" {
+		activeOptions = append(activeOptions, fmt.Sprintf("--file-numbering %s", info.Options.SequenceStyle))
+	}
+	if info.Options.HeaderStyle != "nice" {
+		activeOptions = append(activeOptions, fmt.Sprintf("--file-style %s", info.Options.HeaderStyle))
+	}
+	
+	if len(activeOptions) > 0 {
+		output.WriteString("\nOptions:\n")
+		for _, opt := range activeOptions {
+			output.WriteString(fmt.Sprintf("  %s\n", opt))
+		}
+	}
 	
 	return output.String()
 }
@@ -249,4 +331,53 @@ func formatFileSize(size int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
+}
+
+// countFileLines counts the number of lines in a file, respecting line ranges
+func countFileLines(pathWithRange string) (int, error) {
+	path, rangeSpec := parsePathWithRange(pathWithRange)
+	
+	file, err := os.Open(path)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+	
+	// If no range specified, count all lines
+	if rangeSpec == "" {
+		scanner := bufio.NewScanner(file)
+		lineCount := 0
+		for scanner.Scan() {
+			lineCount++
+		}
+		if err := scanner.Err(); err != nil {
+			return 0, err
+		}
+		return lineCount, nil
+	}
+	
+	// Parse range specification
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+	
+	ranges, err := parseRanges(rangeSpec, len(lines))
+	if err != nil {
+		return 0, err
+	}
+	
+	// Count lines in all ranges
+	totalLines := 0
+	for _, r := range ranges {
+		totalLines += r.End - r.Start + 1
+	}
+	
+	return totalLines, nil
 }

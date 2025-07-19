@@ -63,30 +63,7 @@ var rootCmd = &cobra.Command{
 		// Track explicitly set flags
 		trackExplicitFlags(cmd)
 
-		// 1. Resolve Paths with pattern options
-		pathOpts := &nanodoc.FormattingOptions{
-			AdditionalExtensions: additionalExt,
-			IncludePatterns: includePatterns,
-			ExcludePatterns: excludePatterns,
-		}
-		pathInfos, err := nanodoc.ResolvePathsWithOptions(args, pathOpts)
-		if err != nil {
-			return fmt.Errorf(ErrResolvingPaths, err)
-		}
-
-		// If dry run, show what would be processed and exit
-		if dryRun {
-			dryRunInfo, err := nanodoc.GenerateDryRunInfo(pathInfos, additionalExt)
-			if err != nil {
-				return fmt.Errorf(ErrGeneratingDryRun, err)
-			}
-			
-			output := nanodoc.FormatDryRunOutput(dryRunInfo)
-			_, _ = fmt.Fprint(cmd.OutOrStdout(), output)
-			return nil
-		}
-
-		// 2. Set up Formatting Options
+		// 1. Set up Formatting Options first
 		lineNumberMode := nanodoc.LineNumberNone
 		switch lineNum {
 		case "file":
@@ -109,6 +86,29 @@ var rootCmd = &cobra.Command{
 			AdditionalExtensions: additionalExt,
 			IncludePatterns: includePatterns,
 			ExcludePatterns: excludePatterns,
+		}
+
+		// 2. Resolve Paths with pattern options
+		pathOpts := &nanodoc.FormattingOptions{
+			AdditionalExtensions: additionalExt,
+			IncludePatterns: includePatterns,
+			ExcludePatterns: excludePatterns,
+		}
+		pathInfos, err := nanodoc.ResolvePathsWithOptions(args, pathOpts)
+		if err != nil {
+			return fmt.Errorf(ErrResolvingPaths, err)
+		}
+
+		// If dry run, show what would be processed and exit
+		if dryRun {
+			dryRunInfo, err := nanodoc.GenerateDryRunInfo(pathInfos, opts)
+			if err != nil {
+				return fmt.Errorf(ErrGeneratingDryRun, err)
+			}
+			
+			output := nanodoc.FormatDryRunOutput(dryRunInfo)
+			_, _ = fmt.Fprint(cmd.OutOrStdout(), output)
+			return nil
 		}
 
 		// 3. Build Document with explicit flags
