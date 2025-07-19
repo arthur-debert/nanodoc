@@ -44,9 +44,8 @@ func ResolvePathsWithOptions(sources []string, options *FormattingOptions) ([]Pa
 		results = append(results, pathInfo)
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Absolute < results[j].Absolute
-	})
+	// Preserve the order of paths as provided by the user
+	// Do not sort - the user's specified order is intentional
 
 	return results, nil
 }
