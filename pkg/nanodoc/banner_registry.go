@@ -94,6 +94,27 @@ func GetBannerStyleDescriptions() map[string]string {
 	return globalBannerRegistry.GetDescriptions()
 }
 
+// applyAlignment applies text alignment within the given width
+func applyAlignment(text, alignment string, width int) string {
+	textLen := len(text)
+	if textLen >= width {
+		return text
+	}
+	
+	switch alignment {
+	case "center":
+		leftPadding := (width - textLen) / 2
+		rightPadding := width - textLen - leftPadding
+		return strings.Repeat(" ", leftPadding) + text + strings.Repeat(" ", rightPadding)
+	case "right":
+		padding := width - textLen
+		return strings.Repeat(" ", padding) + text
+	default: // left
+		padding := width - textLen
+		return text + strings.Repeat(" ", padding)
+	}
+}
+
 // Built-in banner style implementations
 
 // NoneBannerStyle displays just the filename with optional alignment
@@ -104,19 +125,7 @@ func (n NoneBannerStyle) Description() string { return "No banner decoration" }
 
 func (n NoneBannerStyle) Apply(filename string, opts *FormattingOptions) string {
 	// Apply alignment
-	switch opts.HeaderAlignment {
-	case "center":
-		padding := (opts.PageWidth - len(filename)) / 2
-		if padding > 0 {
-			return strings.Repeat(" ", padding) + filename
-		}
-	case "right":
-		padding := opts.PageWidth - len(filename)
-		if padding > 0 {
-			return strings.Repeat(" ", padding) + filename
-		}
-	}
-	return filename
+	return applyAlignment(filename, opts.HeaderAlignment, opts.PageWidth)
 }
 
 // DashedBannerStyle uses dashed lines above and below
@@ -126,8 +135,21 @@ func (d DashedBannerStyle) Name() string        { return "dashed" }
 func (d DashedBannerStyle) Description() string { return "Dashed lines above and below" }
 
 func (d DashedBannerStyle) Apply(filename string, opts *FormattingOptions) string {
+	// For dashed/solid styles, we keep the line length matching the text
+	// but apply alignment to the whole block
 	line := strings.Repeat("-", len(filename))
-	return fmt.Sprintf("%s\n%s\n%s", line, filename, line)
+	block := fmt.Sprintf("%s\n%s\n%s", line, filename, line)
+	
+	// For non-left alignment, we need to align each line
+	if opts.HeaderAlignment != "left" && opts.HeaderAlignment != "" {
+		lines := strings.Split(block, "\n")
+		for i, l := range lines {
+			lines[i] = applyAlignment(l, opts.HeaderAlignment, opts.PageWidth)
+		}
+		return strings.Join(lines, "\n")
+	}
+	
+	return block
 }
 
 // SolidBannerStyle uses solid lines above and below
@@ -137,8 +159,21 @@ func (s SolidBannerStyle) Name() string        { return "solid" }
 func (s SolidBannerStyle) Description() string { return "Solid lines above and below" }
 
 func (s SolidBannerStyle) Apply(filename string, opts *FormattingOptions) string {
+	// For dashed/solid styles, we keep the line length matching the text
+	// but apply alignment to the whole block
 	line := strings.Repeat("=", len(filename))
-	return fmt.Sprintf("%s\n%s\n%s", line, filename, line)
+	block := fmt.Sprintf("%s\n%s\n%s", line, filename, line)
+	
+	// For non-left alignment, we need to align each line
+	if opts.HeaderAlignment != "left" && opts.HeaderAlignment != "" {
+		lines := strings.Split(block, "\n")
+		for i, l := range lines {
+			lines[i] = applyAlignment(l, opts.HeaderAlignment, opts.PageWidth)
+		}
+		return strings.Join(lines, "\n")
+	}
+	
+	return block
 }
 
 // BoxedBannerStyle creates a box around the filename

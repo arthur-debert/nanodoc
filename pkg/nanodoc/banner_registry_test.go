@@ -100,6 +100,85 @@ func (c CustomBannerStyle) Apply(filename string, opts *FormattingOptions) strin
 	return ">>> " + filename + " <<<"
 }
 
+func TestBannerStyleAlignment(t *testing.T) {
+	tests := []struct {
+		name      string
+		styleName string
+		alignment string
+		filename  string
+		pageWidth int
+		check     func(t *testing.T, result string)
+	}{
+		{
+			name:      "none_center",
+			styleName: "none",
+			alignment: "center",
+			filename:  "test.txt",
+			pageWidth: 40,
+			check: func(t *testing.T, result string) {
+				// Should be centered in 40 chars
+				if len(result) != 40 {
+					t.Errorf("Expected length 40, got %d", len(result))
+				}
+				trimmed := strings.TrimSpace(result)
+				if trimmed != "test.txt" {
+					t.Errorf("Expected 'test.txt', got %q", trimmed)
+				}
+			},
+		},
+		{
+			name:      "dashed_center",
+			styleName: "dashed",
+			alignment: "center",
+			filename:  "test.txt",
+			pageWidth: 40,
+			check: func(t *testing.T, result string) {
+				lines := strings.Split(result, "\n")
+				if len(lines) != 3 {
+					t.Errorf("Expected 3 lines, got %d", len(lines))
+				}
+				// Each line should be centered
+				for _, line := range lines {
+					if len(line) != 40 {
+						t.Errorf("Expected line length 40, got %d for line: %q", len(line), line)
+					}
+				}
+			},
+		},
+		{
+			name:      "boxed_right",
+			styleName: "boxed",
+			alignment: "right",
+			filename:  "short.txt",
+			pageWidth: 60,
+			check: func(t *testing.T, result string) {
+				lines := strings.Split(result, "\n")
+				// Middle line should have text aligned right
+				if !strings.Contains(lines[1], "short.txt ###") {
+					t.Errorf("Expected right-aligned text in boxed style, got: %q", lines[1])
+				}
+			},
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			style, exists := GetBannerStyle(tt.styleName)
+			if !exists {
+				t.Fatalf("Style %q not found", tt.styleName)
+			}
+			
+			opts := &FormattingOptions{
+				HeaderAlignment: tt.alignment,
+				PageWidth:       tt.pageWidth,
+			}
+			
+			result := style.Apply(tt.filename, opts)
+			tt.check(t, result)
+		})
+	}
+}
+
 func TestCustomBannerStyle(t *testing.T) {
 	// Create a new registry for this test to avoid conflicts
 	registry := &BannerRegistry{
