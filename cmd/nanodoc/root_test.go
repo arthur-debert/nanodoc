@@ -39,6 +39,23 @@ func executeCommand(args ...string) (string, error) {
 	// Reset flags before each test
 	resetFlags()
 	
+	// Reset all flag values to ensure clean state
+	rootCmd.ResetFlags()
+	// Re-initialize flags after reset
+	rootCmd.Flags().BoolVarP(&lineNumbers, "line-numbers", "n", false, FlagLineNumbers)
+	rootCmd.Flags().BoolVarP(&globalLineNumbers, "global-line-numbers", "N", false, FlagGlobalLineNumbers)
+	rootCmd.MarkFlagsMutuallyExclusive("line-numbers", "global-line-numbers")
+	rootCmd.Flags().BoolVar(&toc, "toc", false, FlagTOC)
+	rootCmd.Flags().StringVar(&theme, "theme", "classic", FlagTheme)
+	rootCmd.Flags().BoolVar(&noHeader, "no-header", false, FlagNoHeader)
+	rootCmd.Flags().StringVar(&headerStyle, "header-style", "nice", FlagHeaderStyle)
+	rootCmd.Flags().StringVar(&sequence, "sequence", "numerical", FlagSequence)
+	rootCmd.Flags().StringSliceVar(&additionalExt, "txt-ext", []string{}, FlagTxtExt)
+	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
+	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, FlagExclude)
+	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
+	rootCmd.Flags().BoolP("version", "v", false, FlagVersion)
+	
 	// Use the actual root command
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
@@ -254,6 +271,10 @@ func resetFlags() {
 	sequence = "numerical"
 	headerStyle = "nice"
 	additionalExt = []string{}
+	includePatterns = []string{}
+	excludePatterns = []string{}
+	dryRun = false
+	explicitFlags = make(map[string]bool)
 }
 
 func newRootCmd() (*cobra.Command, *nanodoc.FormattingOptions) {
