@@ -26,21 +26,44 @@ The numbering style determines the marker placed before the header title.
     3. roman: i., ii., iii.
 
 
-ALIGNMENT AND STYLE
+ALIGNMENT AND BANNER STYLES
 
-You can also control the alignment and style of the headers.
+You can control the alignment and style of the headers.
 
     - Alignment: left (default), center, right
-    - Style: none (default), dashed, solid
+    - Banner Styles:
+        * none (default): No decoration, just the text
+        * dashed: Dashed lines above and below the header
+        * solid: Solid lines (=) above and below the header
+        * boxed: Full box around the header using hash (#) characters
 
 
-EXAMPLE
+BANNER STYLE EXAMPLES
 
-Given a file named my_first_document.md, using the default nice header format and numerical sequence would produce the following header:
+Here are examples of different banner styles with a file named "test.txt":
 
-    --
-        1. My First Document
-    --
+    None (default):
+        1. test.txt
+
+    Dashed:
+        -----------
+        1. test.txt
+        -----------
+
+    Solid:
+        ===========
+        1. test.txt
+        ===========
+
+    Boxed (with left alignment):
+        ################################################################################
+        ### 1. test.txt                                                              ###
+        ################################################################################
+
+    Boxed (with center alignment):
+        ################################################################################
+        ###                              1. test.txt                                 ###
+        ################################################################################
 
 
 OPTIONS
@@ -52,18 +75,21 @@ OPTIONS
     --header-format=STYLE    Set the header display style (nice [default], filename, path)
     --header-align=ALIGN     Set the header alignment (left, center, right)
                             Default: left
-    --header-style=STYLE     Set the header style (none, dashed, solid)
+    --header-style=STYLE     Set the header style (none, dashed, solid, boxed)
                             Default: none
     --page-width=WIDTH       Set the page width for alignment
                             Default: 80
 
 
-EXAMPLES
+COMBINING OPTIONS
 
-    --
-        "File (file.txt)"       Default style (nice: titled with original in parentheses)
-        "file.txt"              Filename style
-        "/path/to/file.txt"     Path style (full path)
-        "1. file.txt"           With numerical file numbering
-        "a. File (file.txt)"    Combined alphabetical numbering with nice style
-    --
+You can combine header format, numbering, alignment, and banner styles:
+
+    # Nice format with roman numerals and centered solid banner
+    $ nanodoc --header-format=nice --file-numbering=roman --header-align=center --header-style=solid *.txt
+
+    # Path format with boxed banner, right-aligned
+    $ nanodoc --header-format=path --header-style=boxed --header-align=right docs/*.md
+
+    # Simple filenames with dashed banner
+    $ nanodoc --header-format=filename --header-style=dashed README.md CHANGELOG.md
