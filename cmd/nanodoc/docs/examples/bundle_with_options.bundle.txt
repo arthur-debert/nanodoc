@@ -6,10 +6,10 @@
 
 --toc
 --theme classic-dark
---header-style filename
---sequence roman
---global-line-numbers
---txt-ext log
+--file-style filename
+--file-numbering roman
+--linenum global
+--ext log
 
 # --- Content ---
 # Files to include in the bundle
