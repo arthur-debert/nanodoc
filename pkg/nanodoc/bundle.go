@@ -137,33 +137,44 @@ func MergeFormattingOptions(bundleOpts BundleOptions, cmdOpts FormattingOptions)
 // This function uses explicit flags to determine which options were set by the user
 func MergeFormattingOptionsWithDefaults(bundleOpts BundleOptions, cmdOpts FormattingOptions, explicitFlags map[string]bool) FormattingOptions {
 	result := cmdOpts // Start with command-line options
-	
-	// Only use bundle options if command-line options were not explicitly set
-	applyBundleOption(bundleOpts.Theme, &result.Theme, !explicitFlags["theme"])
-	applyBundleOption(bundleOpts.LineNumbers, &result.LineNumbers, !explicitFlags["line-numbers"])
-	applyBundleOption(bundleOpts.ShowHeaders, &result.ShowHeaders, !explicitFlags["no-header"])
-	applyBundleOption(bundleOpts.HeaderStyle, &result.HeaderStyle, !explicitFlags["header-style"])
-	applyBundleOption(bundleOpts.SequenceStyle, &result.SequenceStyle, !explicitFlags["sequence"])
-	applyBundleOption(bundleOpts.ShowTOC, &result.ShowTOC, !explicitFlags["toc"])
-	
+
+	if !explicitFlags["theme"] && bundleOpts.Theme != nil {
+		result.Theme = *bundleOpts.Theme
+	}
+	if !explicitFlags["line-numbers"] && bundleOpts.LineNumbers != nil {
+		result.LineNumbers = *bundleOpts.LineNumbers
+	}
+	if !explicitFlags["no-header"] && bundleOpts.ShowHeaders != nil {
+		result.ShowHeaders = *bundleOpts.ShowHeaders
+	}
+	if !explicitFlags["header-style"] && bundleOpts.HeaderStyle != nil {
+		result.HeaderStyle = *bundleOpts.HeaderStyle
+	}
+	if !explicitFlags["sequence"] && bundleOpts.SequenceStyle != nil {
+		result.SequenceStyle = *bundleOpts.SequenceStyle
+	}
+	if !explicitFlags["toc"] && bundleOpts.ShowTOC != nil {
+		result.ShowTOC = *bundleOpts.ShowTOC
+	}
+
 	// Merge additional extensions
 	result.AdditionalExtensions = mergeAdditionalExtensions(
 		cmdOpts.AdditionalExtensions,
 		bundleOpts.AdditionalExtensions,
 	)
-	
+
 	// Merge include patterns
 	result.IncludePatterns = mergePatterns(
 		cmdOpts.IncludePatterns,
 		bundleOpts.IncludePatterns,
 	)
-	
+
 	// Merge exclude patterns
 	result.ExcludePatterns = mergePatterns(
 		cmdOpts.ExcludePatterns,
 		bundleOpts.ExcludePatterns,
 	)
-	
+
 	return result
 }
 
@@ -272,103 +283,96 @@ func (bp *BundleProcessor) ProcessBundleFileWithOptions(bundlePath string) (*Bun
 
 // parseOption parses a single command-line option and updates the BundleOptions struct
 func parseOption(optionLine string, options *BundleOptions) error {
-	// Split the option line into parts
-	parts := strings.Fields(optionLine)
-	if len(parts) == 0 {
-		return fmt.Errorf("empty option line")
+	parts := strings.SplitN(optionLine, "=", 2)
+	flag := parts[0]
+	var value string
+	if len(parts) > 1 {
+		value = strings.Trim(parts[1], `"`)
 	}
 
-	flag := parts[0]
-	
 	// Helper variables for cleaner pointer allocation
 	trueVal := true
 	falseVal := false
 	lineNumberFile := LineNumberFile
 	lineNumberGlobal := LineNumberGlobal
-	
+
 	switch flag {
 	case "--toc":
 		options.ShowTOC = &trueVal
-		
-	case "--no-header":
+	case "--no-header", "--filenames=false":
 		options.ShowHeaders = &falseVal
-		
-	case "--line-numbers", "-n":
-		options.LineNumbers = &lineNumberFile
-		
+	case "--filenames", "--filenames=true":
+		options.ShowHeaders = &trueVal
+	case "--linenum", "--line-numbers", "-n", "-l":
+		if value == "" {
+			if len(strings.Fields(optionLine)) > 1 {
+				value = strings.Fields(optionLine)[1]
+			} else {
+				options.LineNumbers = &lineNumberFile // Default to "file"
+				return nil
+			}
+		}
+		switch value {
+		case "file":
+			options.LineNumbers = &lineNumberFile
+		case "global":
+			options.LineNumbers = &lineNumberGlobal
+		default:
+			return fmt.Errorf("invalid value for --linenum: %s", value)
+		}
 	case "--global-line-numbers", "-N":
 		options.LineNumbers = &lineNumberGlobal
-		
 	case "--theme":
-		if len(parts) < 2 {
-			availableThemes, _ := GetAvailableThemes()
-			return fmt.Errorf("--theme requires a value. Available themes: %s (see: nanodoc topics themes)", strings.Join(availableThemes, ", "))
+		if value == "" {
+			return fmt.Errorf("--theme requires a value")
 		}
-		// Validate theme exists
-		themeName := parts[1]
-		availableThemes, err := GetAvailableThemes()
-		if err == nil {
-			themeFound := false
-			for _, available := range availableThemes {
-				if available == themeName {
-					themeFound = true
-					break
-				}
-			}
-			if !themeFound {
-				return fmt.Errorf("invalid theme: %s. Available themes: %s (see: nanodoc topics themes)", themeName, strings.Join(availableThemes, ", "))
-			}
+		options.Theme = &value
+	case "--header-style", "--file-style":
+		if value == "" {
+			return fmt.Errorf("--header-style requires a value")
 		}
-		options.Theme = &themeName
-		
-	case "--header-style":
-		if len(parts) < 2 {
-			return fmt.Errorf("--header-style requires a value. Available styles: nice, filename, path (see: nanodoc topics headers)")
-		}
-		style := HeaderStyle(parts[1])
-		// Validate header style
+		style := HeaderStyle(value)
 		switch style {
 		case HeaderStyleNice, HeaderStyleFilename, HeaderStylePath:
 			options.HeaderStyle = &style
 		default:
-			return fmt.Errorf("invalid header style: %s. Available styles: nice, filename, path", parts[1])
+			return fmt.Errorf("invalid header style: %s", value)
 		}
-		
-	case "--sequence":
-		if len(parts) < 2 {
-			return fmt.Errorf("--sequence requires a value. Available styles: numerical, letter, roman")
+	case "--sequence", "--file-numbering":
+		if value == "" {
+			return fmt.Errorf("--sequence requires a value")
 		}
-		sequence := SequenceStyle(parts[1])
-		// Validate sequence style
-		switch sequence {
+		seq := SequenceStyle(value)
+		switch seq {
 		case SequenceNumerical, SequenceLetter, SequenceRoman:
-			options.SequenceStyle = &sequence
+			options.SequenceStyle = &seq
 		default:
-			return fmt.Errorf("invalid sequence style: %s. Available styles: numerical, letter, roman", parts[1])
+			return fmt.Errorf("invalid sequence style: %s", value)
 		}
-		
-	case "--txt-ext":
-		if len(parts) < 2 {
+	case "--txt-ext", "--ext":
+		if value == "" {
 			return fmt.Errorf("--txt-ext requires a value")
 		}
-		options.AdditionalExtensions = append(options.AdditionalExtensions, parts[1])
-		
+		options.AdditionalExtensions = append(options.AdditionalExtensions, value)
 	case "--include":
-		if len(parts) < 2 {
+		if value == "" {
 			return fmt.Errorf("--include requires a value")
 		}
-		options.IncludePatterns = append(options.IncludePatterns, parts[1])
-		
+		options.IncludePatterns = append(options.IncludePatterns, value)
 	case "--exclude":
-		if len(parts) < 2 {
+		if value == "" {
 			return fmt.Errorf("--exclude requires a value")
 		}
-		options.ExcludePatterns = append(options.ExcludePatterns, parts[1])
-		
+		options.ExcludePatterns = append(options.ExcludePatterns, value)
 	default:
+		// Handle cases where value is passed with space
+		fields := strings.Fields(optionLine)
+		if len(fields) > 1 {
+			return parseOption(strings.Join(fields, "="), options)
+		}
 		return fmt.Errorf("unknown option: %s", flag)
 	}
-	
+
 	return nil
 }
 
@@ -581,10 +585,11 @@ func ProcessLiveBundles(doc *Document) error {
 func shouldSkipLiveBundleProcessing(filepath string) bool {
 	// Skip common documentation files that might contain [[file:]] examples
 	filename := strings.ToLower(filepath)
-	return strings.Contains(filename, "readme") || 
-		   strings.Contains(filename, "changelog") || 
-		   strings.Contains(filename, "troubleshooting") ||
-		   strings.HasSuffix(filename, ".md") // Skip all markdown files for now
+	return strings.Contains(filename, "readme") ||
+		strings.Contains(filename, "changelog") ||
+		strings.Contains(filename, "troubleshooting") ||
+		strings.Contains(filename, "contributing") ||
+		strings.Contains(filename, "license")
 }
 
 // ProcessLiveBundle handles inline bundle processing
