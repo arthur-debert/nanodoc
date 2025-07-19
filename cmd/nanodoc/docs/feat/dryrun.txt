@@ -1,0 +1,90 @@
+DRY RUN MODE
+
+Nanodoc's dry run mode allows you to preview exactly what files will be processed and how they will be formatted before generating the actual output. This is particularly useful for understanding which files match your patterns and how many lines will be included.
+
+
+WHAT DRY RUN SHOWS
+
+When you use the --dry-run flag, nanodoc displays:
+
+    1. File Information:
+       - Path of each file that will be processed
+       - File extension  
+       - Number of lines that will be included (respecting any line ranges)
+       - Line range specification if applicable (e.g., L10-20)
+
+    2. Active Formatting Options:
+       - Which theme is active
+       - Line numbering mode (if enabled)
+       - File style and numbering settings
+       - Whether a table of contents will be generated
+
+    3. Summary Statistics:
+       - Total number of files to be processed
+       - Total number of lines that will be included
+
+
+EXAMPLE OUTPUT
+
+    -- 
+        $ nanodoc --dry-run --linenum global --theme classic-dark src/*.go docs/*.md
+
+        Dry run - no output will be generated
+        
+        Files to be processed:
+        [1] src/main.go (go) - 150 lines
+        [2] src/utils.go (go) - 75 lines
+        [3] docs/README.md (md) - 200 lines
+        [4] docs/API.md (md) - 120 lines
+        
+        Active options:
+        - Theme: classic-dark
+        - Line numbering: global
+        - File style: nice (default)
+        - File numbering: numerical (default)
+        
+        Total: 4 files, 545 lines
+    --
+
+
+LINE RANGE SUPPORT
+
+Dry run accurately shows the number of lines that will be processed when using line ranges:
+
+    -- 
+        $ nanodoc --dry-run main.go:L50-100 utils.go:L1-25
+
+        Files to be processed:
+        [1] main.go (go) - 51 lines [L50-100]
+        [2] utils.go (go) - 25 lines [L1-25]
+        
+        Total: 2 files, 76 lines
+    --
+
+
+USE CASES
+
+    1. Verifying glob patterns:
+       Check which files match your include/exclude patterns before processing
+
+    2. Estimating output size:
+       See how many lines will be in the final output
+
+    3. Debugging file selection:
+       Understand why certain files are or aren't being included
+
+    4. Testing bundles:
+       Preview what a bundle file will produce without generating output
+
+
+OPTIONS
+
+    --dry-run    Preview which files will be processed without generating output
+
+
+TIPS
+
+    - Use dry run when working with new glob patterns to ensure they match expected files
+    - Combine with --include and --exclude to test filtering rules
+    - Use with bundle files to verify their contents before processing
+    - The line counts shown respect any line range specifications

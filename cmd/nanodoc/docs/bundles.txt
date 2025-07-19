@@ -16,9 +16,9 @@ Basic Bundle Syntax
 
         # --- Options ---
         --toc
-        --global-line-numbers
-        --header-style nice
-        --sequence roman
+        --linenum global
+        --file-style nice
+        --file-numbering roman
         --theme classic-dark
 
         # --- Content ---
@@ -33,13 +33,12 @@ Supported Options
 All formatting options are supported in bundle files:
 
     - --toc - Generate a table of contents
-    - --line-numbers or -n - Enable per-file line numbering
-    - --global-line-numbers or -N - Enable global line numbering
+    - --linenum <mode> or -l <mode> - Enable line numbering (file or global)
     - --theme <name> - Set the theme (classic, classic-dark, classic-light)
-    - --header-style <style> - Set header style (nice, filename, path)
-    - --sequence <style> - Set sequence style (numerical, letter, roman)
-    - --no-header - Suppress file headers
-    - --txt-ext <ext> - Additional file extensions to treat as text
+    - --file-style <style> - Set filename display style (nice, filename, path)
+    - --file-numbering <style> - Set file numbering style (numerical, alphabetical, roman)
+    - --filenames=false - Hide file headers (default: true)
+    - --ext <ext> - Additional file extensions to treat as text
     - --include <pattern> - Include only files matching patterns
     - --exclude <pattern> - Exclude files matching patterns
 
@@ -57,8 +56,8 @@ Example: Development vs Production Bundles
 
 dev.bundle.txt:
     -- 
-        --line-numbers
-        --header-style path
+        --linenum file
+        --file-style path
         --theme classic
 
         src/
@@ -68,10 +67,10 @@ dev.bundle.txt:
 release.bundle.txt:
     -- 
         --toc
-        --global-line-numbers
-        --sequence letter
+        --linenum global
+        --file-numbering alphabetical
         --theme classic-dark
-        --no-header
+        --filenames=false
 
         README.md
         CHANGELOG.md
@@ -238,13 +237,12 @@ Bundle files can include formatting options that apply to the entire bundle. Opt
 Supported Options in Bundles
 
     --toc                      Generate a table of contents
-    --line-numbers, -n         Enable per-file line numbering
-    --global-line-numbers, -N  Enable global line numbering
+    --linenum <mode>, -l       Enable line numbering (file or global)
     --theme <name>             Set theme (classic, classic-dark, classic-light)
-    --header-style <style>     Set header style (nice, filename, path)
-    --sequence <style>         Set sequence style (numerical, letter, roman)
-    --no-header                Suppress file headers
-    --txt-ext <ext>            Additional file extensions to treat as text
+    --file-style <style>       Set filename display style (nice, filename, path)
+    --file-numbering <style>   Set file numbering style (numerical, alphabetical, roman)
+    --filenames[=bool]         Show/hide file headers (default: true)
+    --ext <ext>                Additional file extensions to treat as text
     --include <pattern>        Include only files matching patterns
     --exclude <pattern>        Exclude files matching patterns
 

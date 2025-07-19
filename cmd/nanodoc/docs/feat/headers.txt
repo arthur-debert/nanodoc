@@ -1,11 +1,11 @@
-HEADERS AND SEQUENCING
+FILE HEADERS AND NUMBERING
 
-Nanodoc can automatically generate headers for each file included in a bundle. The appearance of these headers is controlled by two main settings: the header style and the sequence style.
+Nanodoc can automatically generate headers for each file included in a bundle. The appearance of these headers is controlled by two main settings: the file style and the file numbering style.
 
 
-HEADER STYLES
+FILE STYLES
 
-There are three available header styles:
+There are three available file styles:
 
     1. filename: Displays the simple filename (e.g., my_document.txt).
     2. path: Displays the full resolved path to the file.
@@ -17,12 +17,12 @@ There are three available header styles:
             - Converts the result to Title Case (e.g., My Document).
 
 
-SEQUENCE STYLES
+FILE NUMBERING STYLES
 
-The sequence style determines the marker placed before the header title.
+The file numbering style determines the marker placed before the header title.
 
     1. numerical (Default): 1., 2., 3.
-    2. letter: a., b., c.
+    2. alphabetical: a., b., c.
     3. roman: i., ii., iii.
 
 
@@ -37,9 +37,11 @@ Given a file named my_first_document.md, using the default nice header style and
 
 OPTIONS
 
-    --no-header             Hide headers completely
-    --sequence=TYPE         Add sequence numbers (numerical, letter, roman)
-    --header-style=STYLE    Change format (nice [default], filename, path)
+    --filenames             Show filenames between concatenated files (default: true)
+                           Use --filenames=false to hide headers completely
+    --file-numbering=TYPE   Set the file numbering style (numerical, alphabetical, roman)
+                           Default: numerical
+    --file-style=STYLE      Set the filename display style (nice [default], filename, path)
 
 
 EXAMPLES
@@ -48,6 +50,6 @@ EXAMPLES
         "File (file.txt)"       Default style (nice: titled with original in parentheses)
         "file.txt"              Filename style
         "/path/to/file.txt"     Path style (full path)
-        "1. file.txt"           With numerical sequence
-        "a. File (file.txt)"    Combined letter sequence with nice style
+        "1. file.txt"           With numerical file numbering
+        "a. File (file.txt)"    Combined alphabetical numbering with nice style
     --
