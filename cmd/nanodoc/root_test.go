@@ -48,6 +48,7 @@ func executeCommand(args ...string) (string, error) {
 	rootCmd.Flags().StringSliceVar(&includePatterns, "include", []string{}, FlagInclude)
 	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, FlagExclude)
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
+	rootCmd.Flags().StringVar(&saveToBundlePath, "save-to-bundle", "", "Save the current invocation as a bundle file")
 	rootCmd.Flags().BoolP("version", "v", false, FlagVersion)
 	
 	// Use the actual root command
@@ -267,5 +268,6 @@ func resetFlags() {
 	includePatterns = []string{}
 	excludePatterns = []string{}
 	dryRun = false
+	saveToBundlePath = ""
 	explicitFlags = make(map[string]bool)
 }
