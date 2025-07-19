@@ -43,7 +43,7 @@ func executeCommand(args ...string) (string, error) {
 	rootCmd.Flags().StringVar(&theme, "theme", "classic", FlagTheme)
 	rootCmd.Flags().BoolVar(&showFilenames, "filenames", true, FlagFilenames)
 	rootCmd.Flags().StringVar(&filenameFormat, "header-format", "nice", FlagHeaderFormat)
-	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment (left, center, right)")
+	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment")
 	rootCmd.Flags().StringVar(&filenameBanner, "header-style", "none", "Header style")
 	rootCmd.Flags().IntVar(&pageWidth, "page-width", 80, "Page width for alignment")
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)

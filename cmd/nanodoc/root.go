@@ -308,7 +308,7 @@ func init() {
 	_ = rootCmd.RegisterFlagCompletionFunc("header-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"nice", "simple", "path", "filename", "title"}, cobra.ShellCompDirectiveNoFileComp
 	})
-	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment (left, center, right)")
+	rootCmd.Flags().StringVar(&filenameAlign, "header-align", "left", "Header alignment")
 	_ = rootCmd.RegisterFlagCompletionFunc("header-align", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"left", "center", "right"}, cobra.ShellCompDirectiveNoFileComp
 	})
