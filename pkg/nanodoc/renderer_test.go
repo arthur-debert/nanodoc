@@ -276,12 +276,15 @@ func TestGenerateFilename(t *testing.T) {
 }
 
 func TestExtractHeadings(t *testing.T) {
-	t.Skip("Skipping failing test")
 	doc := &Document{
 		ContentItems: []FileContent{
 			{
 				Filepath: "/test/file1.md",
-				Content: `# Main Title\nSome content here\n\n## Subsection\nMore content`,
+				Content: `# Main Title
+Some content here
+
+## Subsection
+More content`,
 			},
 			{
 				Filepath: "/test/file2.txt",
