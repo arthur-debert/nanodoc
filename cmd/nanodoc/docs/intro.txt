@@ -1,8 +1,7 @@
 nanodoc is a document bundler that scales downs.
 
 
-Why
-----
+1. Why
 
     Most projects have code  related documentation, thinks like JavaDoc and 
 python's docstrings and user facing documents (be it end-user or developer oriented). 
@@ -26,7 +25,7 @@ makes it much easier to consume and update, the same is true for non-source
 code docs like domain knowledge, design decisions, architecture maps and so on.
 
 
-Focused and Collocated Information
+2.  Focused and Collocated Information
 
     This allows us to think of documentation under a different light: instead of
 the document centric view regular tools use (sphinx, mkdocs), one can keep
@@ -44,8 +43,7 @@ documents and providing aggregated views of the project. that's where nanodoc
 is useful.
 
 
-Nanodoc
--------
+3. Nanodoc
 
   Nanodoc is a simple tool to help you stitch these fragments together into a
 cohesive user facing document, keeping the benefits of locality and bundled
@@ -92,8 +90,7 @@ fragment themselves changes. Having to remember the exact files, patterns and
 options would be tedious and error prone.
 
 
-Bundles
--------
+4. Bundles
 
     Bundles are simple txt files that capture a recipe , a description of what 
 and how to bundle. Bundles are quite simple: each line will contain a path, be it
