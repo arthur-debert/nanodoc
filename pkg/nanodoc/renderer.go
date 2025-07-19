@@ -137,60 +137,15 @@ func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc 
 		baseName = fmt.Sprintf("%s. %s", seq, baseName)
 	}
 
-	// Apply banner style
-	switch opts.HeaderStyle {
-	case "dashed":
-		line := strings.Repeat("-", len(baseName))
-		return fmt.Sprintf("%s\n%s\n%s", line, baseName, line)
-	case "solid":
-		line := strings.Repeat("=", len(baseName))
-		return fmt.Sprintf("%s\n%s\n%s", line, baseName, line)
-	case "boxed":
-		// Calculate padding for boxed style
-		borderChar := "#"
-		borderLength := opts.PageWidth
-		if borderLength < len(baseName)+8 { // Minimum space for "### text ###"
-			borderLength = len(baseName) + 8
-		}
-		
-		topBottom := strings.Repeat(borderChar, borderLength)
-		
-		// Calculate padding based on alignment
-		innerWidth := borderLength - 6 // Account for "### " and " ###"
-		var middleLine string
-		
-		switch opts.HeaderAlignment {
-		case "center":
-			leftPadding := (innerWidth - len(baseName)) / 2
-			rightPadding := innerWidth - len(baseName) - leftPadding
-			middleLine = fmt.Sprintf("### %s%s%s ###", 
-				strings.Repeat(" ", leftPadding),
-				baseName,
-				strings.Repeat(" ", rightPadding))
-		case "right":
-			leftPadding := innerWidth - len(baseName)
-			middleLine = fmt.Sprintf("### %s%s ###", 
-				strings.Repeat(" ", leftPadding),
-				baseName)
-		default: // left
-			rightPadding := innerWidth - len(baseName)
-			middleLine = fmt.Sprintf("### %s%s ###", 
-				baseName,
-				strings.Repeat(" ", rightPadding))
-		}
-		
-		return fmt.Sprintf("%s\n%s\n%s", topBottom, middleLine, topBottom)
+	// Get banner style from registry
+	style, exists := GetBannerStyle(opts.HeaderStyle)
+	if !exists {
+		// Fallback to none style if not found
+		style, _ = GetBannerStyle("none")
 	}
-
-	// Apply alignment (for non-banner styles)
-	switch opts.HeaderAlignment {
-	case "center":
-		return fmt.Sprintf("%*s", len(baseName)+10, baseName)
-	case "right":
-		return fmt.Sprintf("%*s", opts.PageWidth, baseName)
-	}
-
-	return baseName
+	
+	// Apply the banner style
+	return style.Apply(baseName, opts)
 }
 
 // generateSequence generates a sequence number in the specified style

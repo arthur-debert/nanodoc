@@ -471,9 +471,10 @@ func init() {
 	_ = rootCmd.RegisterFlagCompletionFunc("header-align", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"left", "center", "right"}, cobra.ShellCompDirectiveNoFileComp
 	})
-	rootCmd.Flags().StringVar(&headerStyle, "header-style", "none", "Header style (none, dashed, solid, boxed)")
+	rootCmd.Flags().StringVar(&headerStyle, "header-style", "none", "Header style")
 	_ = rootCmd.RegisterFlagCompletionFunc("header-style", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return []string{"none", "dashed", "solid", "boxed"}, cobra.ShellCompDirectiveNoFileComp
+		// Dynamically get banner styles from registry
+		return nanodoc.GetBannerStyleNames(), cobra.ShellCompDirectiveNoFileComp
 	})
 	rootCmd.Flags().IntVar(&pageWidth, "page-width", nanodoc.OUTPUT_WIDTH, "Page width for alignment")
 	rootCmd.Flags().StringVar(&fileNumbering, "file-numbering", "numerical", FlagFileNumbering)
