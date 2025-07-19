@@ -275,6 +275,95 @@ func TestGenerateFilename(t *testing.T) {
 	}
 }
 
+func TestBannerStyles(t *testing.T) {
+	tests := []struct {
+		name            string
+		headerStyle     string
+		headerAlignment string
+		pageWidth       int
+		fileName        string
+		wantContains    []string
+	}{
+		{
+			name:            "dashed_style",
+			headerStyle:     "dashed",
+			headerAlignment: "left",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"-----------", "1. test.txt", "-----------"},
+		},
+		{
+			name:            "solid_style",
+			headerStyle:     "solid",
+			headerAlignment: "left",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"===========", "1. test.txt", "==========="},
+		},
+		{
+			name:            "boxed_style_left",
+			headerStyle:     "boxed",
+			headerAlignment: "left",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"########", "### 1. test.txt", "###"},
+		},
+		{
+			name:            "boxed_style_center",
+			headerStyle:     "boxed",
+			headerAlignment: "center",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"########", "###", "1. test.txt", "###"},
+		},
+		{
+			name:            "boxed_style_right",
+			headerStyle:     "boxed",
+			headerAlignment: "right",
+			pageWidth:       80,
+			fileName:        "test.txt",
+			wantContains:    []string{"########", "###", "1. test.txt ###"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/test/" + tt.fileName,
+						Content:  "Test content",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					ShowFilenames:   true,
+					HeaderStyle:     tt.headerStyle,
+					HeaderAlignment: tt.headerAlignment,
+					PageWidth:       tt.pageWidth,
+					SequenceStyle:   SequenceNumerical,
+					HeaderFormat:    HeaderFormatFilename, // Use filename format for predictable output
+				},
+			}
+
+			ctx, err := NewFormattingContext(doc.FormattingOptions)
+			if err != nil {
+				t.Fatalf("NewFormattingContext() error = %v", err)
+			}
+
+			output, err := RenderDocument(doc, ctx)
+			if err != nil {
+				t.Fatalf("RenderDocument() error = %v", err)
+			}
+
+			for _, want := range tt.wantContains {
+				if !strings.Contains(output, want) {
+					t.Errorf("Output does not contain %q\nGot:\n%s", want, output)
+				}
+			}
+		})
+	}
+}
+
 func TestExtractHeadings(t *testing.T) {
 	doc := &Document{
 		ContentItems: []FileContent{

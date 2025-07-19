@@ -145,9 +145,44 @@ func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc 
 	case "solid":
 		line := strings.Repeat("=", len(baseName))
 		return fmt.Sprintf("%s\n%s\n%s", line, baseName, line)
+	case "boxed":
+		// Calculate padding for boxed style
+		borderChar := "#"
+		borderLength := opts.PageWidth
+		if borderLength < len(baseName)+8 { // Minimum space for "### text ###"
+			borderLength = len(baseName) + 8
+		}
+		
+		topBottom := strings.Repeat(borderChar, borderLength)
+		
+		// Calculate padding based on alignment
+		innerWidth := borderLength - 6 // Account for "### " and " ###"
+		var middleLine string
+		
+		switch opts.HeaderAlignment {
+		case "center":
+			leftPadding := (innerWidth - len(baseName)) / 2
+			rightPadding := innerWidth - len(baseName) - leftPadding
+			middleLine = fmt.Sprintf("### %s%s%s ###", 
+				strings.Repeat(" ", leftPadding),
+				baseName,
+				strings.Repeat(" ", rightPadding))
+		case "right":
+			leftPadding := innerWidth - len(baseName)
+			middleLine = fmt.Sprintf("### %s%s ###", 
+				strings.Repeat(" ", leftPadding),
+				baseName)
+		default: // left
+			rightPadding := innerWidth - len(baseName)
+			middleLine = fmt.Sprintf("### %s%s ###", 
+				baseName,
+				strings.Repeat(" ", rightPadding))
+		}
+		
+		return fmt.Sprintf("%s\n%s\n%s", topBottom, middleLine, topBottom)
 	}
 
-	// Apply alignment
+	// Apply alignment (for non-banner styles)
 	switch opts.HeaderAlignment {
 	case "center":
 		return fmt.Sprintf("%*s", len(baseName)+10, baseName)
