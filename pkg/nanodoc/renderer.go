@@ -331,31 +331,35 @@ func renderMarkdownEnhanced(doc *Document, ctx *FormattingContext) (string, erro
 
 	// Process each content item
 	for i, item := range doc.ContentItems {
-		// Parse content
 		mdDoc, err := parser.Parse([]byte(item.Content))
 		if err != nil {
-			return "", fmt.Errorf("failed to parse content: %w", err)
+			return "", fmt.Errorf("failed to parse content for file %s: %w", item.Filepath, err)
 		}
 
-		// Only perform markdown-specific transformations on markdown files
-		if strings.HasSuffix(item.Filepath, ".md") || strings.HasSuffix(item.Filepath, ".markdown") {
-			// Phase 2.2: Header level adjustment
+		isMarkdown := strings.HasSuffix(item.Filepath, ".md") || strings.HasSuffix(item.Filepath, ".markdown")
+
+		if isMarkdown {
+			// Perform markdown-specific transformations
+
+			// Adjust header levels for subsequent documents to maintain hierarchy
 			if i > 0 && transformer.HasH1(mdDoc) {
 				if err := transformer.AdjustHeaderLevels(mdDoc, 1); err != nil {
-					return "", fmt.Errorf("failed to adjust header levels: %w", err)
+					return "", fmt.Errorf("failed to adjust header levels for %s: %w", item.Filepath, err)
 				}
 			}
 
-			// Phase 2.3: File headers support
+			// Insert file headers if requested
 			if ctx.ShowFilenames {
 				sequenceNum := i + 1
 				headerText := generateFileHeaderText(item.Filepath, &doc.FormattingOptions, sequenceNum, doc)
-				
-				// Format as a markdown header
-				mdHeaderText := headerFormatter.FormatFileHeader(headerText, "", 2)
 
-				if err := transformer.InsertFileHeader(mdDoc, mdHeaderText, 2); err != nil {
-					return "", fmt.Errorf("failed to insert file header: %w", err)
+				// Format as a markdown header. H2 is chosen as a sensible default
+				// to avoid conflicting with a potential H1 title in the first document.
+				const headerLevel = 2
+				mdHeaderText := headerFormatter.FormatFileHeader(headerText, "", headerLevel)
+
+				if err := transformer.InsertFileHeader(mdDoc, mdHeaderText, headerLevel); err != nil {
+					return "", fmt.Errorf("failed to insert file header for %s: %w", item.Filepath, err)
 				}
 			}
 		}
