@@ -364,40 +364,7 @@ func TestBannerStyles(t *testing.T) {
 	}
 }
 
-func TestExtractHeadings(t *testing.T) {
-	doc := &Document{
-		ContentItems: []FileContent{
-			{
-				Filepath: "/test/file1.md",
-				Content: `# Main Title
-Some content here
 
-## Subsection
-More content`,
-			},
-			{
-				Filepath: "/test/file2.txt",
-				Content: `This is a plain text file`,
-			},
-		},
-		FormattingOptions: FormattingOptions{
-			SequenceStyle: SequenceNumerical,
-		},
-	}
-
-	generateTOC(doc)
-
-	if len(doc.TOC) != 2 {
-		t.Fatalf("Expected 2 TOC entries, got %d", len(doc.TOC))
-	}
-
-	if doc.TOC[0].Title != "Main Title" {
-		t.Errorf("Expected title 'Main Title', got %q", doc.TOC[0].Title)
-	}
-	if doc.TOC[1].Title != "Subsection" {
-		t.Errorf("Expected title 'Subsection', got %q", doc.TOC[1].Title)
-	}
-}
 
 func TestRenderDocument(t *testing.T) {
 	tests := []struct {
@@ -453,7 +420,7 @@ func TestRenderDocument(t *testing.T) {
 			},
 		},
 		{
-			name: "with TOC",
+			name: "with indented TOC",
 			doc: &Document{
 				ContentItems: []FileContent{
 					{
@@ -467,13 +434,12 @@ func TestRenderDocument(t *testing.T) {
 			},
 			ctx: &FormattingContext{
 				ShowFilenames: true,
-				ShowTOC:     true,
+				ShowTOC:       true,
 			},
 			want: []string{
 				"Table of Contents",
-				"doc.md",
-				"Title",
-				"Section 1",
+				"- Title (doc.md)",
+				"  - Section 1 (doc.md)",
 			},
 		},
 	}
@@ -517,14 +483,20 @@ func TestGenerateTOC(t *testing.T) {
 		t.Fatalf("Expected 2 TOC entries, got %d", len(doc.TOC))
 	}
 
-	expectedTitles := []string{
-		"Main Title",
-		"Subsection",
+	expected := []struct {
+		title string
+		level int
+	}{
+		{title: "Main Title", level: 1},
+		{title: "Subsection", level: 2},
 	}
 
-	for i, title := range expectedTitles {
-		if doc.TOC[i].Title != title {
-			t.Errorf("Expected TOC title %q, got %q", title, doc.TOC[i].Title)
+	for i, exp := range expected {
+		if doc.TOC[i].Title != exp.title {
+			t.Errorf("Expected TOC title %q, got %q", exp.title, doc.TOC[i].Title)
+		}
+		if doc.TOC[i].Level != exp.level {
+			t.Errorf("Expected TOC level %d, got %d", exp.level, doc.TOC[i].Level)
 		}
 	}
 }
@@ -680,7 +652,7 @@ func TestRenderDocumentWithOutputFormat(t *testing.T) {
 		checkFunc    func(t *testing.T, result string)
 	}{
 		{
-			name: "markdown_format_ignores_context",
+			name: "markdown_format_uses_context",
 			doc: &Document{
 				ContentItems: []FileContent{
 					{
@@ -701,16 +673,16 @@ func TestRenderDocumentWithOutputFormat(t *testing.T) {
 			},
 			outputFormat: "markdown",
 			checkFunc: func(t *testing.T, result string) {
-				// Should not contain any formatting
-				if strings.Contains(result, "Table of Contents") {
-					t.Error("Markdown output should not contain TOC")
+				// Enhanced markdown should now respect context flags
+				if !strings.Contains(result, "Table of Contents") {
+					t.Error("Markdown output should contain TOC when requested")
 				}
+				if !strings.Contains(result, "## 1. Test") {
+					t.Error("Markdown output should contain file header when requested")
+				}
+				// Should not have line numbers (markdown doesn't support this)
 				if strings.Contains(result, "1 |") {
 					t.Error("Markdown output should not contain line numbers")
-				}
-				// Should only contain the raw content
-				if result != "# Test\n" {
-					t.Errorf("Expected raw markdown content, got %q", result)
 				}
 			},
 		},
@@ -790,6 +762,214 @@ func TestRenderDocumentWithOutputFormat(t *testing.T) {
 			if err != nil {
 				t.Errorf("RenderDocument() error = %v", err)
 				return
+			}
+			tt.checkFunc(t, result)
+		})
+	}
+}
+
+// TestRenderMarkdownEnhanced tests the enhanced markdown rendering with all phases
+func TestRenderMarkdownEnhanced(t *testing.T) {
+	tests := []struct {
+		name      string
+		doc       *Document
+		ctx       *FormattingContext
+		checkFunc func(t *testing.T, result string)
+	}{
+		{
+			name: "phase_2.1_poc_basic_parsing",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/tmp/test.md",
+						Content:  "# Hello World\n\nThis is a test.",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "markdown",
+				},
+			},
+			ctx: &FormattingContext{
+				ShowFilenames: false,
+				ShowTOC:       false,
+			},
+			checkFunc: func(t *testing.T, result string) {
+				if !strings.Contains(result, "# Hello World") {
+					t.Errorf("Should preserve markdown header, got: %q", result)
+				}
+				if !strings.Contains(result, "This is a test.") {
+					t.Errorf("Should preserve content, got: %q", result)
+				}
+			},
+		},
+		{
+			name: "phase_2.2_header_adjustment",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/tmp/first.md",
+						Content:  "# First Doc\n\n## Section",
+					},
+					{
+						Filepath: "/tmp/second.md",
+						Content:  "# Second Doc\n\n## Another Section",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "markdown",
+				},
+			},
+			ctx: &FormattingContext{
+				ShowFilenames: false,
+				ShowTOC:       false,
+			},
+			checkFunc: func(t *testing.T, result string) {
+				// First doc should keep H1
+				if !strings.Contains(result, "# First Doc") {
+					t.Errorf("First doc should keep H1, got: %q", result)
+				}
+				// Second doc should have H1 adjusted to H2
+				if !strings.Contains(result, "## Second Doc") {
+					t.Errorf("Second doc should have H1 adjusted to H2, got: %q", result)
+				}
+				// Second doc's H2 should become H3
+				if !strings.Contains(result, "### Another Section") {
+					t.Errorf("Second doc's H2 should become H3, got: %q", result)
+				}
+			},
+		},
+		{
+			name: "phase_2.3_file_headers",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/tmp/doc1.md",
+						Content:  "Content 1",
+					},
+					{
+						Filepath: "/tmp/doc2.md",
+						Content:  "Content 2",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat:  "markdown",
+					ShowFilenames: true,
+					SequenceStyle: SequenceNumerical,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowFilenames: true,
+			},
+			checkFunc: func(t *testing.T, result string) {
+				if !strings.Contains(result, "## 1. Doc1") {
+					t.Errorf("Should contain numbered file header for doc1, got: %q", result)
+				}
+				if !strings.Contains(result, "## 2. Doc2") {
+					t.Errorf("Should contain numbered file header for doc2, got: %q", result)
+				}
+			},
+		},
+		{
+			name: "phase_2.4_table_of_contents",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/tmp/guide.md",
+						Content:  "# Main Title\n\n## Section 1\n\n### Subsection\n\n## Section 2",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "markdown",
+					ShowTOC:      true,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowTOC: true,
+			},
+			checkFunc: func(t *testing.T, result string) {
+				if !strings.Contains(result, "## Table of Contents") {
+					t.Errorf("Should contain TOC header, got: %q", result)
+				}
+				if !strings.Contains(result, "- [guide.md - Main Title]") {
+					t.Errorf("Should contain TOC entry for main title, got: %q", result)
+				}
+				if !strings.Contains(result, "  - [guide.md - Section 1]") {
+					t.Errorf("Should contain nested TOC entry, got: %q", result)
+				}
+				if !strings.Contains(result, "    - [guide.md - Subsection]") {
+					t.Errorf("Should contain nested TOC entry for H3, got: %q", result)
+				}
+			},
+		},
+		{
+			name: "all_phases_combined",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/tmp/readme.md",
+						Content:  "# Project\n\n## Overview\n\nIntroduction.",
+					},
+					{
+						Filepath: "/tmp/guide.md", 
+						Content:  "# Guide\n\n## Getting Started\n\nInstructions.",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat:  "markdown",
+					ShowFilenames: true,
+					ShowTOC:       true,
+					SequenceStyle: SequenceLetter,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowFilenames: true,
+				ShowTOC:       true,
+			},
+			checkFunc: func(t *testing.T, result string) {
+				// Check TOC
+				if !strings.Contains(result, "## Table of Contents") {
+					t.Errorf("Should contain TOC, got: %q", result)
+				}
+				// Check file headers (should be "nice" format from TOC)
+				if !strings.Contains(result, "## a. Project") {
+					t.Errorf("Should contain letter sequence file header, got: %q", result)
+				}
+				if !strings.Contains(result, "## b. Guide") {
+					t.Errorf("Should contain second file header, got: %q", result)
+				}
+				// Check header adjustment
+				if !strings.Contains(result, "## Guide") {
+					t.Errorf("Second file H1 should be adjusted to H2, got: %q", result)
+				}
+			},
+		},
+		{
+			name: "non_markdown_files_passthrough",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/tmp/code.go",
+						Content:  "package main\n\nfunc main() {}",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "markdown",
+				},
+			},
+			ctx: &FormattingContext{},
+			checkFunc: func(t *testing.T, result string) {
+				if !strings.Contains(result, "package main") {
+					t.Errorf("Non-markdown content should pass through, got: %q", result)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := renderMarkdownEnhanced(tt.doc, tt.ctx)
+			if err != nil {
+				t.Fatalf("renderMarkdownEnhanced() error = %v", err)
 			}
 			tt.checkFunc(t, result)
 		})

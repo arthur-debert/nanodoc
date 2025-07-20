@@ -5,9 +5,10 @@ import (
 	"log/slog"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/arthur-debert/nanodoc/pkg/markdown"
 )
 
 // RendererOptions controls how the document is rendered
@@ -19,9 +20,9 @@ type RendererOptions struct {
 
 // RenderDocument renders a Document object to a string
 func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
-	// For markdown output in Phase 1, just concatenate without any formatting
+	// For markdown output, use enhanced renderer with all features
 	if doc.FormattingOptions.OutputFormat == "markdown" {
-		return renderMarkdownBasic(doc)
+		return renderMarkdownEnhanced(doc, ctx)
 	}
 
 	// For plain output, concatenate without any formatting
@@ -44,7 +45,9 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 		tocParts = append(tocParts, "=================")
 		tocParts = append(tocParts, "")
 		for _, entry := range doc.TOC {
-			tocParts = append(tocParts, fmt.Sprintf("- %s (%s)", entry.Title, filepath.Base(entry.Path)))
+			// Indent based on heading level, assuming Level 1 is the base
+			indent := strings.Repeat("  ", entry.Level-1)
+			tocParts = append(tocParts, fmt.Sprintf("%s- %s (%s)", indent, entry.Title, filepath.Base(entry.Path)))
 		}
 		tocParts = append(tocParts, "")
 		parts = append(parts, strings.Join(tocParts, "\n"))
@@ -110,6 +113,21 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 }
 
 func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc *Document) string {
+	headerText := generateFileHeaderText(filePath, opts, seqNum, doc)
+
+	// Get banner style from registry
+	style, exists := GetBannerStyle(opts.HeaderStyle)
+	if !exists {
+		// Fallback to none style if not found
+		style, _ = GetBannerStyle("none")
+	}
+
+	// Apply the banner style
+	return style.Apply(headerText, opts)
+}
+
+// generateFileHeaderText generates the text content for a file header
+func generateFileHeaderText(filePath string, opts *FormattingOptions, seqNum int, doc *Document) string {
 	// Find the primary title for this file from the TOC
 	var title string
 	for _, entry := range doc.TOC {
@@ -144,18 +162,9 @@ func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc 
 	// Add sequence number
 	seq := generateSequence(seqNum, opts.SequenceStyle)
 	if seq != "" {
-		baseName = fmt.Sprintf("%s. %s", seq, baseName)
+		return fmt.Sprintf("%s. %s", seq, baseName)
 	}
-
-	// Get banner style from registry
-	style, exists := GetBannerStyle(opts.HeaderStyle)
-	if !exists {
-		// Fallback to none style if not found
-		style, _ = GetBannerStyle("none")
-	}
-	
-	// Apply the banner style
-	return style.Apply(baseName, opts)
+	return baseName
 }
 
 // generateSequence generates a sequence number in the specified style
@@ -246,124 +255,46 @@ func addLineNumbers(content string, mode LineNumberMode, startNum int) (string, 
 	return strings.Join(result, "\n"), lineNum
 }
 
-// generateTOC generates a table of contents for the document
+// generateTOC generates a table of contents for the document using the markdown parser.
 func generateTOC(doc *Document) {
-	headingsByFile := extractHeadings(doc)
-	if len(headingsByFile) == 0 {
-		return
-	}
-
-	// Update document TOC entries
 	doc.TOC = make([]TOCEntry, 0)
-	
-	// Sort file paths for consistent order
-	var sortedPaths []string
-	for path := range headingsByFile {
-		sortedPaths = append(sortedPaths, path)
-	}
-	sort.Strings(sortedPaths)
+	parser := markdown.NewParser()
+	tocGen := markdown.NewTOCGenerator()
 
+	var allHeadings []TOCEntry
 	sequenceNum := 1
-	for _, filePath := range sortedPaths {
-		headings := headingsByFile[filePath]
-		// Sort headings by line number
-		sort.Slice(headings, func(i, j int) bool {
-			return headings[i].LineNum < headings[j].LineNum
-		})
 
-		for _, heading := range headings {
-			doc.TOC = append(doc.TOC, TOCEntry{
-				Title:      heading.Text,
-				Path:       filePath,
-				Sequence:   generateSequence(sequenceNum, doc.FormattingOptions.SequenceStyle),
-				LineNumber: heading.LineNum,
+	for _, item := range doc.ContentItems {
+		// Only extract headings from markdown files
+		if !strings.HasSuffix(item.Filepath, ".md") && !strings.HasSuffix(item.Filepath, ".markdown") {
+			continue
+		}
+
+		mdDoc, err := parser.Parse([]byte(item.Content))
+		if err != nil {
+			slog.Warn("failed to parse markdown for TOC generation", "file", item.Filepath, "error", err)
+			continue
+		}
+
+		entries := tocGen.ExtractTOC(mdDoc)
+		for _, entry := range entries {
+			allHeadings = append(allHeadings, TOCEntry{
+				Title:    entry.Text,
+				Level:    entry.Level,
+				Path:     item.Filepath,
+				Sequence: generateSequence(sequenceNum, doc.FormattingOptions.SequenceStyle),
+				// LineNumber is not available from the new parser, which is acceptable.
 			})
 			sequenceNum++
 		}
 	}
+	doc.TOC = allHeadings
 }
 
-// HeadingInfo represents a heading found in the document
-type HeadingInfo struct {
-	Text     string
-	Level    int
-	LineNum  int
-}
 
-// extractHeadings extracts headings from document content
-func extractHeadings(doc *Document) map[string][]HeadingInfo {
-	headingByFile := make(map[string][]HeadingInfo)
-	
-	// Markdown heading regex
-	headingPattern := regexp.MustCompile(`^(#+)\s+(.+)$`)
-	
-	for _, item := range doc.ContentItems {
-		var fileHeadings []HeadingInfo
-		
-		// Use original source if available
-		filePath := item.OriginalSource
-		if filePath == "" {
-			filePath = item.Filepath
-		}
-		
-		// Only extract headings from markdown files
-		if !strings.HasSuffix(filePath, ".md") && !strings.HasSuffix(filePath, ".markdown") {
-			continue
-		}
-
-		lines := strings.Split(item.Content, "\n")
-		hasMarkdownHeadings := false
-		
-		for i, line := range lines {
-			if matches := headingPattern.FindStringSubmatch(line); matches != nil {
-				level := len(matches[1])
-				text := strings.TrimSpace(matches[2])
-				
-				// Only include level 1 and 2 headings
-				if level <= 2 {
-					hasMarkdownHeadings = true
-					fileHeadings = append(fileHeadings, HeadingInfo{
-						Text:	text,
-						Level:	level,
-						LineNum: i + 1,
-					})
-				}
-			}
-		}
-		
-		// If no markdown headings, use first non-empty line as title for markdown files
-		if !hasMarkdownHeadings {
-			for i, line := range lines {
-				line = strings.TrimSpace(line)
-				if line != "" {
-					// Limit to 50 characters
-					if len(line) > 50 {
-						line = line[:50] + "..."
-					}
-					fileHeadings = append(fileHeadings, HeadingInfo{
-						Text:	line,
-						Level:	1,
-						LineNum: i + 1,
-					})
-					break
-				}
-			}
-		}
-		
-		// Store headings if any were found
-		if len(fileHeadings) > 0 {
-			if existing, ok := headingByFile[filePath]; ok {
-				headingByFile[filePath] = append(existing, fileHeadings...)
-			} else {
-				headingByFile[filePath] = fileHeadings
-			}
-		}
-	}
-	
-	return headingByFile
-}
 
 // renderMarkdownBasic performs basic concatenation of markdown files without any modifications
+// This is kept for backward compatibility and fallback
 func renderMarkdownBasic(doc *Document) (string, error) {
 	var parts []string
 
@@ -379,6 +310,96 @@ func renderMarkdownBasic(doc *Document) (string, error) {
 
 	result := strings.Join(parts, "")
 	return result, nil
+}
+
+// renderMarkdownEnhanced uses the markdown package to provide rich markdown output
+func renderMarkdownEnhanced(doc *Document, ctx *FormattingContext) (string, error) {
+	// Phase 2.1: POC - Demonstrate all capabilities
+	parser := markdown.NewParser()
+	transformer := markdown.NewTransformer()
+	renderer := markdown.NewRenderer()
+	tocGen := markdown.NewTOCGenerator()
+	headerFormatter := markdown.NewHeaderFormatter()
+
+	var processedDocs []*markdown.Document
+
+	// Generate TOC first if needed, so it's available for all renderers
+	if ctx.ShowTOC {
+		slog.Debug("Generating table of contents for markdown output")
+		generateTOC(doc)
+	}
+
+	// Process each content item
+	for i, item := range doc.ContentItems {
+		mdDoc, err := parser.Parse([]byte(item.Content))
+		if err != nil {
+			return "", fmt.Errorf("failed to parse content for file %s: %w", item.Filepath, err)
+		}
+
+		isMarkdown := strings.HasSuffix(item.Filepath, ".md") || strings.HasSuffix(item.Filepath, ".markdown")
+
+		if isMarkdown {
+			// Perform markdown-specific transformations
+
+			// Adjust header levels for subsequent documents to maintain hierarchy
+			if i > 0 && transformer.HasH1(mdDoc) {
+				if err := transformer.AdjustHeaderLevels(mdDoc, 1); err != nil {
+					return "", fmt.Errorf("failed to adjust header levels for %s: %w", item.Filepath, err)
+				}
+			}
+
+			// Insert file headers if requested
+			if ctx.ShowFilenames {
+				sequenceNum := i + 1
+				headerText := generateFileHeaderText(item.Filepath, &doc.FormattingOptions, sequenceNum, doc)
+
+				// Format as a markdown header. H2 is chosen as a sensible default
+				// to avoid conflicting with a potential H1 title in the first document.
+				const headerLevel = 2
+				mdHeaderText := headerFormatter.FormatFileHeader(headerText, "", headerLevel)
+
+				if err := transformer.InsertFileHeader(mdDoc, mdHeaderText, headerLevel); err != nil {
+					return "", fmt.Errorf("failed to insert file header for %s: %w", item.Filepath, err)
+				}
+			}
+		}
+
+		processedDocs = append(processedDocs, mdDoc)
+	}
+
+	// Build final output
+	var output strings.Builder
+
+	// Phase 2.4: Add TOC if requested
+	if ctx.ShowTOC && len(doc.TOC) > 0 {
+		// Convert nanodoc.TOCEntry to markdown.TOCEntry
+		mdTOCEntries := make([]markdown.TOCEntry, len(doc.TOC))
+		for i, entry := range doc.TOC {
+			mdTOCEntries[i] = markdown.TOCEntry{
+				Text:  fmt.Sprintf("%s - %s", filepath.Base(entry.Path), entry.Title),
+				Level: entry.Level,
+			}
+		}
+		tocMarkdown := tocGen.GenerateTOCMarkdown(mdTOCEntries)
+		output.WriteString(tocMarkdown)
+		output.WriteString("\n\n")
+	}
+
+	// Render all processed documents
+	for i, mdDoc := range processedDocs {
+		if i > 0 {
+			output.WriteString("\n")
+		}
+
+		rendered, err := renderer.Render(mdDoc)
+		if err != nil {
+			return "", fmt.Errorf("failed to render markdown: %w", err)
+		}
+
+		output.Write(rendered)
+	}
+
+	return output.String(), nil
 }
 
 // renderPlainText performs basic concatenation without any formatting
