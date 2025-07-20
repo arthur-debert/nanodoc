@@ -113,6 +113,21 @@ func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
 }
 
 func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc *Document) string {
+	headerText := generateFileHeaderText(filePath, opts, seqNum, doc)
+
+	// Get banner style from registry
+	style, exists := GetBannerStyle(opts.HeaderStyle)
+	if !exists {
+		// Fallback to none style if not found
+		style, _ = GetBannerStyle("none")
+	}
+
+	// Apply the banner style
+	return style.Apply(headerText, opts)
+}
+
+// generateFileHeaderText generates the text content for a file header
+func generateFileHeaderText(filePath string, opts *FormattingOptions, seqNum int, doc *Document) string {
 	// Find the primary title for this file from the TOC
 	var title string
 	for _, entry := range doc.TOC {
@@ -147,18 +162,9 @@ func generateFilename(filePath string, opts *FormattingOptions, seqNum int, doc 
 	// Add sequence number
 	seq := generateSequence(seqNum, opts.SequenceStyle)
 	if seq != "" {
-		baseName = fmt.Sprintf("%s. %s", seq, baseName)
+		return fmt.Sprintf("%s. %s", seq, baseName)
 	}
-
-	// Get banner style from registry
-	style, exists := GetBannerStyle(opts.HeaderStyle)
-	if !exists {
-		// Fallback to none style if not found
-		style, _ = GetBannerStyle("none")
-	}
-	
-	// Apply the banner style
-	return style.Apply(baseName, opts)
+	return baseName
 }
 
 // generateSequence generates a sequence number in the specified style
@@ -343,11 +349,12 @@ func renderMarkdownEnhanced(doc *Document, ctx *FormattingContext) (string, erro
 			// Phase 2.3: File headers support
 			if ctx.ShowFilenames {
 				sequenceNum := i + 1
-				sequence := generateSequence(sequenceNum, doc.FormattingOptions.SequenceStyle)
-				filename := filepath.Base(item.Filepath)
-				headerText := headerFormatter.FormatFileHeader(filename, sequence, 2)
+				headerText := generateFileHeaderText(item.Filepath, &doc.FormattingOptions, sequenceNum, doc)
+				
+				// Format as a markdown header
+				mdHeaderText := headerFormatter.FormatFileHeader(headerText, "", 2)
 
-				if err := transformer.InsertFileHeader(mdDoc, headerText, 2); err != nil {
+				if err := transformer.InsertFileHeader(mdDoc, mdHeaderText, 2); err != nil {
 					return "", fmt.Errorf("failed to insert file header: %w", err)
 				}
 			}

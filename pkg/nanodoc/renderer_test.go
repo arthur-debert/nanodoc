@@ -677,7 +677,7 @@ func TestRenderDocumentWithOutputFormat(t *testing.T) {
 				if !strings.Contains(result, "Table of Contents") {
 					t.Error("Markdown output should contain TOC when requested")
 				}
-				if !strings.Contains(result, "## 1. test.md") {
+				if !strings.Contains(result, "## 1. Test") {
 					t.Error("Markdown output should contain file header when requested")
 				}
 				// Should not have line numbers (markdown doesn't support this)
@@ -861,10 +861,10 @@ func TestRenderMarkdownEnhanced(t *testing.T) {
 				ShowFilenames: true,
 			},
 			checkFunc: func(t *testing.T, result string) {
-				if !strings.Contains(result, "## 1. doc1.md") {
+				if !strings.Contains(result, "## 1. Doc1") {
 					t.Errorf("Should contain numbered file header for doc1, got: %q", result)
 				}
-				if !strings.Contains(result, "## 2. doc2.md") {
+				if !strings.Contains(result, "## 2. Doc2") {
 					t.Errorf("Should contain numbered file header for doc2, got: %q", result)
 				}
 			},
@@ -930,11 +930,11 @@ func TestRenderMarkdownEnhanced(t *testing.T) {
 				if !strings.Contains(result, "## Table of Contents") {
 					t.Errorf("Should contain TOC, got: %q", result)
 				}
-				// Check file headers
-				if !strings.Contains(result, "## a. readme.md") {
+				// Check file headers (should be "nice" format from TOC)
+				if !strings.Contains(result, "## a. Project") {
 					t.Errorf("Should contain letter sequence file header, got: %q", result)
 				}
-				if !strings.Contains(result, "## b. guide.md") {
+				if !strings.Contains(result, "## b. Guide") {
 					t.Errorf("Should contain second file header, got: %q", result)
 				}
 				// Check header adjustment
