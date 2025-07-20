@@ -49,7 +49,7 @@ var rootCmd = &cobra.Command{
 	Example: rootExamples,
 	Args:    cobra.ArbitraryArgs,
 	SilenceUsage: true,
-	SilenceErrors: true,
+	SilenceErrors: false,
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		// Default to file completion
 		return nil, cobra.ShellCompDirectiveDefault
