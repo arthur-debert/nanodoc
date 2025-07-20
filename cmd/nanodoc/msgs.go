@@ -47,6 +47,7 @@ const (
 	FlagHeaderStyle       = "Header style"
 	FlagPageWidth         = "Page width"
 	FlagSaveToBundle      = "Save the current invocation as a bundle file"
+	FlagOutputFormat      = "Output format: term|plain|markdown"
 )
 
 // Output messages
@@ -78,8 +79,9 @@ var TopicDescriptions = map[string]string{
 	"circular-dependencies":  "Understanding and resolving circular dependency issues",
 	"content":                "File selection, patterns, and line ranges",
 	"design":                 "Architecture and design principles of nanodoc",
-	"filenames":                "Customize file filenames and separators with formatting options",
+	"filenames":              "Customize file filenames and separators with formatting options",
 	"line-numbering":         "Add line numbers to your bundled documents with various modes",
+	"output-formats":         "Available output formats (term, plain, markdown)",
 	"themes":                 "Available themes and styling options",
 	"toc":                    "Generate table of contents for your documents with navigation aids",
 }

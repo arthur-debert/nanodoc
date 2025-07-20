@@ -95,6 +95,9 @@ type FormattingOptions struct {
 
 	// Exclude patterns for file filtering (gitignore-style)
 	ExcludePatterns []string
+
+	// Output format (term, plain, markdown)
+	OutputFormat string
 }
 
 // NewRange creates a new Range with validation

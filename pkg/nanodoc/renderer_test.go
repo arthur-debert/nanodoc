@@ -528,3 +528,270 @@ func TestGenerateTOC(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderMarkdownBasic(t *testing.T) {
+	tests := []struct {
+		name     string
+		doc      *Document
+		expected string
+	}{
+		{
+			name: "single_markdown_file",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "test.md",
+						Content:  "# Header\n\nThis is content.\n",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "markdown",
+				},
+			},
+			expected: "# Header\n\nThis is content.\n",
+		},
+		{
+			name: "multiple_markdown_files",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "file1.md",
+						Content:  "# First File\n\nContent 1\n",
+					},
+					{
+						Filepath: "file2.md",
+						Content:  "# Second File\n\nContent 2\n",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "markdown",
+				},
+			},
+			expected: "# First File\n\nContent 1\n# Second File\n\nContent 2\n",
+		},
+		{
+			name: "file_without_trailing_newline",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "test.md",
+						Content:  "# Header\n\nNo trailing newline",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "markdown",
+				},
+			},
+			expected: "# Header\n\nNo trailing newline\n",
+		},
+		{
+			name: "empty_file",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "empty.md",
+						Content:  "",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "markdown",
+				},
+			},
+			expected: "\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := renderMarkdownBasic(tt.doc)
+			if err != nil {
+				t.Errorf("renderMarkdownBasic() error = %v", err)
+				return
+			}
+			if result != tt.expected {
+				t.Errorf("renderMarkdownBasic() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRenderPlainText(t *testing.T) {
+	tests := []struct {
+		name     string
+		doc      *Document
+		expected string
+	}{
+		{
+			name: "single_text_file",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "test.txt",
+						Content:  "Hello World\nThis is plain text.\n",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "plain",
+				},
+			},
+			expected: "Hello World\nThis is plain text.\n",
+		},
+		{
+			name: "multiple_text_files",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "file1.txt",
+						Content:  "File 1 content\n",
+					},
+					{
+						Filepath: "file2.txt",
+						Content:  "File 2 content\n",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat: "plain",
+				},
+			},
+			expected: "File 1 content\nFile 2 content\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := renderPlainText(tt.doc)
+			if err != nil {
+				t.Errorf("renderPlainText() error = %v", err)
+				return
+			}
+			if result != tt.expected {
+				t.Errorf("renderPlainText() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRenderDocumentWithOutputFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		doc          *Document
+		ctx          *FormattingContext
+		outputFormat string
+		checkFunc    func(t *testing.T, result string)
+	}{
+		{
+			name: "markdown_format_ignores_context",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "test.md",
+						Content:  "# Test\n",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat:  "markdown",
+					ShowFilenames: true,
+					ShowTOC:       true,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowFilenames: true,
+				ShowTOC:       true,
+				LineNumbers:   LineNumberFile,
+			},
+			outputFormat: "markdown",
+			checkFunc: func(t *testing.T, result string) {
+				// Should not contain any formatting
+				if strings.Contains(result, "Table of Contents") {
+					t.Error("Markdown output should not contain TOC")
+				}
+				if strings.Contains(result, "1 |") {
+					t.Error("Markdown output should not contain line numbers")
+				}
+				// Should only contain the raw content
+				if result != "# Test\n" {
+					t.Errorf("Expected raw markdown content, got %q", result)
+				}
+			},
+		},
+		{
+			name: "plain_format_ignores_context",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "test.txt",
+						Content:  "Plain text content\n",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat:  "plain",
+					ShowFilenames: true,
+					ShowTOC:       true,
+				},
+			},
+			ctx: &FormattingContext{
+				ShowFilenames: true,
+				ShowTOC:       true,
+				LineNumbers:   LineNumberFile,
+			},
+			outputFormat: "plain",
+			checkFunc: func(t *testing.T, result string) {
+				// Should not contain any formatting
+				if strings.Contains(result, "Table of Contents") {
+					t.Error("Plain output should not contain TOC")
+				}
+				if strings.Contains(result, "1 |") {
+					t.Error("Plain output should not contain line numbers")
+				}
+				// Should only contain the raw content
+				if result != "Plain text content\n" {
+					t.Errorf("Expected raw plain content, got %q", result)
+				}
+			},
+		},
+		{
+			name: "term_format_uses_context",
+			doc: &Document{
+				ContentItems: []FileContent{
+					{
+						Filepath: "/tmp/test.txt",
+						Content:  "Terminal content\n",
+					},
+				},
+				FormattingOptions: FormattingOptions{
+					OutputFormat:  "term",
+					ShowFilenames: true,
+					ShowTOC:       false,
+					HeaderFormat:  HeaderFormatFilename,
+					SequenceStyle: SequenceNumerical,
+					HeaderAlignment: "left",
+					HeaderStyle:    "none",
+				},
+			},
+			ctx: &FormattingContext{
+				ShowFilenames: true,
+				ShowTOC:       false,
+				LineNumbers:   LineNumberNone,
+				HeaderFormat:  HeaderFormatFilename,
+			},
+			outputFormat: "term",
+			checkFunc: func(t *testing.T, result string) {
+				// Should contain filename header
+				if !strings.Contains(result, "test.txt") {
+					t.Errorf("Term output should contain filename, got: %q", result)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := RenderDocument(tt.doc, tt.ctx)
+			if err != nil {
+				t.Errorf("RenderDocument() error = %v", err)
+				return
+			}
+			tt.checkFunc(t, result)
+		})
+	}
+}

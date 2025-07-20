@@ -27,6 +27,7 @@ var (
 	excludePatterns    []string
 	dryRun             bool
 	saveToBundlePath   string
+	outputFormat       string
 	explicitFlags      map[string]bool
 
 	// Version information - set by ldflags during build
@@ -84,6 +85,7 @@ var rootCmd = &cobra.Command{
 			additionalExt,
 			includePatterns,
 			excludePatterns,
+			outputFormat,
 		)
 		if err != nil {
 			return err
@@ -207,6 +209,11 @@ func saveBundleFile(path string, args []string, opts nanodoc.FormattingOptions, 
 
 	// File numbering
 	content.WriteString(fmt.Sprintf("--file-numbering=%s\n", string(opts.SequenceStyle)))
+
+	// Output format
+	if opts.OutputFormat != "" && opts.OutputFormat != "term" {
+		content.WriteString(fmt.Sprintf("--output-format=%s\n", opts.OutputFormat))
+	}
 
 	// Additional extensions
 	for _, ext := range opts.AdditionalExtensions {
@@ -333,6 +340,10 @@ func init() {
 	// Other flags
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
 	rootCmd.Flags().StringVar(&saveToBundlePath, "save-to-bundle", "", FlagSaveToBundle)
+	rootCmd.Flags().StringVar(&outputFormat, "output-format", "term", FlagOutputFormat)
+	_ = rootCmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"term", "plain", "markdown"}, cobra.ShellCompDirectiveNoFileComp
+	})
 	rootCmd.Flags().BoolP("version", "v", false, FlagVersion)
 	_ = rootCmd.Flags().SetAnnotation("dry-run", "group", []string{"Misc"})
 	_ = rootCmd.Flags().SetAnnotation("save-to-bundle", "group", []string{"Features"})

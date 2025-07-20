@@ -25,6 +25,7 @@ func ParseBundleOptions(optionLines []string) (FormattingOptions, error) {
 	var bundleAdditionalExt []string
 	var bundleIncludePatterns []string
 	var bundleExcludePatterns []string
+	var bundleOutputFormat string
 	
 	tempCmd.Flags().StringVarP(&bundleLineNum, "linenum", "l", "", "")
 	tempCmd.Flags().BoolVar(&bundleToc, "toc", false, "")
@@ -38,6 +39,7 @@ func ParseBundleOptions(optionLines []string) (FormattingOptions, error) {
 	tempCmd.Flags().StringSliceVar(&bundleAdditionalExt, "ext", []string{}, "")
 	tempCmd.Flags().StringSliceVar(&bundleIncludePatterns, "include", []string{}, "")
 	tempCmd.Flags().StringSliceVar(&bundleExcludePatterns, "exclude", []string{}, "")
+	tempCmd.Flags().StringVar(&bundleOutputFormat, "output-format", "term", "")
 	
 	// Parse the option lines
 	// Need to split options that have values into separate elements
@@ -74,6 +76,7 @@ func ParseBundleOptions(optionLines []string) (FormattingOptions, error) {
 		AdditionalExtensions: bundleAdditionalExt,
 		IncludePatterns:      bundleIncludePatterns,
 		ExcludePatterns:      bundleExcludePatterns,
+		OutputFormat:         bundleOutputFormat,
 	}, nil
 }
 
@@ -117,6 +120,9 @@ func TrackExplicitFlags(cmd *cobra.Command) map[string]bool {
 	}
 	if cmd.Flags().Changed("exclude") {
 		explicitFlags["exclude"] = true
+	}
+	if cmd.Flags().Changed("output-format") {
+		explicitFlags["output-format"] = true
 	}
 	
 	return explicitFlags
@@ -167,6 +173,9 @@ func MergeOptionsWithExplicitFlags(bundleOpts, cmdOpts FormattingOptions, explic
 	if len(bundleOpts.ExcludePatterns) > 0 && !explicitFlags["exclude"] {
 		result.ExcludePatterns = append(bundleOpts.ExcludePatterns, result.ExcludePatterns...)
 	}
+	if !explicitFlags["output-format"] {
+		result.OutputFormat = bundleOpts.OutputFormat
+	}
 	
 	return result
 }
@@ -185,6 +194,7 @@ func BuildFormattingOptions(
 	additionalExt []string,
 	includePatterns []string,
 	excludePatterns []string,
+	outputFormat string,
 ) (FormattingOptions, error) {
 	// Parse line number mode
 	lineNumberMode := LineNumberNone
@@ -197,6 +207,11 @@ func BuildFormattingOptions(
 		// Default is none
 	default:
 		return FormattingOptions{}, fmt.Errorf("invalid --linenum value: %s (must be 'file' or 'global')", lineNum)
+	}
+
+	// Validate output format
+	if outputFormat != "term" && outputFormat != "plain" && outputFormat != "markdown" {
+		return FormattingOptions{}, fmt.Errorf("invalid --output-format value: %s (must be 'term', 'plain', or 'markdown')", outputFormat)
 	}
 
 	return FormattingOptions{
@@ -212,5 +227,6 @@ func BuildFormattingOptions(
 		AdditionalExtensions: additionalExt,
 		IncludePatterns:      includePatterns,
 		ExcludePatterns:      excludePatterns,
+		OutputFormat:         outputFormat,
 	}, nil
 }

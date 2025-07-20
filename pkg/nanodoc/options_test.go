@@ -103,6 +103,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 		additionalExt   []string
 		includePatterns []string
 		excludePatterns []string
+		outputFormat    string
 		wantOpts        FormattingOptions
 		wantErr         bool
 	}{
@@ -117,6 +118,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 			filenameAlign:  "left",
 			filenameBanner: "none",
 			pageWidth:      80,
+			outputFormat:   "term",
 			wantOpts: FormattingOptions{
 				LineNumbers:     LineNumberNone,
 				ShowTOC:         false,
@@ -127,6 +129,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 				HeaderAlignment: "left",
 				HeaderStyle:     "none",
 				PageWidth:       80,
+				OutputFormat:    "term",
 			},
 			wantErr: false,
 		},
@@ -141,6 +144,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 			filenameAlign:  "center",
 			filenameBanner: "dashed",
 			pageWidth:      120,
+			outputFormat:   "term",
 			wantOpts: FormattingOptions{
 				LineNumbers:     LineNumberFile,
 				ShowTOC:         true,
@@ -151,6 +155,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 				HeaderAlignment: "center",
 				HeaderStyle:     "dashed",
 				PageWidth:       120,
+				OutputFormat:    "term",
 			},
 			wantErr: false,
 		},
@@ -165,6 +170,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 			filenameAlign:  "right",
 			filenameBanner: "boxed",
 			pageWidth:      100,
+			outputFormat:   "term",
 			wantOpts: FormattingOptions{
 				LineNumbers:     LineNumberGlobal,
 				ShowTOC:         false,
@@ -175,6 +181,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 				HeaderAlignment: "right",
 				HeaderStyle:     "boxed",
 				PageWidth:       100,
+				OutputFormat:    "term",
 			},
 			wantErr: false,
 		},
@@ -190,6 +197,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 			filenameBanner: "none",
 			pageWidth:      80,
 			additionalExt:  []string{".txt", ".log"},
+			outputFormat:   "term",
 			includePatterns: []string{"*.go", "*.md"},
 			excludePatterns: []string{"*_test.go", "vendor/*"},
 			wantOpts: FormattingOptions{
@@ -205,6 +213,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 				AdditionalExtensions: []string{".txt", ".log"},
 				IncludePatterns:      []string{"*.go", "*.md"},
 				ExcludePatterns:      []string{"*_test.go", "vendor/*"},
+				OutputFormat:         "term",
 			},
 			wantErr: false,
 		},
@@ -212,6 +221,64 @@ func TestBuildFormattingOptions(t *testing.T) {
 			name:    "invalid_line_num",
 			lineNum: "invalid",
 			wantErr: true,
+		},
+		{
+			name:           "with_output_format_term",
+			lineNum:        "",
+			toc:            false,
+			theme:          "classic",
+			showFilenames:  true,
+			fileNumbering:  "numerical",
+			filenameFormat: "nice",
+			filenameAlign:  "left",
+			filenameBanner: "none",
+			pageWidth:      80,
+			outputFormat:   "term",
+			wantOpts: FormattingOptions{
+				LineNumbers:     LineNumberNone,
+				ShowTOC:         false,
+				Theme:           "classic",
+				ShowFilenames:   true,
+				SequenceStyle:   "numerical",
+				HeaderFormat:    "nice",
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+				PageWidth:       80,
+				OutputFormat:    "term",
+			},
+			wantErr: false,
+		},
+		{
+			name:           "with_output_format_markdown",
+			lineNum:        "",
+			toc:            false,
+			theme:          "classic",
+			showFilenames:  true,
+			fileNumbering:  "numerical",
+			filenameFormat: "nice",
+			filenameAlign:  "left",
+			filenameBanner: "none",
+			pageWidth:      80,
+			outputFormat:   "markdown",
+			wantOpts: FormattingOptions{
+				LineNumbers:     LineNumberNone,
+				ShowTOC:         false,
+				Theme:           "classic",
+				ShowFilenames:   true,
+				SequenceStyle:   "numerical",
+				HeaderFormat:    "nice",
+				HeaderAlignment: "left",
+				HeaderStyle:     "none",
+				PageWidth:       80,
+				OutputFormat:    "markdown",
+			},
+			wantErr: false,
+		},
+		{
+			name:         "invalid_output_format",
+			lineNum:      "",
+			outputFormat: "invalid",
+			wantErr:      true,
 		},
 	}
 
@@ -230,6 +297,7 @@ func TestBuildFormattingOptions(t *testing.T) {
 				tt.additionalExt,
 				tt.includePatterns,
 				tt.excludePatterns,
+				tt.outputFormat,
 			)
 
 			if (err != nil) != tt.wantErr {
@@ -275,6 +343,9 @@ func TestBuildFormattingOptions(t *testing.T) {
 				}
 				if len(opts.ExcludePatterns) != len(tt.wantOpts.ExcludePatterns) {
 					t.Errorf("ExcludePatterns length = %v, want %v", len(opts.ExcludePatterns), len(tt.wantOpts.ExcludePatterns))
+				}
+				if opts.OutputFormat != tt.wantOpts.OutputFormat {
+					t.Errorf("OutputFormat = %v, want %v", opts.OutputFormat, tt.wantOpts.OutputFormat)
 				}
 			}
 		})

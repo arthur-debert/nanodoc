@@ -52,6 +52,7 @@ func executeCommand(args ...string) (string, error) {
 	rootCmd.Flags().StringSliceVar(&excludePatterns, "exclude", []string{}, FlagExclude)
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, FlagDryRun)
 	rootCmd.Flags().StringVar(&saveToBundlePath, "save-to-bundle", "", FlagSaveToBundle)
+	rootCmd.Flags().StringVar(&outputFormat, "output-format", "term", FlagOutputFormat)
 	rootCmd.Flags().BoolP("version", "v", false, FlagVersion)
 	
 	// Use the actual root command
@@ -107,6 +108,20 @@ func TestRootCmd(t *testing.T) {
 			wantOutput:    []string{"hello", "world"},
 			dontWantOutput:[]string{"1. File1"},
 			wantErr:       false,
+		},
+		{
+			name:       "markdown_output_format",
+			args:       []string{"--output-format=markdown", file1, file2},
+			wantOutput: []string{"hello", "world", "# Title", "content"},
+			dontWantOutput: []string{"1. File1", "Table of Contents", "====="},
+			wantErr:    false,
+		},
+		{
+			name:       "plain_output_format",
+			args:       []string{"--output-format=plain", file1},
+			wantOutput: []string{"hello", "world"},
+			dontWantOutput: []string{"1. File1", "Table of Contents"},
+			wantErr:    false,
 		},
 		{
 			name:       "with dark theme",
@@ -275,5 +290,6 @@ func resetFlags() {
 	excludePatterns = []string{}
 	dryRun = false
 	saveToBundlePath = ""
+	outputFormat = "term"
 	explicitFlags = make(map[string]bool)
 }
