@@ -364,40 +364,7 @@ func TestBannerStyles(t *testing.T) {
 	}
 }
 
-func TestExtractHeadings(t *testing.T) {
-	doc := &Document{
-		ContentItems: []FileContent{
-			{
-				Filepath: "/test/file1.md",
-				Content: `# Main Title
-Some content here
 
-## Subsection
-More content`,
-			},
-			{
-				Filepath: "/test/file2.txt",
-				Content: `This is a plain text file`,
-			},
-		},
-		FormattingOptions: FormattingOptions{
-			SequenceStyle: SequenceNumerical,
-		},
-	}
-
-	generateTOC(doc)
-
-	if len(doc.TOC) != 2 {
-		t.Fatalf("Expected 2 TOC entries, got %d", len(doc.TOC))
-	}
-
-	if doc.TOC[0].Title != "Main Title" {
-		t.Errorf("Expected title 'Main Title', got %q", doc.TOC[0].Title)
-	}
-	if doc.TOC[1].Title != "Subsection" {
-		t.Errorf("Expected title 'Subsection', got %q", doc.TOC[1].Title)
-	}
-}
 
 func TestRenderDocument(t *testing.T) {
 	tests := []struct {
@@ -453,7 +420,7 @@ func TestRenderDocument(t *testing.T) {
 			},
 		},
 		{
-			name: "with TOC",
+			name: "with indented TOC",
 			doc: &Document{
 				ContentItems: []FileContent{
 					{
@@ -467,13 +434,12 @@ func TestRenderDocument(t *testing.T) {
 			},
 			ctx: &FormattingContext{
 				ShowFilenames: true,
-				ShowTOC:     true,
+				ShowTOC:       true,
 			},
 			want: []string{
 				"Table of Contents",
-				"doc.md",
-				"Title",
-				"Section 1",
+				"- Title (doc.md)",
+				"  - Section 1 (doc.md)",
 			},
 		},
 	}
@@ -517,14 +483,20 @@ func TestGenerateTOC(t *testing.T) {
 		t.Fatalf("Expected 2 TOC entries, got %d", len(doc.TOC))
 	}
 
-	expectedTitles := []string{
-		"Main Title",
-		"Subsection",
+	expected := []struct {
+		title string
+		level int
+	}{
+		{title: "Main Title", level: 1},
+		{title: "Subsection", level: 2},
 	}
 
-	for i, title := range expectedTitles {
-		if doc.TOC[i].Title != title {
-			t.Errorf("Expected TOC title %q, got %q", title, doc.TOC[i].Title)
+	for i, exp := range expected {
+		if doc.TOC[i].Title != exp.title {
+			t.Errorf("Expected TOC title %q, got %q", exp.title, doc.TOC[i].Title)
+		}
+		if doc.TOC[i].Level != exp.level {
+			t.Errorf("Expected TOC level %d, got %d", exp.level, doc.TOC[i].Level)
 		}
 	}
 }
@@ -923,6 +895,9 @@ func TestRenderMarkdownEnhanced(t *testing.T) {
 				}
 				if !strings.Contains(result, "  - [guide.md - Section 1]") {
 					t.Errorf("Should contain nested TOC entry, got: %q", result)
+				}
+				if !strings.Contains(result, "    - [guide.md - Subsection]") {
+					t.Errorf("Should contain nested TOC entry for H3, got: %q", result)
 				}
 			},
 		},

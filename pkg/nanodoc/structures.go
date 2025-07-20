@@ -51,6 +51,9 @@ type TOCEntry struct {
 	// File path this entry refers to
 	Path string
 
+	// Heading level (1 for H1, 2 for H2, etc.)
+	Level int
+
 	// Sequence number/letter/roman numeral if applicable
 	Sequence string
 
