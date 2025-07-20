@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/arthur-debert/nanodoc/pkg/markdown"
 )
 
 // RendererOptions controls how the document is rendered
@@ -19,9 +21,9 @@ type RendererOptions struct {
 
 // RenderDocument renders a Document object to a string
 func RenderDocument(doc *Document, ctx *FormattingContext) (string, error) {
-	// For markdown output in Phase 1, just concatenate without any formatting
+	// For markdown output, use enhanced renderer with all features
 	if doc.FormattingOptions.OutputFormat == "markdown" {
-		return renderMarkdownBasic(doc)
+		return renderMarkdownEnhanced(doc, ctx)
 	}
 
 	// For plain output, concatenate without any formatting
@@ -364,6 +366,7 @@ func extractHeadings(doc *Document) map[string][]HeadingInfo {
 }
 
 // renderMarkdownBasic performs basic concatenation of markdown files without any modifications
+// This is kept for backward compatibility and fallback
 func renderMarkdownBasic(doc *Document) (string, error) {
 	var parts []string
 
@@ -379,6 +382,97 @@ func renderMarkdownBasic(doc *Document) (string, error) {
 
 	result := strings.Join(parts, "")
 	return result, nil
+}
+
+// renderMarkdownEnhanced uses the markdown package to provide rich markdown output
+func renderMarkdownEnhanced(doc *Document, ctx *FormattingContext) (string, error) {
+	// Phase 2.1: POC - Demonstrate all capabilities
+	parser := markdown.NewParser()
+	transformer := markdown.NewTransformer()
+	renderer := markdown.NewRenderer()
+	tocGen := markdown.NewTOCGenerator()
+	headerFormatter := markdown.NewHeaderFormatter()
+
+	var processedDocs []*markdown.Document
+	var allTOCEntries []markdown.TOCEntry
+
+	// Process each content item
+	for i, item := range doc.ContentItems {
+		// Only process markdown files
+		if !strings.HasSuffix(item.Filepath, ".md") && !strings.HasSuffix(item.Filepath, ".markdown") {
+			// For non-markdown files, create a simple document
+			mdDoc, err := parser.Parse([]byte(item.Content))
+			if err != nil {
+				return "", fmt.Errorf("failed to parse content: %w", err)
+			}
+			processedDocs = append(processedDocs, mdDoc)
+			continue
+		}
+
+		// Parse markdown content
+		mdDoc, err := parser.Parse([]byte(item.Content))
+		if err != nil {
+			return "", fmt.Errorf("failed to parse markdown: %w", err)
+		}
+
+		// Phase 2.2: Header level adjustment
+		// If document has H1 and it's not the first document, adjust levels
+		if i > 0 && transformer.HasH1(mdDoc) {
+			if err := transformer.AdjustHeaderLevels(mdDoc, 1); err != nil {
+				return "", fmt.Errorf("failed to adjust header levels: %w", err)
+			}
+		}
+
+		// Phase 2.3: File headers support
+		if ctx.ShowFilenames {
+			sequenceNum := i + 1
+			sequence := generateSequence(sequenceNum, doc.FormattingOptions.SequenceStyle)
+			filename := filepath.Base(item.Filepath)
+			headerText := headerFormatter.FormatFileHeader(filename, sequence, 2)
+			
+			if err := transformer.InsertFileHeader(mdDoc, headerText, 2); err != nil {
+				return "", fmt.Errorf("failed to insert file header: %w", err)
+			}
+		}
+
+		// Phase 2.4: Extract TOC entries
+		if ctx.ShowTOC {
+			entries := tocGen.ExtractTOC(mdDoc)
+			// Prepend filename to make entries unique across files
+			for i := range entries {
+				entries[i].Text = fmt.Sprintf("%s - %s", filepath.Base(item.Filepath), entries[i].Text)
+			}
+			allTOCEntries = append(allTOCEntries, entries...)
+		}
+
+		processedDocs = append(processedDocs, mdDoc)
+	}
+
+	// Build final output
+	var output strings.Builder
+
+	// Phase 2.4: Add TOC if requested
+	if ctx.ShowTOC && len(allTOCEntries) > 0 {
+		tocMarkdown := tocGen.GenerateTOCMarkdown(allTOCEntries)
+		output.WriteString(tocMarkdown)
+		output.WriteString("\n\n")
+	}
+
+	// Render all processed documents
+	for i, mdDoc := range processedDocs {
+		if i > 0 {
+			output.WriteString("\n")
+		}
+
+		rendered, err := renderer.Render(mdDoc)
+		if err != nil {
+			return "", fmt.Errorf("failed to render markdown: %w", err)
+		}
+
+		output.Write(rendered)
+	}
+
+	return output.String(), nil
 }
 
 // renderPlainText performs basic concatenation without any formatting
