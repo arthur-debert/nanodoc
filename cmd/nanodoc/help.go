@@ -79,11 +79,11 @@ func groupedFlagUsages(fs *pflag.FlagSet) string {
 		}
 
 		// Write group header
-		buf.WriteString(fmt.Sprintf("\033[1m%s\033[0m\n", strings.ToUpper(groupName)))
+		fmt.Fprintf(&buf, "\033[1m%s\033[0m\n", strings.ToUpper(groupName))
 
 		// Write flags in this group
 		for _, flag := range groups[groupName] {
-			buf.WriteString(fmt.Sprintf("  %s\n", flagUsage(flag)))
+			fmt.Fprintf(&buf, "  %s\n", flagUsage(flag))
 		}
 	}
 
@@ -96,14 +96,14 @@ func flagUsage(f *pflag.Flag) string {
 
 	// Build flag name part
 	if f.Shorthand != "" && f.ShorthandDeprecated == "" {
-		buf.WriteString(fmt.Sprintf("-%s, --%s", f.Shorthand, f.Name))
+		fmt.Fprintf(&buf, "-%s, --%s", f.Shorthand, f.Name)
 	} else {
-		buf.WriteString(fmt.Sprintf("    --%s", f.Name))
+		fmt.Fprintf(&buf, "    --%s", f.Name)
 	}
 
 	// Add type if not bool
 	if f.Value.Type() != "bool" {
-		buf.WriteString(fmt.Sprintf(" %s", f.Value.Type()))
+		fmt.Fprintf(&buf, " %s", f.Value.Type())
 	}
 
 	// Pad to align descriptions
@@ -119,7 +119,7 @@ func flagUsage(f *pflag.Flag) string {
 
 	// Add default value if not empty
 	if f.DefValue != "" && f.DefValue != "false" && f.DefValue != "[]" {
-		buf.WriteString(fmt.Sprintf(" (default %q)", f.DefValue))
+		fmt.Fprintf(&buf, " (default %q)", f.DefValue)
 	}
 
 	return buf.String()
@@ -134,7 +134,7 @@ func helpTopics() string {
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("\033[1m%s\033[0m\n", "HELP TOPICS"))
+	fmt.Fprintf(&buf, "\033[1m%s\033[0m\n", "HELP TOPICS")
 
 	// Find the longest topic name for padding
 	maxLen := 0
@@ -152,7 +152,7 @@ func helpTopics() string {
 		if !exists {
 			desc = "Documentation for " + topic
 		}
-		buf.WriteString(fmt.Sprintf("  %-*s %s\n", maxLen, topic, desc))
+		fmt.Fprintf(&buf, "  %-*s %s\n", maxLen, topic, desc)
 	}
 
 	buf.WriteString("\nRun \"nanodoc help <topic>\" for more information.")

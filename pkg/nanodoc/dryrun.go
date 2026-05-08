@@ -177,7 +177,7 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	// Show TOC line count if enabled
 	if info.Options.ShowTOC {
 		tocLines := 2 + info.TotalFiles // title + separator + entries
-		output.WriteString(fmt.Sprintf("\nTable of Contents (%d lines)\n", tocLines))
+		fmt.Fprintf(&output, "\nTable of Contents (%d lines)\n", tocLines)
 	}
 	
 	// Group files by source
@@ -197,7 +197,7 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	fileNum := 1
 	for _, source := range sources {
 		files := filesBySource[source]
-		output.WriteString(fmt.Sprintf("\nFrom %s:\n", source))
+		fmt.Fprintf(&output, "\nFrom %s:\n", source)
 		
 		// Sort files within each source
 		sort.Slice(files, func(i, j int) bool {
@@ -209,7 +209,7 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 			if file.RangeSpec != "" {
 				relPath = fmt.Sprintf("%s:%s", relPath, file.RangeSpec)
 			}
-			output.WriteString(fmt.Sprintf("%d. %s (%d lines)\n", fileNum, relPath, file.LineCount))
+			fmt.Fprintf(&output, "%d. %s (%d lines)\n", fileNum, relPath, file.LineCount)
 			fileNum++
 		}
 	}
@@ -218,7 +218,7 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	if len(info.Bundles) > 0 {
 		output.WriteString("\nBundle files detected:\n")
 		for _, bundle := range info.Bundles {
-			output.WriteString(fmt.Sprintf("  - %s\n", filepath.Base(bundle)))
+			fmt.Fprintf(&output, "  - %s\n", filepath.Base(bundle))
 		}
 	}
 	
@@ -226,13 +226,13 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	if len(info.RequiresExtension) > 0 {
 		output.WriteString("\nFiles requiring --ext flag:\n")
 		for file, ext := range info.RequiresExtension {
-			output.WriteString(fmt.Sprintf("  - %s (requires --ext=%s)\n", 
-				filepath.Base(file), strings.TrimPrefix(ext, ".")))
+			fmt.Fprintf(&output, "  - %s (requires --ext=%s)\n",
+				filepath.Base(file), strings.TrimPrefix(ext, "."))
 		}
 	}
 	
 	// Summary
-	output.WriteString(fmt.Sprintf("\nTotal files to process: %d (%d lines)\n", info.TotalFiles, info.TotalLines))
+	fmt.Fprintf(&output, "\nTotal files to process: %d (%d lines)\n", info.TotalFiles, info.TotalLines)
 	
 	// Show active options
 	var activeOptions []string
@@ -262,7 +262,7 @@ func FormatDryRunOutput(info *DryRunInfo) string {
 	if len(activeOptions) > 0 {
 		output.WriteString("\nOptions:\n")
 		for _, opt := range activeOptions {
-			output.WriteString(fmt.Sprintf("  %s\n", opt))
+			fmt.Fprintf(&output, "  %s\n", opt)
 		}
 	}
 	
