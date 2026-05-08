@@ -194,7 +194,7 @@ func saveBundleFile(path string, args []string, opts nanodoc.FormattingOptions, 
 	}
 
 	// Theme
-	content.WriteString(fmt.Sprintf("--theme=%s\n", opts.Theme))
+	fmt.Fprintf(&content, "--theme=%s\n", opts.Theme)
 
 	// File filenames
 	if !opts.ShowFilenames {
@@ -202,32 +202,32 @@ func saveBundleFile(path string, args []string, opts nanodoc.FormattingOptions, 
 	}
 
 	// File header format
-	content.WriteString(fmt.Sprintf("--header-format=%s\n", string(opts.HeaderFormat)))
-	content.WriteString(fmt.Sprintf("--header-align=%s\n", opts.HeaderAlignment))
-	content.WriteString(fmt.Sprintf("--header-style=%s\n", opts.HeaderStyle))
-	content.WriteString(fmt.Sprintf("--page-width=%d\n", opts.PageWidth))
+	fmt.Fprintf(&content, "--header-format=%s\n", string(opts.HeaderFormat))
+	fmt.Fprintf(&content, "--header-align=%s\n", opts.HeaderAlignment)
+	fmt.Fprintf(&content, "--header-style=%s\n", opts.HeaderStyle)
+	fmt.Fprintf(&content, "--page-width=%d\n", opts.PageWidth)
 
 	// File numbering
-	content.WriteString(fmt.Sprintf("--file-numbering=%s\n", string(opts.SequenceStyle)))
+	fmt.Fprintf(&content, "--file-numbering=%s\n", string(opts.SequenceStyle))
 
 	// Output format
 	if opts.OutputFormat != "" && opts.OutputFormat != "term" {
-		content.WriteString(fmt.Sprintf("--output-format=%s\n", opts.OutputFormat))
+		fmt.Fprintf(&content, "--output-format=%s\n", opts.OutputFormat)
 	}
 
 	// Additional extensions
 	for _, ext := range opts.AdditionalExtensions {
-		content.WriteString(fmt.Sprintf("--ext=%s\n", ext))
+		fmt.Fprintf(&content, "--ext=%s\n", ext)
 	}
 
 	// Include patterns
 	for _, pattern := range opts.IncludePatterns {
-		content.WriteString(fmt.Sprintf("--include=%q\n", pattern))
+		fmt.Fprintf(&content, "--include=%q\n", pattern)
 	}
 
 	// Exclude patterns
 	for _, pattern := range opts.ExcludePatterns {
-		content.WriteString(fmt.Sprintf("--exclude=%q\n", pattern))
+		fmt.Fprintf(&content, "--exclude=%q\n", pattern)
 	}
 
 	// Write content section

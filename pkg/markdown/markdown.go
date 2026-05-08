@@ -183,7 +183,7 @@ func (tg *TOCGenerator) GenerateTOCMarkdown(entries []TOCEntry) string {
 	for _, entry := range entries {
 		// Create indentation based on header level
 		indent := strings.Repeat("  ", entry.Level-1)
-		builder.WriteString(fmt.Sprintf("%s- [%s](#%s)\n", indent, entry.Text, entry.ID))
+		fmt.Fprintf(&builder, "%s- [%s](#%s)\n", indent, entry.Text, entry.ID)
 	}
 	
 	return builder.String()
