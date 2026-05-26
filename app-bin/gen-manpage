@@ -7,7 +7,7 @@ echo "Generating man pages..."
 # Build the binary first if it doesn't exist
 if [ ! -f "./bin/nanodoc" ]; then
     echo "Building nanodoc binary..."
-    ./scripts/build
+    ./app-bin/build
 fi
 
 # Create man directory

@@ -14,7 +14,7 @@ BUILDING AND RUNNING
 -------------------
 
 Build the nanodoc CLI:
-    ./scripts/build
+    ./app-bin/build
 
 This creates the binary at bin/nanodoc with version information embedded.
 
@@ -28,10 +28,10 @@ TESTING
 -------
 
 Run all tests:
-    ./scripts/test
+    ./app-bin/test
 
 Run tests with coverage:
-    ./scripts/test-with-cov
+    ./app-bin/test-with-cov
 
 The test script uses gotestsum for better output formatting.
 
@@ -39,20 +39,20 @@ PRE-COMMIT CHECKS
 ----------------
 
 Run pre-commit checks (linting + tests):
-    ./scripts/pre-commit
+    ./app-bin/pre-commit
 
 This runs:
 - golangci-lint for code quality
 - All unit tests
 
 It's recommended to install this as a git pre-commit hook:
-    ln -s ../../scripts/pre-commit .git/hooks/pre-commit
+    ln -s ../../app-bin/pre-commit .git/hooks/pre-commit
 
 LINTING
 -------
 
 Run linter only:
-    ./scripts/lint
+    ./app-bin/lint
 
 The project uses golangci-lint with default configuration.
 
@@ -71,7 +71,7 @@ CREATING A RELEASE
    - Update homebrew formula (if configured)
 
 Alternative: Use the release script:
-    ./scripts/release-new v0.0.1
+    ./app-bin/release-new v0.0.1
 
 GITHUB WORKFLOWS
 ---------------
@@ -130,7 +130,7 @@ pkg/nanodoc/        - Core library
   constants.go      - Constants and defaults
   structures.go     - Core data structures
   *_test.go         - Unit tests
-scripts/            - Development scripts
+app-bin/            - Development scripts
 .github/workflows/  - GitHub Actions
 .goreleaser.yml     - GoReleaser configuration
 
@@ -138,9 +138,9 @@ DEVELOPMENT WORKFLOW
 -------------------
 
 1. Make changes to code
-2. Run tests: ./scripts/test
-3. Run linter: ./scripts/lint
-4. Build: ./scripts/build
+2. Run tests: ./app-bin/test
+3. Run linter: ./app-bin/lint
+4. Build: ./app-bin/build
 5. Test binary: ./bin/nanodoc --help
 6. Commit changes
 7. Push to GitHub

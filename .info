@@ -1,6 +1,6 @@
 pkg/
 
-scripts/
+app-bin/
 # All executable (chmod +x applied)
 
 .goreleaser.yml

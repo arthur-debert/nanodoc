@@ -23,8 +23,8 @@ jobs:
 
       - name: Generate completions and man pages
         run: |
-          ./scripts/gen-completion
-          ./scripts/gen-manpage
+          ./app-bin/gen-completion
+          ./app-bin/gen-manpage
 
       - uses: goreleaser/goreleaser-action@v7
         with:
@@ -45,6 +45,6 @@ jobs:
           echo "Repository: arthur-debert/nanodoc-go"
 
       - name: Build binary first
-        run: scripts/build
+        run: app-bin/build
         env:
           PKG_NAME: nanodoc 

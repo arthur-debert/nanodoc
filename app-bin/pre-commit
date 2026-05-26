@@ -69,18 +69,18 @@ run_checks() {
     overall_success=true
 
     # Run lint (suppress output)
-    if "${PROJECT_ROOT}"/scripts/lint >/dev/null 2>&1; then
+    if "${PROJECT_ROOT}"/app-bin/lint >/dev/null 2>&1; then
         echo -e "    ${GREEN}✓ Linting${NC}"
     else
-        echo -e "    ${RED}✗ Linting (See scripts/lint for more info.)${NC}"
+        echo -e "    ${RED}✗ Linting (See app-bin/lint for more info.)${NC}"
         overall_success=false
     fi
 
     # Run tests (suppress output)
-    if "${PROJECT_ROOT}"/scripts/test >/dev/null 2>&1; then
+    if "${PROJECT_ROOT}"/app-bin/test >/dev/null 2>&1; then
         echo -e "    ${GREEN}✓ Tests${NC}"
     else
-        echo -e "    ${RED}✗ Tests (See scripts/test for more info.)${NC}"
+        echo -e "    ${RED}✗ Tests (See app-bin/test for more info.)${NC}"
         overall_success=false
     fi
 
